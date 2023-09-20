@@ -1,4 +1,5 @@
 using skills_sellers.Entities;
+using skills_sellers.Models.Users;
 
 namespace skills_sellers.Models.Extensions;
 

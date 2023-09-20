@@ -7,4 +7,7 @@ public class User
 {
     public int Id { get; set; }
     public string Pseudo { get; set; }
+
+    // Many to many
+    public List<Card> Cards { get; set; } = new();
 }
