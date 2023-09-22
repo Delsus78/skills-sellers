@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
@@ -115,14 +116,16 @@ public class UserService : IUserService
 
     private User GetUser(int id)
     {
-        var user = _context.Users.Find(id);
+        var user = _context.Users.Include(u => u.Cards)
+            .FirstOrDefault(u => u.Id == id);
         if (user == null) throw new AppException("User not found", 404);
         return user;
     }
-    
+
     private User GetUser(string pseudo)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Pseudo == pseudo);
+        var user = _context.Users.Include(u => u.Cards)
+            .FirstOrDefault(u => u.Pseudo == pseudo);
         if (user == null) throw new AppException("User not found", 404);
         return user;
     }

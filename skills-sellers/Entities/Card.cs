@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace skills_sellers.Entities;
 
@@ -11,5 +12,6 @@ public class Card
     public string Description { get; set; }
     
     // Many to many
+    [JsonIgnore]
     public List<User> Users { get; } = new();
 }

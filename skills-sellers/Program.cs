@@ -78,6 +78,29 @@ services.AddSwaggerGen(c =>
     c.AddSignalRSwaggerGen();
     c.CustomSchemaIds(x => x.FullName); // Enables to support different classes with the same name using the full name with namespace
     c.SchemaFilter<NamespaceSchemaFilter>();
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
 });
     
 // configurations

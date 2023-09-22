@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Entities;
 using skills_sellers.Models.Cards;
@@ -25,6 +27,7 @@ public class CardsController : ControllerBase
     public Card GetById(int id)
         => _cardService.GetById(id);
 
+    [Authorize(Roles = "admin")]
     [HttpPost]
     public IActionResult Create(CreateRequest model)
     {

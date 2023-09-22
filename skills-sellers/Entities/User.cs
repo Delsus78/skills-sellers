@@ -9,5 +9,5 @@ public class User
     public string Pseudo { get; set; }
 
     // Many to many
-    public List<Card> Cards { get; set; } = new();
+    public List<Card> Cards { get; } = new();
 }

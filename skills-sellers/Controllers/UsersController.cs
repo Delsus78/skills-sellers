@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using skills_sellers.Entities;
+using skills_sellers.Helpers;
 using skills_sellers.Models;
 using skills_sellers.Models.Users;
 using skills_sellers.Services;
@@ -26,6 +28,8 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    
+    [Authorize(Roles = "admin")]
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
@@ -37,8 +41,6 @@ public class UsersController : ControllerBase
     [HttpPost]
     public IActionResult Create(CreateRequest model)
     {
-        // get current user id
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         _userService.Create(model);
         return Ok(new { message = "User created" });
     } 
@@ -56,6 +58,7 @@ public class UsersController : ControllerBase
     }
 */
 
+    [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
@@ -63,10 +66,20 @@ public class UsersController : ControllerBase
         return Ok(new { message = "User deleted" });
     }
     
+    [Authorize(Roles = "admin")]
     [HttpPost("{id}/cards/{cardId}")]
     public IActionResult AddCardToUser(int id, int cardId)
     {
         _userService.AddCardToUser(id, cardId);
         return Ok(new { message = "Card added to user" });
+    }
+    
+    // helper methods
+
+    private User GetUserAuthenticated()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = _userService.GetById(int.Parse(userId ?? throw new AppException("User authenticated not found", 400)));
+        return user;
     }
 }
