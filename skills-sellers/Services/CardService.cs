@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
@@ -8,9 +9,10 @@ namespace skills_sellers.Services;
 
 public interface ICardService
 {
-    IEnumerable<Card> GetAll();
-    Card GetById(int id);
-    void Create(CreateRequest model);
+    IEnumerable<CardResponse> GetAll();
+    CardResponse GetById(int id);
+    CardResponse Create(CreateRequest model);
+    Card GetCardEntity(Expression<Func<Card, bool>> predicate);
 }
 
 public class CardService : ICardService
@@ -23,17 +25,11 @@ public class CardService : ICardService
         _context = context;
     }
     
-    public IEnumerable<Card> GetAll()
-    {
-        return _context.Cards;
-    }
+    public IEnumerable<CardResponse> GetAll() => _context.Cards.Select(x => x.ToResponse());
 
-    public Card GetById(int id)
-    {
-        return getCard(id);
-    }
+    public CardResponse GetById(int id) => GetCardEntity(c => c.Id == id).ToResponse();
 
-    public void Create(CreateRequest model)
+    public CardResponse Create(CreateRequest model)
     {
         // validate
         if (_context.Cards.Any(x => x.Name == model.Name))
@@ -45,14 +41,17 @@ public class CardService : ICardService
         // save user
         _context.Cards.Add(card);
         _context.SaveChanges();
+        
+        return card.ToResponse();
     }
     
     
     // helper methods
 
-    private Card getCard(int id)
+    public Card GetCardEntity(Expression<Func<Card, bool>> predicate)
     {
-        var card = _context.Cards.Find(id);
+        var card = _context.Cards.FirstOrDefault(predicate);
+        
         if (card == null) throw new KeyNotFoundException("Card not found");
         return card;
     }

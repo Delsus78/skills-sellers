@@ -17,4 +17,9 @@ public static class UsersModelsExtensions
             Pseudo = model.Pseudo
         };
     }
+    
+    public static UserResponse ToResponse(this User user)
+    {
+        return new UserResponse(user.Id, user.Pseudo);
+    }
 }

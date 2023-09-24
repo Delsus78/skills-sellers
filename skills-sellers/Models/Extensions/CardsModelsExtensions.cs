@@ -5,13 +5,6 @@ namespace skills_sellers.Models.Extensions;
 
 public static class CardsModelsExtensions
 {
-    public static void UpdateCard(this UpdateRequest model, Card card)
-    {
-        card.Name = model.Name;
-        card.Description = model.Description;
-        card.ImageUrl = model.ImageUrl;
-    }
-    
     public static Card CreateCard(this CreateRequest model)
     {
         return new Card
@@ -20,5 +13,10 @@ public static class CardsModelsExtensions
             Description = model.Description,
             ImageUrl = model.ImageUrl
         };
+    }
+    
+    public static CardResponse ToResponse(this Card card)
+    {
+        return new CardResponse(card.Id, card.Name, card.ImageUrl, card.Description);
     }
 }

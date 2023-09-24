@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Models;
+using skills_sellers.Models.Cards;
 using skills_sellers.Models.Users;
 using skills_sellers.Services;
+using CreateRequest = skills_sellers.Models.Users.CreateRequest;
 
 namespace skills_sellers.Controllers;
 
@@ -21,42 +23,25 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
+    [Authorize]
     [HttpGet]
-    public IActionResult GetAll()
-    {
-        var users = _userService.GetAll();
-        return Ok(users);
-    }
+    public IEnumerable<UserResponse> GetAll()
+        => _userService.GetAll();
 
-    
-    [Authorize(Roles = "admin")]
+
+    [Authorize]
     [HttpGet("{id}")]
-    public IActionResult GetById(int id)
-    {
-        var user = _userService.GetById(id);
-        return Ok(user);
-    }
+    public UserResponse GetById(int id)
+        => _userService.GetById(id);
 
-    [Authorize(Roles = "admin")]
-    [HttpPost]
-    public IActionResult Create(CreateRequest model)
-    {
-        _userService.Create(model);
-        return Ok(new { message = "User created" });
-    } 
-    
+    [Authorize]
+    [HttpGet("{id}/cards")]
+    public IEnumerable<UserCardResponse> GetUserCards(int id)
+        => _userService.GetUserCards(id);
+
     [HttpPost("authenticate")]
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         => await _userService.Authenticate(model);
-
-/*
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, UpdateRequest model)
-    {
-        _userService.Update(id, model);
-        return Ok(new { message = "User updated" });
-    }
-*/
 
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
@@ -67,10 +52,18 @@ public class UsersController : ControllerBase
     }
     
     [Authorize(Roles = "admin")]
-    [HttpPost("{id}/cards/{cardId}")]
-    public IActionResult AddCardToUser(int id, int cardId)
+    [HttpPost]
+    public IActionResult Create(CreateRequest model)
     {
-        _userService.AddCardToUser(id, cardId);
+        _userService.Create(model);
+        return Ok(new { message = "User created" });
+    }
+    
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/cards/{cardId}")]
+    public IActionResult AddCardToUser(int id, int cardId, CompetencesRequest competences)
+    {
+        _userService.AddCardToUser(id, cardId, competences);
         return Ok(new { message = "Card added to user" });
     }
     
@@ -78,8 +71,8 @@ public class UsersController : ControllerBase
 
     private User GetUserAuthenticated()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = _userService.GetById(int.Parse(userId ?? throw new AppException("User authenticated not found", 400)));
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new AppException("User authenticated not found", 400));
+        var user = _userService.GetUserEntity(u => u.Id == userId);
         return user;
     }
 }
