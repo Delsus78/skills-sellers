@@ -9,7 +9,12 @@ public class AppExceptionFiltersAttribute : ExceptionFilterAttribute
     {
         if (context.Exception is AppException exception)
         {
-            context.Result = new JsonResult(exception.Message)
+            var errorResponse = new 
+            {
+                error = exception.Message
+            };
+            
+            context.Result = new JsonResult(errorResponse)
             {
                 StatusCode = exception.ErrorCode
             };
