@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
+using skills_sellers.Hubs;
 using skills_sellers.Models;
 using skills_sellers.Services;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -67,6 +68,24 @@ services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(
                 configuration.GetSection("jwt")["secret"]))
     };
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/globalChatHub")))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 
@@ -123,6 +142,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<GlobalChatHub>("/globalChatHub");
 
 app.Run();
 
