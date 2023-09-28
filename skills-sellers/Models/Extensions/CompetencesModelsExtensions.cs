@@ -4,7 +4,8 @@ namespace skills_sellers.Models.Extensions;
 
 public static class CompetencesModelsExtensions
 {
-
+    // DTO
+    
     public static Competences CreateCompetences(this CompetencesRequest model) 
         => new()
         {
@@ -18,4 +19,14 @@ public static class CompetencesModelsExtensions
     public static CompetencesResponse ToResponse(this Competences competences) 
         => new(competences.Id, competences.Cuisine, competences.Force, competences.Intelligence, competences.Charisme,
         competences.Exploration);
+    
+    
+    // helpers
+    
+    public static bool GotOneMaxed(this Competences competences) 
+        => competences.Cuisine == 10 
+           || competences.Force == 10 
+           || competences.Intelligence == 10 
+           || competences.Charisme == 10 
+           || competences.Exploration == 10;
 }

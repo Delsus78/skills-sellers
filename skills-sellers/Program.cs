@@ -45,6 +45,7 @@ services.AddSignalR();
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
+services.AddScoped<IStatsService, StatsService>();
 
 // DbContext
 services.AddDbContext<DataContext>(options =>

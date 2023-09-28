@@ -23,6 +23,7 @@ public interface IUserService
     Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
     User GetUserEntity(Expression<Func<User, bool>> predicate);
     IEnumerable<UserCardResponse> GetUserCards(int id);
+    StatsResponse GetUserStats(int id);
 }
 
 public class UserService : IUserService
@@ -30,20 +31,23 @@ public class UserService : IUserService
     private readonly DataContext _context;
     private readonly ICardService _cardService;
     private readonly IAuthService _authService;
-    
+    private readonly IStatsService _statsService;
+
     public UserService(
         DataContext context,
         ICardService cardService,
-        IAuthService authService)
+        IAuthService authService,
+        IStatsService statsService)
     {
         _context = context;
         _cardService = cardService;
         _authService = authService;
+        _statsService = statsService;
     }
 
     public IEnumerable<UserResponse> GetAll()
     {
-        var users = _context.Users;
+        var users = IncludeGetUsers().ToList();
         return users.Select(x => x.ToResponse());
     }
 
@@ -57,6 +61,9 @@ public class UserService : IUserService
 
         // map model to new user object
         var user = model.CreateUser();
+        
+        // create user stats
+        _statsService.GetOrCreateStatsEntity(user);
 
         // registering credentials
         var resultAuthRegister = await _authService.Registeration(user, model.Password, model.Role);
@@ -66,21 +73,6 @@ public class UserService : IUserService
         // save user
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
-    }
-
-    public void Update(int id, UpdateRequest model)
-    {
-        var user = GetUserEntity(u => u.Id == id);
-
-        // validate
-        if (model.Pseudo != user.Pseudo && _context.Users.Any(x => x.Pseudo == model.Pseudo))
-            throw new AppException("User with the pseudo '" + model.Pseudo + "' already exists", 400);
-
-        // copy model to user and save
-        model.UpdateUser(user);
-        
-        _context.Users.Update(user);
-        _context.SaveChanges();
     }
 
     public void Delete(int id)
@@ -127,7 +119,16 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         return user.UserCards.Select(uc => uc.ToUserCardResponse());
     }
-    
+
+    public StatsResponse GetUserStats(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userCards = user.UserCards;
+        var stats = _statsService.GetOrCreateStatsEntity(user);
+        
+        return stats.ToResponse(userCards);
+    }
+
     // helper methods
 
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
@@ -137,8 +138,10 @@ public class UserService : IUserService
         if (user == null) throw new AppException("User not found", 404);
         return user;
     }
+    
+    
 
-    private IIncludableQueryable<User,Competences> IncludeGetUsers()
+    private IIncludableQueryable<User,Object> IncludeGetUsers()
     {
         return _context.Users.Include(u => u.UserCards)
             .ThenInclude(uc => uc.Card)
