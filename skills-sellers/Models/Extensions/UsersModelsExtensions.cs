@@ -20,6 +20,7 @@ public static class UsersModelsExtensions
     
     public static UserResponse ToResponse(this User user)
     {
-        return new UserResponse(user.Id, user.Pseudo);
+        var nbCards = user.UserCards.Count;
+        return new UserResponse(user.Id, user.Pseudo, nbCards);
     }
 }

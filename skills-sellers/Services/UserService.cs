@@ -47,7 +47,7 @@ public class UserService : IUserService
 
     public IEnumerable<UserResponse> GetAll()
     {
-        var users = _context.Users;
+        var users = IncludeGetUsers().ToList();
         return users.Select(x => x.ToResponse());
     }
 

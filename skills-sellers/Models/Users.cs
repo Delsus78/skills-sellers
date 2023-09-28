@@ -17,4 +17,4 @@ public record CreateRequest([Required] string Pseudo, [Required] [MinLength(6)] 
     public string ConfirmPassword { get; init; }
 }
 
-public record UserResponse(int Id, string Pseudo);
+public record UserResponse(int Id, string Pseudo, int NbCards);
