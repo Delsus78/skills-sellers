@@ -14,13 +14,15 @@ public static class UsersModelsExtensions
     {
         return new User
         {
-            Pseudo = model.Pseudo
+            Pseudo = model.Pseudo,
+            Creatium = 600,
+            Or = 0,
         };
     }
     
     public static UserResponse ToResponse(this User user)
     {
         var nbCards = user.UserCards.Count;
-        return new UserResponse(user.Id, user.Pseudo, nbCards);
+        return new UserResponse(user.Id, user.Pseudo, nbCards, user.Creatium, user.Or);
     }
 }

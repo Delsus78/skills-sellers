@@ -60,11 +60,8 @@ public class UsersController : ControllerBase
     
     [Authorize(Roles = "admin")]
     [HttpPost]
-    public IActionResult Create(CreateRequest model)
-    {
-        _userService.Create(model);
-        return Ok(new { message = "User created" });
-    }
+    public async Task<UserResponse> Create(CreateRequest model)
+        => await _userService.Create(model);
     
     [Authorize(Roles = "admin")]
     [HttpPost("{id}/cards/{cardId}")]
