@@ -11,6 +11,7 @@ public class DataContext : DbContext
     
     // hashed passwords with userIds
     public DbSet<AuthUser> AuthUsers { get; set; }
+    public DbSet<Stats> Stats { get; set; }
 
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
@@ -18,5 +19,10 @@ public class DataContext : DbContext
     {
         modelBuilder.Entity<UserCard>()
             .HasKey(uc => new { uc.UserId, uc.CardId });
+        
+            // link between user and stats
+        modelBuilder.Entity<Stats>().HasOne(s => s.User)
+            .WithOne(u => u.Stats)
+            .HasForeignKey<Stats>(s => s.UserId);
     }
 }

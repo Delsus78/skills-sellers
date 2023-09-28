@@ -39,6 +39,13 @@ public class UsersController : ControllerBase
     public IEnumerable<UserCardResponse> GetUserCards(int id)
         => _userService.GetUserCards(id);
 
+    [Authorize]
+    [HttpGet("{id}/stats")]
+    public StatsResponse GetUserStats(int id)
+        => _userService.GetUserStats(id);
+    
+    #region ADMIN AND AUTH REGION
+
     [HttpPost("authenticate")]
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         => await _userService.Authenticate(model);
@@ -66,6 +73,8 @@ public class UsersController : ControllerBase
         _userService.AddCardToUser(id, cardId, competences);
         return Ok(new { message = "Card added to user" });
     }
+
+    #endregion
     
     // helper methods
 

@@ -10,4 +10,7 @@ public class User
 
     // Many to many
     public List<UserCard> UserCards { get; } = new();
+    
+    // One to one
+    public Stats Stats { get; set; }
 }
