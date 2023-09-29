@@ -17,7 +17,7 @@ public interface IUserService
 {
     IEnumerable<UserResponse> GetAll();
     UserResponse GetById(int id);
-    Task Create(CreateRequest model);
+    Task<UserResponse> Create(CreateRequest model);
     void Delete(int id);
     void AddCardToUser(int id, int cardId, CompetencesRequest competences);
     Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
@@ -53,7 +53,7 @@ public class UserService : IUserService
 
     public UserResponse GetById(int id) => GetUserEntity(user => user.Id == id).ToResponse();
 
-    public async Task Create(CreateRequest model)
+    public async Task<UserResponse> Create(CreateRequest model)
     {
         // validate
         if (_context.Users.Any(x => x.Pseudo == model.Pseudo))
@@ -73,6 +73,8 @@ public class UserService : IUserService
         // save user
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+        
+        return user.ToResponse();
     }
 
     public void Delete(int id)

@@ -11,6 +11,9 @@ public class User
     // Many to many
     public List<UserCard> UserCards { get; } = new();
     
+    public int Creatium { get; set; }
+    public int Or { get; set; }
+    
     // One to one
     public Stats Stats { get; set; }
 }
