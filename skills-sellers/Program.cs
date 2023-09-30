@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Hubs;
 using skills_sellers.Models;
 using skills_sellers.Services;
+using skills_sellers.Services.ActionServices;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +48,13 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IStatsService, StatsService>();
+
+// add action services
+services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
+services.AddScoped<IActionService<ActionEtudier>, EtudierActionService>();
+services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
+services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
+
 
 // DbContext
 services.AddDbContext<DataContext>(options =>
