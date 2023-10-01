@@ -17,7 +17,7 @@ public static class CompetencesModelsExtensions
         };
 
     public static CompetencesResponse ToResponse(this Competences competences) 
-        => new(competences.Id, competences.Cuisine, competences.Force, competences.Intelligence, competences.Charisme,
+        => new(competences.Cuisine, competences.Force, competences.Intelligence, competences.Charisme,
         competences.Exploration);
     
     

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +7,6 @@ using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Hubs;
-using skills_sellers.Models;
 using skills_sellers.Services;
 using skills_sellers.Services.ActionServices;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -24,10 +21,10 @@ builder.WebHost.UseUrls("https://*:5002");
 // cors
 services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddDefaultPolicy(corsPolicyBuilder =>
     {
         Console.Out.WriteLine("Adding cors policy");
-        builder.WithOrigins("http://localhost:5173", "http://skills-sellers.team-unc.fr") // Ajoutez votre domaine client ici
+        corsPolicyBuilder.WithOrigins("http://localhost:5173", "http://skills-sellers.team-unc.fr")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // Important pour SignalR
@@ -48,6 +45,9 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IStatsService, StatsService>();
+services.AddScoped<IUserBatimentsService, UserBatimentsService>();
+services.AddHostedService<TimerTaskService>();
+services.AddSingleton<ITimerTaskService, TimerTaskService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
@@ -76,7 +76,7 @@ services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(
-                configuration.GetSection("jwt")["secret"]))
+                configuration.GetSection("jwt")["secret"] ?? throw new InvalidOperationException("No jwt secret found")))
     };
     
     options.Events = new JwtBearerEvents

@@ -7,5 +7,5 @@ public static class UserCardsModelsExtensions
 {
     public static UserCardResponse ToUserCardResponse(this UserCard userCard) 
         => new(userCard.Card.Id, userCard.Card.Name, userCard.Card.ImageUrl, userCard.Card.Description, 
-            userCard.Card.Rarity, userCard.Competences.ToResponse());
+            userCard.Card.Rarity, userCard.Competences.ToResponse() /* TODO userCard.Action?.ToResponse()*/);
 }

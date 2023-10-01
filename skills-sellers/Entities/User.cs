@@ -16,4 +16,5 @@ public class User
     
     // One to one
     public Stats Stats { get; set; }
+    public UserBatimentData UserBatimentData { get; set; }
 }
