@@ -12,5 +12,5 @@ public class UserCard
     public Competences Competences { get; set; }
     
     // Action associée à cette combinaison User-Card
-    public Action Action { get; set; }
+    public Action? Action { get; set; }
 }

@@ -9,7 +9,6 @@ using skills_sellers.Models.Cards;
 using skills_sellers.Models.Extensions;
 using skills_sellers.Models.Users;
 using CreateRequest = skills_sellers.Models.Users.CreateRequest;
-using UpdateRequest = skills_sellers.Models.Users.UpdateRequest;
 
 namespace skills_sellers.Services;
 
@@ -24,6 +23,7 @@ public interface IUserService
     User GetUserEntity(Expression<Func<User, bool>> predicate);
     IEnumerable<UserCardResponse> GetUserCards(int id);
     StatsResponse GetUserStats(int id);
+    UserBatimentResponse GetUserBatiments(int id);
 }
 
 public class UserService : IUserService
@@ -32,17 +32,20 @@ public class UserService : IUserService
     private readonly ICardService _cardService;
     private readonly IAuthService _authService;
     private readonly IStatsService _statsService;
+    private readonly IUserBatimentsService _userBatimentsService;
 
     public UserService(
         DataContext context,
         ICardService cardService,
         IAuthService authService,
-        IStatsService statsService)
+        IStatsService statsService, 
+        IUserBatimentsService userBatimentsService)
     {
         _context = context;
         _cardService = cardService;
         _authService = authService;
         _statsService = statsService;
+        _userBatimentsService = userBatimentsService;
     }
 
     public IEnumerable<UserResponse> GetAll()
@@ -64,6 +67,9 @@ public class UserService : IUserService
         
         // create user stats
         _statsService.GetOrCreateStatsEntity(user);
+        
+        // create user batiment data
+        _userBatimentsService.GetOrCreateUserBatimentData(user);
 
         // registering credentials
         var resultAuthRegister = await _authService.Registeration(user, model.Password, model.Role);
@@ -129,6 +135,13 @@ public class UserService : IUserService
         var stats = _statsService.GetOrCreateStatsEntity(user);
         
         return stats.ToResponse(userCards);
+    }
+
+    public UserBatimentResponse GetUserBatiments(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
+        return userBatimentData.ToResponse();
     }
 
     // helper methods

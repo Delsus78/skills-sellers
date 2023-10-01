@@ -44,6 +44,11 @@ public class UsersController : ControllerBase
     public StatsResponse GetUserStats(int id)
         => _userService.GetUserStats(id);
     
+    [Authorize]
+    [HttpGet("{id}/batiments")]
+    public UserBatimentResponse GetUserBatiments(int id)
+        => _userService.GetUserBatiments(id);
+    
     #region ADMIN AND AUTH REGION
 
     [HttpPost("authenticate")]

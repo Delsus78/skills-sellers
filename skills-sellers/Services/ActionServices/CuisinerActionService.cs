@@ -58,7 +58,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
 
         // TODO trigger on action start du batiment utilisé
 
-        await _context.ActionsCuisiner.AddAsync(action);
+        await _context.Actions.AddAsync(action);
         await _context.SaveChangesAsync();
         
         // start timer
@@ -89,7 +89,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
     
     private IIncludableQueryable<ActionCuisiner,Object> IncludeGetActionsCuisiner()
     {
-        return _context.ActionsCuisiner
+        return _context.Actions
+            .OfType<ActionCuisiner>()
             .Include(a => a.UserCards)
             .ThenInclude(uc => uc.User)
             .Include(a => a.UserCards)
