@@ -9,6 +9,7 @@ public static class UserBatimentExtensions
     {
         return new UserBatimentResponse(
             userBatiment.CuisineLevel,
+            userBatiment.NbCuisineUsedToday,
             userBatiment.SalleSportLevel,
             userBatiment.LaboLevel,
             userBatiment.SpatioPortLevel);

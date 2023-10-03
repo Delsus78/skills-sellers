@@ -54,6 +54,10 @@ services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
 services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
 services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
 
+// add daily task service
+services.AddScoped<IDailyTaskService, DailyTaskService>();
+services.AddHostedService<DailyTaskHostedService>();
+
 // DbContext
 services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));

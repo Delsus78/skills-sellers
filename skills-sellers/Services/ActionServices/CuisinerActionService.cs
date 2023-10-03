@@ -54,7 +54,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         
         // Batiment déjà plein
         if (_userBatimentsService.IsUserBatimentFull(user, "cuisine"))
-            return (false, "Batiment déjà plein");
+            return (false, "Batiment déjà plein, attendez demain !");
         
         // Stats et ressources suffisantes ?
         // Cuisiner ne nécessite pas de ressources ni de minimum de stats
@@ -88,7 +88,9 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             Plat = randomPlat,
             User = user
         };
-
+        
+        // actualise bdd and nb cuisine used today
+        user.UserBatimentData.NbCuisineUsedToday += 1;
         await _context.Actions.AddAsync(action);
         await _context.SaveChangesAsync();
         

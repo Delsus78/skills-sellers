@@ -29,6 +29,8 @@ public class DataContext : DbContext
     // batiments
     public DbSet<UserBatimentData> UserBatiments { get; set; }
     
+    // Daily task log
+    public DbSet<DailyTaskLog> DailyTaskLog { get; set; }
 
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     

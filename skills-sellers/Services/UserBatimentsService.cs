@@ -67,7 +67,7 @@ public class UserBatimentsService : IUserBatimentsService
         
         (int nbActionsEnCours, int batLevel) = batNameLower switch
         {
-            "cuisine" => (actionCounts.GetValueOrDefault(typeof(ActionCuisiner), 0), userBatimentData.CuisineLevel),
+            "cuisine" => (userBatimentData.NbCuisineUsedToday, userBatimentData.CuisineLevel),
             "salleDeSport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
