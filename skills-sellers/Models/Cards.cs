@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace skills_sellers.Models.Cards;
 
-public record CreateRequest([Required] string Name,
+public record CardCreateRequest([Required] string Name,
     [Required] string ImageUrl,
     [Required] string Description,
     string Rarity);
@@ -12,5 +12,5 @@ public record UserCardResponse(int Id,
     string ImageUrl,
     string Description,
     string Rarity,
-    CompetencesResponse Competences 
-    /* TODO ActionResponse Action*/);
+    CompetencesResponse Competences,
+    ActionResponse? Action = null);

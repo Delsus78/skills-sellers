@@ -13,6 +13,7 @@ public class User
     
     public int Creatium { get; set; }
     public int Or { get; set; }
+    public int Nourriture { get; set; }
     
     // One to one
     public Stats Stats { get; set; }

@@ -7,7 +7,6 @@ using skills_sellers.Models;
 using skills_sellers.Models.Cards;
 using skills_sellers.Models.Users;
 using skills_sellers.Services;
-using CreateRequest = skills_sellers.Models.Users.CreateRequest;
 
 namespace skills_sellers.Controllers;
 
@@ -48,7 +47,31 @@ public class UsersController : ControllerBase
     [HttpGet("{id}/batiments")]
     public UserBatimentResponse GetUserBatiments(int id)
         => _userService.GetUserBatiments(id);
+
+    #region only related user can access to this region
+
+    // helper methods
+
+    private User GetUserAuthenticated()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new AppException("User authenticated not found", 400));
+        var user = _userService.GetUserEntity(u => u.Id == userId);
+        return user;
+    }
     
+    [Authorize]
+    [HttpPost("{id}/actions")]
+    public async Task<ActionResponse> CreateAction(int id, ActionRequest model)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id)
+            throw new AppException("You are not allowed to do this action", 403);
+        
+        return await _userService.CreateAction(user, model);
+    }
+
+    #endregion
+
     #region ADMIN AND AUTH REGION
 
     [HttpPost("authenticate")]
@@ -65,7 +88,7 @@ public class UsersController : ControllerBase
     
     [Authorize(Roles = "admin")]
     [HttpPost]
-    public async Task<UserResponse> Create(CreateRequest model)
+    public async Task<UserResponse> Create(UserCreateRequest model)
         => await _userService.Create(model);
     
     [Authorize(Roles = "admin")]
@@ -77,13 +100,4 @@ public class UsersController : ControllerBase
     }
 
     #endregion
-    
-    // helper methods
-
-    private User GetUserAuthenticated()
-    {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new AppException("User authenticated not found", 400));
-        var user = _userService.GetUserEntity(u => u.Id == userId);
-        return user;
-    }
 }

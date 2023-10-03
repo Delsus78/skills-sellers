@@ -1,8 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
-using skills_sellers.Models.Extensions;
 
 namespace skills_sellers.Services;
 
@@ -11,6 +12,17 @@ public interface IUserBatimentsService
 {
     UserBatimentData GetOrCreateUserBatimentData(User user);
     
+    /// <summary>
+    /// Retourne true si une carte de l'utilisateur est déjà en train d'effectuer une action du type correspondant au batiment
+    /// </summary>
+    /// <param name="user">the user given mus come with UserCards included and their own actions too</param>
+    /// <param name="batimentName">
+    /// - cuisine
+    /// - salleDeSport
+    /// - laboratoire
+    /// - spatioport
+    /// </param>
+    /// <returns></returns>
     bool IsUserBatimentFull(User user, string batimentName);
     
     (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel);
@@ -29,7 +41,7 @@ public class UserBatimentsService : IUserBatimentsService
         if (user == null)
             throw new AppException("User not found", 404);
         
-        var userBatimentData = _context.UserBatiments.FirstOrDefault(
+        var userBatimentData = IncludeGetUserBatimentDatas().ToList().FirstOrDefault(
         ub => ub.User.Id == user.Id,
         new UserBatimentData
         {
@@ -45,30 +57,19 @@ public class UserBatimentsService : IUserBatimentsService
         return userBatimentData;
     }
 
-    /// <summary>
-    /// Retourne true si une carte de l'utilisateur est déjà en train d'effectuer une action du type correspondant au batiment
-    /// </summary>
-    /// <param name="user">the user given mus come with UserCards included and their own actions too</param>
-    /// <param name="batimentName">
-    /// - cuisine
-    /// - salleDeSport
-    /// - laboratoire
-    /// - spatioport
-    /// </param>
-    /// <returns></returns>
     public bool IsUserBatimentFull(User user, string batimentName)
     {
         var userBatimentData = GetOrCreateUserBatimentData(user);
         var batNameLower = batimentName.ToLower();
-        var actionCounts = user.UserCards
-            .GroupBy(uc => uc.Action?.GetType())
+        var actionCounts = user.UserCards.FindAll(uc => uc.Action != null)
+            .GroupBy(uc => uc.Action!.GetType())
             .ToDictionary(g => g.Key, g => g.Count());
         
         (int nbActionsEnCours, int batLevel) = batNameLower switch
         {
             "cuisine" => (actionCounts.GetValueOrDefault(typeof(ActionCuisiner), 0), userBatimentData.CuisineLevel),
             "salleDeSport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
-            "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionEtudier), 0), userBatimentData.LaboLevel),
+            "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
             _ => throw new AppException("Batiment name not found", 404)
         };
@@ -94,5 +95,10 @@ public class UserBatimentsService : IUserBatimentsService
     private int GetForceBatimentPrice(int currentLevel)
     {
         return (currentLevel + 1) * 4;
+    }
+    
+    public IIncludableQueryable<UserBatimentData, Object> IncludeGetUserBatimentDatas()
+    {
+        return _context.UserBatiments.Include(ub => ub.User);
     }
 }

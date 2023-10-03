@@ -1,11 +1,13 @@
+using System.Collections.Concurrent;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Models;
 
 namespace skills_sellers.Services.ActionServices;
 
 public class ExplorerActionService : IActionService<ActionExplorer>
 {
-    public (bool valid, string why) CanExecuteAction(UserCard userCard)
+    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards)
     {
         throw new NotImplementedException();
     }
@@ -20,13 +22,20 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         throw new NotImplementedException();
     }
 
-    public Task StartAction(UserCard userCard)
+    public Task<ActionResponse> StartAction(User user, ActionRequest model)
     {
         throw new NotImplementedException();
     }
 
-    public Task EndAction(ActionExplorer action)
+    public Task EndAction(int actionId)
     {
         throw new NotImplementedException();
     }
+
+    public Task RegisterNewTaskForActionAsync(ActionExplorer action, User user)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
 }

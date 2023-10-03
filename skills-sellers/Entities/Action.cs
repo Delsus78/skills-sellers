@@ -9,4 +9,6 @@ public abstract class Action
     
     // One to Many
     public List<UserCard> UserCards { get; set; } = new();
+    public int UserId { get; set; }
+    public User User { get; set; }
 }
