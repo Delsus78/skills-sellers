@@ -29,6 +29,8 @@ public class DataContext : DbContext
     // batiments
     public DbSet<UserBatimentData> UserBatiments { get; set; }
     
+    // Daily task log
+    public DbSet<DailyTaskLog> DailyTaskLog { get; set; }
 
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
@@ -39,8 +41,11 @@ public class DataContext : DbContext
          .HasValue<ActionCuisiner>("Cuisine")
          .HasValue<ActionExplorer>("Explorer")
          .HasValue<ActionAmeliorer>("Ameliorer")
-         .HasValue<ActionEtudier>("Etudier")
          .HasValue<ActionMuscler>("Muscler");
+        
+        // adding user id to action
+        modelBuilder.Entity<Action>()
+            .HasOne(a => a.User);
 
         modelBuilder.Entity<UserCard>()
          .HasKey(uc => new { uc.UserId, uc.CardId });

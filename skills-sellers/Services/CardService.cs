@@ -11,7 +11,7 @@ public interface ICardService
 {
     IEnumerable<CardResponse> GetAll();
     CardResponse GetById(int id);
-    CardResponse Create(CreateRequest model);
+    CardResponse Create(CardCreateRequest model);
     Card GetCardEntity(Expression<Func<Card, bool>> predicate);
 }
 
@@ -29,7 +29,7 @@ public class CardService : ICardService
 
     public CardResponse GetById(int id) => GetCardEntity(c => c.Id == id).ToResponse();
 
-    public CardResponse Create(CreateRequest model)
+    public CardResponse Create(CardCreateRequest model)
     {
         // validate
         if (_context.Cards.Any(x => x.Name == model.Name))

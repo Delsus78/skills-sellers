@@ -1,41 +1,65 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using skills_sellers.Models.Cards;
 
 namespace skills_sellers.Models;
 
-public abstract class ActionRequest
+public class ActionRequest
 {
-    public int CardId { get; set; }
-    
+    /// <summary>
+    /// The name of the action
+    /// - ameliorer
+    /// - explorer
+    /// - cuisiner
+    /// - muscler
+    /// </summary>
     [Required]
     public string ActionName { get; set; }
+    
+    /// <summary>
+    /// user's cards ids to use for the action
+    /// </summary>
+    [Required]
+    public IEnumerable<int> CardsIds { get; set; }
 }
 
-public class ActionExplorerRequest : ActionRequest
-{
-}
-
-public class ActionEtudierRequest : ActionRequest
-{
-}
-
-public class ActionCuisinerRequest : ActionRequest
-{
-}
-
-public class ActionMusclerRequest : ActionRequest
-{
-}
-
-public class ActionAmeliorerRequest : ActionRequest
-{
-}
-
+[JsonDerivedType(typeof(ActionCuisinerResponse))]
+[JsonDerivedType(typeof(ActionExplorerResponse))]
+[JsonDerivedType(typeof(ActionAmeliorerResponse))]
+[JsonDerivedType(typeof(ActionMusclerResponse))]
 public abstract class ActionResponse
 {
-    public CardResponse Card { get; set; }
+    public List<UserCardResponse> Cards { get; set; }
     
     public string ActionName { get; set; }
     
     public DateTime EndTime { get; set; }
+}
+
+public class ActionCuisinerResponse : ActionResponse
+{
+    /// <summary>
+    /// The name of the plat to cook
+    /// </summary>
+    [Required]
+    public string Plat { get; set; }
+}
+
+public class ActionExplorerResponse : ActionResponse
+{
+}
+
+public class ActionAmeliorerResponse : ActionResponse
+{
+}
+
+public class ActionMusclerResponse : ActionResponse
+{
+}
+
+public class ActionEstimationResponse : ActionResponse
+{
+    public Dictionary<string, string> Gains { get; set; } = new();
+    
+    public Dictionary<string, string> Couts { get; set; } = new();
 }

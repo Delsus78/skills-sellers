@@ -1,17 +1,25 @@
+using System.Collections.Concurrent;
 using skills_sellers.Entities;
+using skills_sellers.Models;
 using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
 public interface IActionService<T> where T : Action
 {
-    (bool valid, string why) CanExecuteAction(UserCard userCard);
+    (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards);
     
     T? GetAction(UserCard userCard);
     
     List<T> GetActions();
+
+    Task<ActionResponse> StartAction(User user, ActionRequest model);
     
-    Task StartAction(UserCard userCard);
-    
-    Task EndAction(T action);
+    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
+
+    Task EndAction(int actionId);
+
+    Task RegisterNewTaskForActionAsync(T action, User user);
+
+    ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; }
 }

@@ -5,7 +5,7 @@ namespace skills_sellers.Models.Extensions;
 
 public static class CardsModelsExtensions
 {
-    public static Card CreateCard(this CreateRequest model) 
+    public static Card CreateCard(this CardCreateRequest model) 
         => new()
         {
             Name = model.Name,

@@ -5,6 +5,7 @@ public class UserBatimentData
     public int Id { get; set; }
     
     public int CuisineLevel { get; set; }
+    public int NbCuisineUsedToday { get; set; }
     
     public int SalleSportLevel { get; set; }
     

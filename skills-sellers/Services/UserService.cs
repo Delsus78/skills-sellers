@@ -2,13 +2,14 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
+using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Cards;
 using skills_sellers.Models.Extensions;
 using skills_sellers.Models.Users;
-using CreateRequest = skills_sellers.Models.Users.CreateRequest;
+using skills_sellers.Services.ActionServices;
 
 namespace skills_sellers.Services;
 
@@ -16,7 +17,7 @@ public interface IUserService
 {
     IEnumerable<UserResponse> GetAll();
     UserResponse GetById(int id);
-    Task<UserResponse> Create(CreateRequest model);
+    Task<UserResponse> Create(UserCreateRequest model);
     void Delete(int id);
     void AddCardToUser(int id, int cardId, CompetencesRequest competences);
     Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
@@ -24,6 +25,9 @@ public interface IUserService
     IEnumerable<UserCardResponse> GetUserCards(int id);
     StatsResponse GetUserStats(int id);
     UserBatimentResponse GetUserBatiments(int id);
+    Task<ActionResponse> CreateAction(User user, ActionRequest model);
+    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
+    Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
 }
 
 public class UserService : IUserService
@@ -33,19 +37,33 @@ public class UserService : IUserService
     private readonly IAuthService _authService;
     private readonly IStatsService _statsService;
     private readonly IUserBatimentsService _userBatimentsService;
+    
+    // actions services
+    private readonly IActionService<ActionCuisiner> _cuisinerActionService;
+    private readonly IActionService<ActionExplorer> _explorerActionService;
+    private readonly IActionService<ActionMuscler> _musclerActionService;
+    private readonly IActionService<ActionAmeliorer> _ameliorerActionService;
 
     public UserService(
         DataContext context,
         ICardService cardService,
         IAuthService authService,
         IStatsService statsService, 
-        IUserBatimentsService userBatimentsService)
+        IUserBatimentsService userBatimentsService,
+        IActionService<ActionCuisiner> cuisinerActionService,
+        IActionService<ActionExplorer> explorerActionService,
+        IActionService<ActionMuscler> musclerActionService,
+        IActionService<ActionAmeliorer> ameliorerActionService)
     {
         _context = context;
         _cardService = cardService;
         _authService = authService;
         _statsService = statsService;
         _userBatimentsService = userBatimentsService;
+        _cuisinerActionService = cuisinerActionService;
+        _explorerActionService = explorerActionService;
+        _musclerActionService = musclerActionService;
+        _ameliorerActionService = ameliorerActionService;
     }
 
     public IEnumerable<UserResponse> GetAll()
@@ -56,7 +74,7 @@ public class UserService : IUserService
 
     public UserResponse GetById(int id) => GetUserEntity(user => user.Id == id).ToResponse();
 
-    public async Task<UserResponse> Create(CreateRequest model)
+    public async Task<UserResponse> Create(UserCreateRequest model)
     {
         // validate
         if (_context.Users.Any(x => x.Pseudo == model.Pseudo))
@@ -125,7 +143,7 @@ public class UserService : IUserService
     public IEnumerable<UserCardResponse> GetUserCards(int id)
     {
         var user = GetUserEntity(u => u.Id == id);
-        return user.UserCards.Select(uc => uc.ToUserCardResponse());
+        return user.UserCards.Select(uc => uc.ToResponse());
     }
 
     public StatsResponse GetUserStats(int id)
@@ -141,7 +159,49 @@ public class UserService : IUserService
     {
         var user = GetUserEntity(u => u.Id == id);
         var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
-        return userBatimentData.ToResponse();
+
+        var nbLaboUsed = _ameliorerActionService.GetActions().Count;
+        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count;
+        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count;
+        
+        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
+    }
+
+    public async Task<ActionResponse> CreateAction(User user, ActionRequest model)
+    {
+        return model.ActionName switch
+        {
+            "cuisiner" => await _cuisinerActionService.StartAction(user, model),
+            "explorer" => await _explorerActionService.StartAction(user, model),
+            "muscler" => await _musclerActionService.StartAction(user, model),
+            "ameliorer" => await _ameliorerActionService.StartAction(user, model),
+            _ => throw new AppException("Action not found", 404)
+        };
+    }
+    
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    {
+        return model.ActionName switch
+        {
+            "cuisiner" => _cuisinerActionService.EstimateAction(user, model),
+            "explorer" => _explorerActionService.EstimateAction(user, model),
+            "muscler" => _musclerActionService.EstimateAction(user, model),
+            "ameliorer" => _ameliorerActionService.EstimateAction(user, model),
+            _ => throw new AppException("Action not found", 404)
+        };
+    }
+
+    public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        
+        var userBatimentData = batimentsRequest.UpdateUserBatimentData(user.UserBatimentData);
+        
+        // save user batiment data
+        _context.UserBatiments.Update(userBatimentData);
+        await _context.SaveChangesAsync();
+
+        return userBatimentData.ToResponse(-1, -1, -1);
     }
 
     // helper methods
@@ -158,9 +218,14 @@ public class UserService : IUserService
 
     private IIncludableQueryable<User,Object> IncludeGetUsers()
     {
-        return _context.Users.Include(u => u.UserCards)
+        // include usercards of user, cards of usercards, competences of usercards and actions of usercards
+        return _context.Users
+            .Include(u => u.UserCards)
+            .ThenInclude(uc => uc.Action)
+            .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Card)
             .ThenInclude(c => c.UserCards)
-            .ThenInclude(uc => uc.Competences);
+            .ThenInclude(uc => uc.Competences)
+            .Include(u => u.UserBatimentData);
     } 
 }

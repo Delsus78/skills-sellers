@@ -46,20 +46,23 @@ services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IStatsService, StatsService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
-services.AddHostedService<TimerTaskService>();
-services.AddSingleton<ITimerTaskService, TimerTaskService>();
+services.AddHostedService<HostedTasksService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
-services.AddScoped<IActionService<ActionEtudier>, EtudierActionService>();
+services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
 services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
 services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
 
+// add daily task service
+services.AddScoped<IDailyTaskService, DailyTaskService>();
+services.AddHostedService<DailyTaskHostedService>();
 
 // DbContext
 services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Authentication
 services.AddAuthentication(options =>

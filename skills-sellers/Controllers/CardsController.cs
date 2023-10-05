@@ -25,6 +25,6 @@ public class CardsController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPost]
-    public CardResponse Create(CreateRequest model)
+    public CardResponse Create(CardCreateRequest model)
         => _cardService.Create(model);
 }
