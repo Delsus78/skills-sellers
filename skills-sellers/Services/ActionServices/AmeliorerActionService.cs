@@ -28,6 +28,11 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         throw new NotImplementedException();
     }
 
+    public ActionResponse EstimateAction(User user, ActionRequest model)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task EndAction(int actionId)
     {
         throw new NotImplementedException();

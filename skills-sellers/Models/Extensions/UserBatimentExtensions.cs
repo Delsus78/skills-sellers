@@ -14,4 +14,15 @@ public static class UserBatimentExtensions
             userBatiment.LaboLevel,
             userBatiment.SpatioPortLevel);
     }
+    
+    public static UserBatimentData UpdateUserBatimentData(this UserBatimentRequest userBatimentRequest, UserBatimentData userBatiment)
+    {
+        userBatiment.CuisineLevel = userBatimentRequest.CuisineLevel;
+        userBatiment.NbCuisineUsedToday = userBatimentRequest.NbCuisineUsedToday;
+        userBatiment.SalleSportLevel = userBatimentRequest.SalleSportLevel;
+        userBatiment.LaboLevel = userBatimentRequest.LaboLevel;
+        userBatiment.SpatioPortLevel = userBatimentRequest.SpatioPortLevel;
+        
+        return userBatiment;
+    }
 }

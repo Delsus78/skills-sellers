@@ -69,6 +69,18 @@ public class UsersController : ControllerBase
         
         return await _userService.CreateAction(user, model);
     }
+    
+    [Authorize]
+    [HttpPost("{id}/estimate/actions")]
+    public ActionResponse EstimateAction(int id, ActionRequest model)
+    {
+        // TODO renvoyer les couts et les gains de l'action estimée
+        var user = GetUserAuthenticated();
+        if (user.Id != id)
+            throw new AppException("You are not allowed to do this action", 403);
+        
+        return _userService.EstimateAction(user, model);
+    }
 
     #endregion
 
@@ -98,6 +110,11 @@ public class UsersController : ControllerBase
         _userService.AddCardToUser(id, cardId, competences);
         return Ok(new { message = "Card added to user" });
     }
+    
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/batiments")]
+    public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
+        => await _userService.SetLevelOfBatiments(id, batimentsRequest);
 
     #endregion
 }

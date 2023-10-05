@@ -6,3 +6,10 @@ public record UserBatimentResponse(
     int SalleSportLevel,
     int LaboLevel,
     int SpatioPortLevel);
+    
+public record UserBatimentRequest(
+    int CuisineLevel,
+    int NbCuisineUsedToday,
+    int SalleSportLevel,
+    int LaboLevel,
+    int SpatioPortLevel);

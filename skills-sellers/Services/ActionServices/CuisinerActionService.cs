@@ -108,6 +108,30 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         return action.ToResponse();
     }
 
+    public ActionResponse EstimateAction(User user, ActionRequest model)
+    {
+        var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
+
+        // validate action
+        var validation = CanExecuteAction(user, userCards);
+        if (!validation.valid)
+            throw new AppException("Impossible de cuisiner : " + validation.why, 400);
+        
+        // calculate action end time
+        var endTime = CalculateActionEndTime();
+        
+        var action = new ActionCuisiner
+        {
+            UserCards = userCards,
+            DueDate = endTime,
+            Plat = "Plat aléatoire",
+            User = user
+        };
+        
+        // return response
+        return action.ToResponse();
+    }
+
     #endregion
 
     #region TaskService

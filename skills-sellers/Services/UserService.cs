@@ -26,6 +26,8 @@ public interface IUserService
     StatsResponse GetUserStats(int id);
     UserBatimentResponse GetUserBatiments(int id);
     Task<ActionResponse> CreateAction(User user, ActionRequest model);
+    ActionResponse EstimateAction(User user, ActionRequest model);
+    Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
 }
 
 public class UserService : IUserService
@@ -171,6 +173,32 @@ public class UserService : IUserService
             _ => throw new AppException("Action not found", 404)
         };
     }
+    
+    public ActionResponse EstimateAction(User user, ActionRequest model)
+    {
+        return model.ActionName switch
+        {
+            "cuisiner" => _cuisinerActionService.EstimateAction(user, model),
+            "explorer" => _explorerActionService.EstimateAction(user, model),
+            "muscler" => _musclerActionService.EstimateAction(user, model),
+            "ameliorer" => _ameliorerActionService.EstimateAction(user, model),
+            _ => throw new AppException("Action not found", 404)
+        };
+    }
+
+    public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        // update user batiment data with new level
+        
+        var userBatimentData = batimentsRequest.UpdateUserBatimentData(user.UserBatimentData);
+        
+        // save user batiment data
+        _context.UserBatiments.Update(userBatimentData);
+        await _context.SaveChangesAsync();
+        
+        return userBatimentData.ToResponse();
+    }
 
     // helper methods
 
@@ -193,6 +221,7 @@ public class UserService : IUserService
             .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Card)
             .ThenInclude(c => c.UserCards)
-            .ThenInclude(uc => uc.Competences);
+            .ThenInclude(uc => uc.Competences)
+            .Include(u => u.UserBatimentData);
     } 
 }
