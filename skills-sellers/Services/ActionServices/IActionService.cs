@@ -15,7 +15,7 @@ public interface IActionService<T> where T : Action
 
     Task<ActionResponse> StartAction(User user, ActionRequest model);
     
-    ActionResponse EstimateAction(User user, ActionRequest model);
+    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
 
     Task EndAction(int actionId);
 

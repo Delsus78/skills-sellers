@@ -56,3 +56,10 @@ public class ActionAmeliorerResponse : ActionResponse
 public class ActionMusclerResponse : ActionResponse
 {
 }
+
+public class ActionEstimationResponse : ActionResponse
+{
+    public Dictionary<string, string> Gains { get; set; } = new();
+    
+    public Dictionary<string, string> Couts { get; set; } = new();
+}

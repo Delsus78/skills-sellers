@@ -108,7 +108,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         return action.ToResponse();
     }
 
-    public ActionResponse EstimateAction(User user, ActionRequest model)
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -119,17 +119,21 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         
         // calculate action end time
         var endTime = CalculateActionEndTime();
-        
-        var action = new ActionCuisiner
+
+        var action = new ActionEstimationResponse
         {
-            UserCards = userCards,
-            DueDate = endTime,
-            Plat = "Plat aléatoire",
-            User = user
+            EndTime = endTime,
+            ActionName = "cuisiner",
+            Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
+            Gains = new Dictionary<string, string>
+            {
+                { "nourriture", (userCards.First().Competences.Cuisine - 1).ToString() },
+                { "Up cuisine", "20%" }
+            }
         };
         
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     #endregion

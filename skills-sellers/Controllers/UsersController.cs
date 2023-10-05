@@ -72,9 +72,8 @@ public class UsersController : ControllerBase
     
     [Authorize]
     [HttpPost("{id}/estimate/actions")]
-    public ActionResponse EstimateAction(int id, ActionRequest model)
+    public ActionEstimationResponse EstimateAction(int id, ActionRequest model)
     {
-        // TODO renvoyer les couts et les gains de l'action estimée
         var user = GetUserAuthenticated();
         if (user.Id != id)
             throw new AppException("You are not allowed to do this action", 403);

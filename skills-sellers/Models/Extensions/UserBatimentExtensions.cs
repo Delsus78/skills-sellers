@@ -5,16 +5,19 @@ namespace skills_sellers.Models.Extensions;
 
 public static class UserBatimentExtensions
 {
-    public static UserBatimentResponse ToResponse(this UserBatimentData userBatiment)
+    public static UserBatimentResponse ToResponse(this UserBatimentData userBatiment, int actualSalleSportUsed, int actualLaboUsed, int actualSpatioPortUsed)
     {
         return new UserBatimentResponse(
             userBatiment.CuisineLevel,
             userBatiment.NbCuisineUsedToday,
             userBatiment.SalleSportLevel,
+            actualSalleSportUsed,
             userBatiment.LaboLevel,
-            userBatiment.SpatioPortLevel);
+            actualLaboUsed,
+            userBatiment.SpatioPortLevel,
+            actualSpatioPortUsed);
     }
-    
+
     public static UserBatimentData UpdateUserBatimentData(this UserBatimentRequest userBatimentRequest, UserBatimentData userBatiment)
     {
         userBatiment.CuisineLevel = userBatimentRequest.CuisineLevel;

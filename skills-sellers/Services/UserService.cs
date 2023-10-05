@@ -26,7 +26,7 @@ public interface IUserService
     StatsResponse GetUserStats(int id);
     UserBatimentResponse GetUserBatiments(int id);
     Task<ActionResponse> CreateAction(User user, ActionRequest model);
-    ActionResponse EstimateAction(User user, ActionRequest model);
+    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
     Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
 }
 
@@ -159,7 +159,12 @@ public class UserService : IUserService
     {
         var user = GetUserEntity(u => u.Id == id);
         var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
-        return userBatimentData.ToResponse();
+
+        var nbLaboUsed = _ameliorerActionService.GetActions().Count;
+        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count;
+        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count;
+        
+        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
     }
 
     public async Task<ActionResponse> CreateAction(User user, ActionRequest model)
@@ -174,7 +179,7 @@ public class UserService : IUserService
         };
     }
     
-    public ActionResponse EstimateAction(User user, ActionRequest model)
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         return model.ActionName switch
         {
@@ -189,15 +194,14 @@ public class UserService : IUserService
     public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
     {
         var user = GetUserEntity(u => u.Id == id);
-        // update user batiment data with new level
         
         var userBatimentData = batimentsRequest.UpdateUserBatimentData(user.UserBatimentData);
         
         // save user batiment data
         _context.UserBatiments.Update(userBatimentData);
         await _context.SaveChangesAsync();
-        
-        return userBatimentData.ToResponse();
+
+        return userBatimentData.ToResponse(-1, -1, -1);
     }
 
     // helper methods

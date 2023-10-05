@@ -4,8 +4,11 @@ public record UserBatimentResponse(
     int CuisineLevel,
     int NbCuisineUsedToday,
     int SalleSportLevel,
+    int ActualSalleSportUsed,
     int LaboLevel,
-    int SpatioPortLevel);
+    int ActualLaboUsed,
+    int SpatioPortLevel,
+    int ActualSpatioPortUsed);
     
 public record UserBatimentRequest(
     int CuisineLevel,
