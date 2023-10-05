@@ -68,7 +68,7 @@ public class UserBatimentsService : IUserBatimentsService
         (int nbActionsEnCours, int batLevel) = batNameLower switch
         {
             "cuisine" => (userBatimentData.NbCuisineUsedToday, userBatimentData.CuisineLevel),
-            "salleDeSport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
+            "salledesport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
             _ => throw new AppException("Batiment name not found", 404)

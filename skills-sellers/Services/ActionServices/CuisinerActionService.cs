@@ -241,20 +241,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             .ThenInclude(uc => uc.Card)
             .Include(a => a.UserCards)
             .ThenInclude(uc => uc.Competences);
-    } 
-    
-    private IIncludableQueryable<ActionCuisiner,Object> IncludeGetActionsCuisiner(DataContext context)
-    {
-        return context.Actions
-            .OfType<ActionCuisiner>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    } 
-    
+    }
+
     private DateTime CalculateActionEndTime()
     {
         return DateTime.Now.AddMinutes(30);
