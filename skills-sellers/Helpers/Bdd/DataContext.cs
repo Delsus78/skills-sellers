@@ -16,7 +16,8 @@ public class DataContext : DbContext
     
     // user's cards
     public DbSet<UserCard> UserCards { get; set; }
-    
+    public DbSet<UserCardDoubled> UserCardDoubleds { get; set; }
+
     // hashed passwords with userIds
     public DbSet<AuthUser> AuthUsers { get; set; }
     
@@ -49,8 +50,8 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<UserCard>()
          .HasKey(uc => new { uc.UserId, uc.CardId });
-        
-            // link between user and stats
+
+        // link between user and stats
         modelBuilder.Entity<Stats>().HasOne(s => s.User)
             .WithOne(u => u.Stats)
             .HasForeignKey<Stats>(s => s.UserId);

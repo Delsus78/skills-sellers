@@ -7,7 +7,7 @@ namespace skills_sellers.Services.ActionServices;
 
 public interface IActionService<T> where T : Action
 {
-    (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards);
+    (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model);
     
     T? GetAction(UserCard userCard);
     

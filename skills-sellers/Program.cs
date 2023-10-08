@@ -45,6 +45,7 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IStatsService, StatsService>();
+services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
 services.AddHostedService<HostedTasksService>();
 

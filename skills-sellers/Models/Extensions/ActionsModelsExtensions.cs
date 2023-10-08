@@ -19,12 +19,15 @@ public static class ActionsModelsExtensions
             {
                 ActionName = "explorer",
                 EndTime = actionExplorer.DueDate,
-                Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
+                Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
+                IsReturningToHome = actionExplorer.IsReturningToHome,
+                PlanetName = actionExplorer.PlanetName
             },
             ActionAmeliorer actionAmeliorer => new ActionAmeliorerResponse
             {
                 ActionName = "ameliorer",
                 EndTime = actionAmeliorer.DueDate,
+                BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
             ActionMuscler actionMuscler => new ActionMusclerResponse

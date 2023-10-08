@@ -15,10 +15,11 @@ public class CardsController : ControllerBase
     public CardsController(
         ICardService cardService) => _cardService = cardService;
 
+    [Authorize(Roles = "admin")]
     [HttpGet]
     public IEnumerable<CardResponse> GetAll()
         => _cardService.GetAll();
-
+    
     [HttpGet("{id}")]
     public CardResponse GetById(int id)
         => _cardService.GetById(id);

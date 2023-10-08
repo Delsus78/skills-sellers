@@ -12,13 +12,14 @@ public static class UsersModelsExtensions
             Pseudo = model.Pseudo,
             Creatium = 600,
             Or = 0,
-            Nourriture = 5
+            Nourriture = 5,
+            NbCardOpeningAvailable = 1
         };
     }
     
     public static UserResponse ToResponse(this User user)
     {
         var nbCards = user.UserCards.Count;
-        return new UserResponse(user.Id, user.Pseudo, nbCards, user.Creatium, user.Or, user.Nourriture);
+        return new UserResponse(user.Id, user.Pseudo, nbCards, user.Creatium, user.Or, user.Nourriture, user.NbCardOpeningAvailable, user.UserCardsDoubled.Select(x => x.CardId).ToList());
     }
 }

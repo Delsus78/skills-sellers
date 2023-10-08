@@ -68,7 +68,7 @@ public class UserBatimentsService : IUserBatimentsService
         (int nbActionsEnCours, int batLevel) = batNameLower switch
         {
             "cuisine" => (userBatimentData.NbCuisineUsedToday, userBatimentData.CuisineLevel),
-            "salleDeSport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
+            "salledesport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
             _ => throw new AppException("Batiment name not found", 404)
@@ -89,12 +89,12 @@ public class UserBatimentsService : IUserBatimentsService
 
     private int GetIntelBatimentPrice(int currentLevel)
     {
-        return (currentLevel + 1) * 2;
+        return currentLevel * 2;
     }
 
     private int GetForceBatimentPrice(int currentLevel)
     {
-        return (currentLevel + 1) * 4;
+        return currentLevel * 4;
     }
     
     public IIncludableQueryable<UserBatimentData, Object> IncludeGetUserBatimentDatas()
