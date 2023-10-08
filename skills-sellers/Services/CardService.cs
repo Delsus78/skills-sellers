@@ -13,6 +13,7 @@ public interface ICardService
     CardResponse GetById(int id);
     CardResponse Create(CardCreateRequest model);
     Card GetCardEntity(Expression<Func<Card, bool>> predicate);
+    Card GetRandomCard();
 }
 
 public class CardService : ICardService
@@ -46,6 +47,17 @@ public class CardService : ICardService
     }
     
     
+    public Card GetRandomCard()
+    {
+        // Legendaire 10% , Epic 30%, Commune 60%
+        var cardType = Randomizer.RandomCardType();
+        var cards = _context.Cards.Where(c => c.Rarity == cardType).ToList();
+        
+        var randomIndex = Randomizer.RandomInt(0, cards.Count);
+        
+        return cards[randomIndex];
+    }
+    
     // helper methods
 
     public Card GetCardEntity(Expression<Func<Card, bool>> predicate)
@@ -55,4 +67,5 @@ public class CardService : ICardService
         if (card == null) throw new KeyNotFoundException("Card not found");
         return card;
     }
+
 }

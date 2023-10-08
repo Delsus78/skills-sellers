@@ -26,7 +26,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         _serviceProvider = serviceProvider;
     }
     
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards)
+    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest model)
     {
         // une seule carte pour se muscler
         if (userCards.Count != 1)
@@ -39,7 +39,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         
         // Batiment déjà plein
         if (_userBatimentsService.IsUserBatimentFull(user, "salledesport"))
-            return (false, "Batiment déjà plein");
+            return (false, "Bâtiment déjà plein");
         
         // Stats et ressources suffisantes ?
         if (user.Nourriture < 1)
@@ -64,12 +64,12 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return IncludeGetActionsMuscler().ToList();
     }
 
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<ActionResponse> StartAction(User user, ActionRequest? model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
         // validate action
-        var validation = CanExecuteAction(user, userCards);
+        var validation = CanExecuteAction(user, userCards, null);
         if (!validation.valid)
             throw new AppException("Impossible de se muscler : " + validation.why, 400);
         
@@ -110,10 +110,8 @@ public class MusclerActionService : IActionService<ActionMuscler>
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
         // validate action
-        var validation = CanExecuteAction(user, userCards);
-        if (!validation.valid)
-            throw new AppException("Impossible de se muscler : " + validation.why, 400);
-        
+        var validation = CanExecuteAction(user, userCards, null);
+
         // calculate action end time
         var endTime = CalculateActionEndTime(userCards.First().Competences.Force  + 1);
 
@@ -129,7 +127,8 @@ public class MusclerActionService : IActionService<ActionMuscler>
             Couts = new Dictionary<string, string>
             {
                 { "nourriture", "1" }
-            }
+            },
+            Error = !validation.valid ? "Impossible d'aller pousser à la salle : " + validation.why : null
         };
         
         // return response

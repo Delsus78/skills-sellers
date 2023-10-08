@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
+using skills_sellers.Models.Extensions;
 
 namespace skills_sellers.Services.ActionServices;
 
@@ -13,25 +15,51 @@ public class ExplorerActionService : IActionService<ActionExplorer>
     private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IResourcesService _resourcesService;
     
     public ExplorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IResourcesService resourcesService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
+        _resourcesService = resourcesService;
     }
     
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards)
+    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        throw new NotImplementedException();
+        // une seule carte pour explorer
+        if (userCards.Count != 1)
+            return (false, "Une carte seule est nécessaire pour explorer !");
+        var userCard = userCards.First();
+
+        // Carte déjà en action
+        if (GetAction(userCard) != null)
+            return (false, "Carte déjà en action");
+        
+        // Batiment déjà plein
+        if (_userBatimentsService.IsUserBatimentFull(user, "spatioport"))
+            return (false, "Batiment déjà plein");
+        
+        // Stats et ressources suffisantes ?
+        if (user.Nourriture < 2)
+            return (false, "Pas assez de nourriture");
+
+        if (userCard.Competences.Exploration < 1)
+            return (false, "Pas assez de compétences en exploration");
+
+        return (true, "");
     }
 
     public ActionExplorer? GetAction(UserCard userCard)
     {
-        throw new NotImplementedException();
+        return IncludeGetActionsExplorer()
+            .FirstOrDefault(a => a.UserCards
+                .Any(uc => uc.CardId == userCard.CardId 
+                           && uc.UserId == userCard.UserId));
     }
 
     public List<ActionExplorer> GetActions()
@@ -39,24 +67,190 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         return IncludeGetActionsExplorer().ToList();
     }
 
-    public Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
     {
-        throw new NotImplementedException();
+        var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
+
+        // validate action
+        var validation = CanExecuteAction(user, userCards, null);
+        if (!validation.valid)
+            throw new AppException("Impossible de partir en exploration : " + validation.why, 400);
+        
+        // calculate action end time
+        var endTime = CalculateActionEndTime(userCards.First().Competences.Exploration);
+
+        // Random planet
+        var randomPlanet = Randomizer.RandomPlanet();
+        
+        var action = new ActionExplorer
+        {
+            UserCards = userCards,
+            DueDate = endTime,
+            User = user,
+            IsReturningToHome = false,
+            PlanetName = randomPlanet
+        };
+        
+        // actualise bdd
+        await _context.Actions.AddAsync(action);
+        
+        // consume resources
+        user.Nourriture -= 2;
+        
+        await _context.SaveChangesAsync();
+        
+        // start timer
+        _ = RegisterNewTaskForActionAsync(action, user)
+            .ContinueWith(t =>
+            {
+                if (t is { IsFaulted: true, Exception: not null })
+                {
+                    Console.Error.WriteLine(t.Exception);
+                }
+            });
+        
+        // return response
+        return action.ToResponse();
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
-        throw new NotImplementedException();
+        var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
+        var userCard = userCards.First();
+        // validate action
+        var validation = CanExecuteAction(user, userCards, null);
+        
+        // calculate action end time
+        var endTime = CalculateActionEndTime(userCard.Competences.Exploration);
+        var creatiumWinnableRange = _resourcesService
+            .GetLimitsForForceStat(userCard.Competences.Force, "creatium");
+        
+            var orWinnableRange = _resourcesService
+            .GetLimitsForForceStat(userCard.Competences.Force, "or");
+
+            var action = new ActionEstimationResponse
+        {
+            EndTime = endTime,
+            ActionName = "explorer",
+            Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
+            Gains = new Dictionary<string, string>
+            {
+                { "Up exploration", "20%" },
+                { "Creatium", $"{creatiumWinnableRange.min} - {creatiumWinnableRange.max}" },
+                { "Or", $"{orWinnableRange.min} - {orWinnableRange.max}" },
+                { "Chance de carte", userCard.Competences.Charisme * 10 + "%"}
+            },
+            Couts = new Dictionary<string, string>
+            {
+                { "nourriture", "2" },
+                { "Prend du temps à revenir", "15min"}
+            },
+            Error = !validation.valid ? "Impossible de partir en exploration : " + validation.why : null
+        };
+        
+        // return response
+        return action;
     }
 
     public Task EndAction(int actionId)
     {
-        throw new NotImplementedException();
+        // get data
+        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+
+        var user = action.User;
+        
+        var userCard = action.UserCards.First();
+
+        #region REWARDS
+        
+        // give resources and turn on the cardOpeningAvailable flag
+
+        user.Creatium += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
+        user.Or += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+        
+        // chance to get a card based on charisme
+        if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
+        {
+            // TODO notify user
+            user.NbCardOpeningAvailable++;
+        }
+
+        // // chance to up cuisine competence
+        // - 20% de chance de up
+        if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
+        {
+            userCard.Competences.Exploration += 1;
+            // TODO notify user
+            
+            _context.UserCards.Update(userCard);
+        }
+
+        // TODO notify user
+
+        _context.Users.Update(user);
+        #endregion
+        
+        // remove action if returning
+        if (action.IsReturningToHome)
+            _context.Actions.Remove(action);
+        else
+        {
+            // else update action to returning
+            action.IsReturningToHome = true;
+            action.DueDate = CalculateActionEndTime(userCard.Competences.Exploration, true);
+            _context.Actions.Update(action);
+            RegisterNewTaskForActionAsync(action, user);
+        }
+
+        // notify user
+        // TODO notify user
+
+        return _context.SaveChangesAsync();
     }
 
     public Task RegisterNewTaskForActionAsync(ActionExplorer action, User user)
     {
-        throw new NotImplementedException();
+        var cts = new CancellationTokenSource();
+        TaskCancellations.TryAdd(action.Id, cts);
+        
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+
+        return StartTaskForActionAsync(action, cts.Token);
+    }
+    
+    private async Task StartTaskForActionAsync(
+        ActionExplorer action,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.Now;
+        var delay = action.DueDate - now;
+        
+        if (delay.TotalMilliseconds > 0)
+        {
+            try
+            {
+                await Task.Delay(delay, cancellationToken);
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    await EndAction(action.Id);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                Console.WriteLine($"Task {action.Id} cancelled");
+                _context.Actions.Remove(action);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+        else
+        {
+            // La date d'échéance est déjà passée
+            await EndAction(action.Id);
+        }
+        
+        TaskCancellations.TryRemove(action.Id, out _);
     }
 
     public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
@@ -73,5 +267,11 @@ public class ExplorerActionService : IActionService<ActionExplorer>
             .ThenInclude(uc => uc.Card)
             .Include(a => a.UserCards)
             .ThenInclude(uc => uc.Competences);
+    }
+    
+    private DateTime CalculateActionEndTime(int exploLevel, bool returning = false)
+    {
+        // l’exploration prendra 5h30 - le niveau x 30 minutes 
+        return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
     }
 }

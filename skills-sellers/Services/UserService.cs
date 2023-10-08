@@ -28,6 +28,10 @@ public interface IUserService
     Task<ActionResponse> CreateAction(User user, ActionRequest model);
     ActionEstimationResponse EstimateAction(User user, ActionRequest model);
     Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
+    Task<UserCardResponse?> OpenCard(User user);
+    Task<UserCardResponse?> OpenCard(int userId);
+    Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
+    UserCardResponse GetUserCard(int id, int cardId);
 }
 
 public class UserService : IUserService
@@ -145,6 +149,16 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         return user.UserCards.Select(uc => uc.ToResponse());
     }
+    
+    public UserCardResponse GetUserCard(int id, int cardId)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
+        if (userCard == null)
+            throw new AppException("Le joueur ne possède pas cette carte !", 404);
+
+        return userCard.ToResponse();
+    }
 
     public StatsResponse GetUserStats(int id)
     {
@@ -160,9 +174,9 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
 
-        var nbLaboUsed = _ameliorerActionService.GetActions().Count;
-        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count;
-        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count;
+        var nbLaboUsed = _ameliorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         
         return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
     }
@@ -204,6 +218,109 @@ public class UserService : IUserService
         return userBatimentData.ToResponse(-1, -1, -1);
     }
 
+    public async Task<UserCardResponse?> OpenCard(User user)
+    {
+        // remove card opening
+        user.NbCardOpeningAvailable--;
+        
+        // random card
+        var card = _cardService.GetRandomCard();
+        
+        // Doublon
+        // check if user has already this card
+        var userCards = user.UserCards;
+        var doublon = userCards.FirstOrDefault(uc => uc.CardId == card.Id);
+        
+        if (doublon != null)
+        {
+            var usercardDoubled = new UserCardDoubled
+            {
+                User = user,
+                Card = card
+            };
+            user.UserCardsDoubled.Add(usercardDoubled);
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return null;
+        }
+
+        // random competences
+        var competence = Randomizer.GetRandomCompetenceBasedOnRarity(card.Rarity);
+        
+        var userCardEntity = new UserCard
+        {
+            User = user,
+            Card = card,
+            Competences = competence,
+            Action = null
+        };
+
+        // save user card
+        _context.UserCards.Add(userCardEntity);
+        
+        // save user
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return userCardEntity.ToResponse();
+    }
+
+    public Task<UserCardResponse?> OpenCard(int userId)
+    {
+        var user = GetUserEntity(u => u.Id == userId);
+        return OpenCard(user);
+    }
+
+    public async Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest)
+    {
+        // get user card
+        var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == userCardId);
+
+        if (userCard == null)
+            throw new AppException("User card not found", 404);
+
+        var doubledEntity = user.UserCardsDoubled.FirstOrDefault(ucd => ucd.CardId == userCard.CardId);
+        
+        if (doubledEntity == null)
+            throw new AppException("User card doubled not found => unauthorized", 404);
+        
+        // verifier si pour la carte en question, la rareté correspond au nombre de points de compétence envoyé
+        var nbPoints = competencesRequest.Force +
+                       competencesRequest.Intelligence +
+                       competencesRequest.Cuisine +
+                       competencesRequest.Charisme +
+                       competencesRequest.Exploration;
+
+        var tooMuchPts = userCard.Card.Rarity.ToLower() switch
+        {
+            "legendaire" => nbPoints > 15,
+            "epic" => nbPoints > 10,
+            "commune" => nbPoints > 5,
+            _ => throw new AppException("Rarity not found", 404)
+        };
+        
+        if (tooMuchPts)
+            throw new AppException("Too much points for this rarity", 400);
+
+        // update user card
+        userCard.Competences.Intelligence += competencesRequest.Intelligence + userCard.Competences.Intelligence > 10 ? 0 : competencesRequest.Intelligence;
+        userCard.Competences.Force += competencesRequest.Force + userCard.Competences.Force > 10 ? 0 : competencesRequest.Force;
+        userCard.Competences.Cuisine += competencesRequest.Cuisine + userCard.Competences.Cuisine > 10 ? 0 : competencesRequest.Cuisine;
+        userCard.Competences.Charisme += competencesRequest.Charisme + userCard.Competences.Charisme > 10 ? 0 : competencesRequest.Charisme;
+        userCard.Competences.Exploration += competencesRequest.Exploration + userCard.Competences.Exploration > 10 ? 0 : competencesRequest.Exploration;
+        
+        _context.UserCards.Update(userCard);
+        
+        // save user
+        user.UserCardsDoubled.Remove(doubledEntity);
+        _context.Users.Update(user);
+        
+        // save changes
+        await _context.SaveChangesAsync();
+        
+        return userCard.ToResponse();
+    }
+
     // helper methods
 
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
@@ -213,8 +330,6 @@ public class UserService : IUserService
         if (user == null) throw new AppException("User not found", 404);
         return user;
     }
-    
-    
 
     private IIncludableQueryable<User,Object> IncludeGetUsers()
     {
@@ -226,6 +341,7 @@ public class UserService : IUserService
             .ThenInclude(uc => uc.Card)
             .ThenInclude(c => c.UserCards)
             .ThenInclude(uc => uc.Competences)
-            .Include(u => u.UserBatimentData);
-    } 
+            .Include(u => u.UserBatimentData)
+            .Include(u => u.UserCardsDoubled);
+    }
 }

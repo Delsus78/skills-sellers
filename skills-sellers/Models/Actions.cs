@@ -21,6 +21,8 @@ public class ActionRequest
     /// </summary>
     [Required]
     public IEnumerable<int> CardsIds { get; set; }
+    
+    public string? BatimentToUpgrade { get; set; }
 }
 
 [JsonDerivedType(typeof(ActionCuisinerResponse))]
@@ -47,10 +49,17 @@ public class ActionCuisinerResponse : ActionResponse
 
 public class ActionExplorerResponse : ActionResponse
 {
+    public bool IsReturningToHome { get; set; }
+    public string PlanetName { get; set; }
 }
 
 public class ActionAmeliorerResponse : ActionResponse
 {
+    /// <summary>
+    /// The name of the batiment to upgrade
+    /// </summary>
+    [Required]
+    public string BatimentToUpgrade { get; set; }
 }
 
 public class ActionMusclerResponse : ActionResponse
@@ -62,4 +71,5 @@ public class ActionEstimationResponse : ActionResponse
     public Dictionary<string, string> Gains { get; set; } = new();
     
     public Dictionary<string, string> Couts { get; set; } = new();
+    public string? Error { get; set; }
 }

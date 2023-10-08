@@ -89,12 +89,12 @@ public class UserBatimentsService : IUserBatimentsService
 
     private int GetIntelBatimentPrice(int currentLevel)
     {
-        return (currentLevel + 1) * 2;
+        return currentLevel * 2;
     }
 
     private int GetForceBatimentPrice(int currentLevel)
     {
-        return (currentLevel + 1) * 4;
+        return currentLevel * 4;
     }
     
     public IIncludableQueryable<UserBatimentData, Object> IncludeGetUserBatimentDatas()

@@ -41,7 +41,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
     
     #region Validator
 
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards)
+    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
         // une seule carte pour cuisiner
         if (userCards.Count != 1)
@@ -57,7 +57,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             return (false, "Batiment déjà plein, attendez demain !");
         
         // Stats et ressources suffisantes ?
-        // Cuisiner ne nécessite pas de ressources ni de minimum de stats
+        if (user.Nourriture < 1)
+            return (false, "Pas assez de nourriture");
         
         return (true, "");
     }
@@ -71,7 +72,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
         // validate action
-        var validation = CanExecuteAction(user, userCards);
+        var validation = CanExecuteAction(user, userCards, null);
         if (!validation.valid)
             throw new AppException("Impossible de cuisiner : " + validation.why, 400);
         
@@ -79,7 +80,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         var endTime = CalculateActionEndTime();
         
         // Random plat
-        var randomPlat = FoodRandomizer.RandomPlat();
+        var randomPlat = Randomizer.RandomPlat();
         
         var action = new ActionCuisiner
         {
@@ -91,6 +92,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday += 1;
+        user.Nourriture -= 1;
+        
         await _context.Actions.AddAsync(action);
         await _context.SaveChangesAsync();
         
@@ -113,9 +116,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
         // validate action
-        var validation = CanExecuteAction(user, userCards);
-        if (!validation.valid)
-            throw new AppException("Impossible de cuisiner : " + validation.why, 400);
+        var validation = CanExecuteAction(user, userCards, null);
         
         // calculate action end time
         var endTime = CalculateActionEndTime();
@@ -129,7 +130,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             {
                 { "nourriture", (userCards.First().Competences.Cuisine - 1).ToString() },
                 { "Up cuisine", "20%" }
-            }
+            },
+            Error = !validation.valid ? "Impossible de cuisiner : " + validation.why : null
         };
         
         // return response
@@ -204,7 +206,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
 
         // chance to up cuisine competence
         // - 20% de chance de up
-        if (FoodRandomizer.RandomCuisineUp() && userCard.Competences.Cuisine < 10)
+        if (Randomizer.RandomPourcentageUp() && userCard.Competences.Cuisine < 10)
         {
             userCard.Competences.Cuisine += 1;
             // TODO notify user

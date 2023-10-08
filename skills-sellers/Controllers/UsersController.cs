@@ -39,6 +39,10 @@ public class UsersController : ControllerBase
         => _userService.GetUserCards(id);
 
     [Authorize]
+    [HttpGet("{id}/cards/{cardId}")]
+    public UserCardResponse GetUserCard(int id, int cardId)
+        => _userService.GetUserCard(id, cardId);
+    [Authorize]
     [HttpGet("{id}/stats")]
     public StatsResponse GetUserStats(int id)
         => _userService.GetUserStats(id);
@@ -51,7 +55,6 @@ public class UsersController : ControllerBase
     #region only related user can access to this region
 
     // helper methods
-
     private User GetUserAuthenticated()
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new AppException("User authenticated not found", 400));
@@ -65,7 +68,7 @@ public class UsersController : ControllerBase
     {
         var user = GetUserAuthenticated();
         if (user.Id != id)
-            throw new AppException("You are not allowed to do this action", 403);
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
         
         return await _userService.CreateAction(user, model);
     }
@@ -76,9 +79,31 @@ public class UsersController : ControllerBase
     {
         var user = GetUserAuthenticated();
         if (user.Id != id)
-            throw new AppException("You are not allowed to do this action", 403);
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
         
         return _userService.EstimateAction(user, model);
+    }
+    
+    [Authorize]
+    [HttpPost("{id}/actions/opencard")]
+    public async Task<UserCardResponse?> OpenCard(int id)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id || user.NbCardOpeningAvailable==0)
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
+        
+        return await _userService.OpenCard(user);
+    }
+    
+    [Authorize]
+    [HttpPost("{id}/cards/{cardId}/ameliorer")]
+    public async Task<UserCardResponse> AmeliorerCard(int id, int cardId, CompetencesRequest competencesPointsToGive)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id || user.UserCardsDoubled.All(userCardDb => userCardDb.CardId != cardId))
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
+        
+        return await _userService.AmeliorerCard(user, cardId, competencesPointsToGive);
     }
 
     #endregion
@@ -114,6 +139,11 @@ public class UsersController : ControllerBase
     [HttpPost("{id}/batiments")]
     public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
         => await _userService.SetLevelOfBatiments(id, batimentsRequest);
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/actions/forceopencard")]
+    public async Task<UserCardResponse> ForceOpenCard(int id)
+        => await _userService.OpenCard(id);
 
     #endregion
 }
