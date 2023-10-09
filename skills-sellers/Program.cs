@@ -48,6 +48,7 @@ services.AddScoped<IStatsService, StatsService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
 services.AddHostedService<HostedTasksService>();
+services.AddScoped<INotificationService, NotificationService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
@@ -92,7 +93,7 @@ services.AddAuthentication(options =>
             // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/globalChatHub")))
+                (path.StartsWithSegments("/globalChatHub") || path.StartsWithSegments("/notificationHub")))
             {
                 // Read the token out of the query string
                 context.Token = accessToken;
@@ -157,6 +158,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<GlobalChatHub>("/globalChatHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
 

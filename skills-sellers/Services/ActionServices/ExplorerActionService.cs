@@ -16,17 +16,19 @@ public class ExplorerActionService : IActionService<ActionExplorer>
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IResourcesService _resourcesService;
+    private readonly INotificationService _notificationService;
     
     public ExplorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
         IServiceProvider serviceProvider,
-        IResourcesService resourcesService)
+        IResourcesService resourcesService, INotificationService notificationService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
         _resourcesService = resourcesService;
+        _notificationService = notificationService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -167,13 +169,28 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         
         // give resources and turn on the cardOpeningAvailable flag
 
-        user.Creatium += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
-        user.Or += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+        var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
+        var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+        user.Creatium += creatiumWin;
+        user.Or += orWin;
+        
+        // notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Explorer",
+            $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
+        ));
         
         // chance to get a card based on charisme
         if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
         {
-            // TODO notify user
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Explorer",
+                $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
+            ));
+            
             user.NbCardOpeningAvailable++;
         }
 
@@ -182,12 +199,15 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
         {
             userCard.Competences.Exploration += 1;
-            // TODO notify user
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Compétence exploration",
+                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
+            ));
             
             _context.UserCards.Update(userCard);
         }
-
-        // TODO notify user
 
         _context.Users.Update(user);
         #endregion
@@ -205,7 +225,12 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         }
 
         // notify user
-        // TODO notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Explorer",
+            $"Votre carte {userCard.Card.Name} a exploré {action.PlanetName} !" +
+            (action.IsReturningToHome ? " Elle est en train de revenir à la maison." : "")
+        ));
 
         return _context.SaveChangesAsync();
     }

@@ -11,6 +11,7 @@ public class User
     // Many to many
     public List<UserCard> UserCards { get; } = new();
     public List<UserCardDoubled> UserCardsDoubled { get; } = new();
+    public List<Notification> Notifications { get; } = new();
     
     public int Creatium { get; set; }
     public int Or { get; set; }
