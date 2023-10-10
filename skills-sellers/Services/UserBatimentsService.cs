@@ -10,7 +10,7 @@ namespace skills_sellers.Services;
 
 public interface IUserBatimentsService
 {
-    UserBatimentData GetOrCreateUserBatimentData(User user);
+    UserBatimentData GetOrCreateUserBatimentData(User user, DataContext? context = null);
     
     /// <summary>
     /// Retourne true si une carte de l'utilisateur est déjà en train d'effectuer une action du type correspondant au batiment
@@ -23,42 +23,50 @@ public interface IUserBatimentsService
     /// - spatioport
     /// </param>
     /// <returns></returns>
-    bool IsUserBatimentFull(User user, string batimentName);
+    bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null);
     
     (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel);
 }
 public class UserBatimentsService : IUserBatimentsService
 {
-    private readonly DataContext _context;
+    private DataContext _context;
     
     public UserBatimentsService(DataContext context)
     {
         _context = context;
     }
     
-    public UserBatimentData GetOrCreateUserBatimentData(User user)
+    public UserBatimentData GetOrCreateUserBatimentData(User user, DataContext? context = null)
     {
+        _context = context ?? _context;
+        
         if (user == null)
             throw new AppException("User not found", 404);
         
         var userBatimentData = IncludeGetUserBatimentDatas().ToList().FirstOrDefault(
-        ub => ub.User.Id == user.Id,
-        new UserBatimentData
+        ub => ub.User.Id == user.Id);
+        
+        if (userBatimentData != null)
+            return userBatimentData;
+
+        // create new userBatimentData
+        userBatimentData = new UserBatimentData
         {
             User = user,
             CuisineLevel = 1,
             SalleSportLevel = 1,
             LaboLevel = 1,
             SpatioPortLevel = 1
-        });
-        
+        };
         user.UserBatimentData = userBatimentData;
         _context.SaveChanges();
         return userBatimentData;
     }
 
-    public bool IsUserBatimentFull(User user, string batimentName)
+    public bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null)
     {
+        _context = context ?? _context;
+        
         var userBatimentData = GetOrCreateUserBatimentData(user);
         var batNameLower = batimentName.ToLower();
         var actionCounts = user.UserCards.FindAll(uc => uc.Action != null)

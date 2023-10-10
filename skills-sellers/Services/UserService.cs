@@ -171,8 +171,11 @@ public class UserService : IUserService
     public Task DeleteNotification(User user, int notificationId)
         => _notificationService.DeleteNotification(user, notificationId);
 
-    public Task SendNotificationToAll(NotificationRequest notification)
-        => _notificationService.SendNotificationToAll(notification, _context);
+    public async Task SendNotificationToAll(NotificationRequest notification)
+    {
+        await _notificationService.SendNotificationToAll(notification, _context);
+        await _context.SaveChangesAsync();
+    }
 
     public StatsResponse GetUserStats(int id)
     {

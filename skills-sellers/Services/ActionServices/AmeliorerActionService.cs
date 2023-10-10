@@ -178,7 +178,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             .Where(uc => uc.Competences.Intelligence < 10)
             .ToList();
         
-        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(action.User);
+        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(action.User, _context);
 
         var niveauIntelADonner = GetLevelOfUserBat(userBatimentData, new ActionRequest { BatimentToUpgrade = action.BatimentToUpgrade });
 
