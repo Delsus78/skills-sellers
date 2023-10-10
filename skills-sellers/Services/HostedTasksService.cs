@@ -25,7 +25,6 @@ public class HostedTasksService : IHostedService
         // Récupérer toutes les actions en cours et les lancer
         var ongoingActions = context.Actions.Include(a => a.User).ToList();
         var taskList = new List<Task>();
-            
         // lancer chaque type d'action via son service
             
         foreach (var action in ongoingActions)
@@ -59,7 +58,7 @@ public class HostedTasksService : IHostedService
             {
                 Console.Error.WriteLine(t.Exception);
             }
-        });
+        }, cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

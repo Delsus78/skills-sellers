@@ -15,15 +15,17 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
     private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly INotificationService _notificationService;
     
     public CuisinerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, INotificationService notificationService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
+        _notificationService = notificationService;
     }
 
     public ActionCuisiner? GetAction(UserCard userCard)
@@ -209,12 +211,14 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         if (Randomizer.RandomPourcentageUp() && userCard.Competences.Cuisine < 10)
         {
             userCard.Competences.Cuisine += 1;
-            // TODO notify user
-            
-            _context.UserCards.Update(userCard);
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Compétence cuisine",
+                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !"
+            ), _context);
         }
         
-        _context.Users.Update(user);
         #endregion
         
         
@@ -222,8 +226,12 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         _context.Actions.Remove(action);
 
         // notify user
-        // TODO notify user
-
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Cuisiner",
+            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture !"
+        ), _context);
+        
         return _context.SaveChangesAsync();
     }
     

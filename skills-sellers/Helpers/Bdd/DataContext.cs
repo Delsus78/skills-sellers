@@ -33,6 +33,9 @@ public class DataContext : DbContext
     // Daily task log
     public DbSet<DailyTaskLog> DailyTaskLog { get; set; }
 
+    // Notifications
+    public DbSet<Notification> Notifications { get; set; }
+    
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

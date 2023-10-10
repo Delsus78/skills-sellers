@@ -14,17 +14,19 @@ namespace skills_sellers.Services.ActionServices;
 public class AmeliorerActionService : IActionService<ActionAmeliorer>
 {
     private DataContext _context;
+    private readonly INotificationService _notificationService;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
 
     public AmeliorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, INotificationService notificationService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
+        _notificationService = notificationService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -176,10 +178,12 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             .Where(uc => uc.Competences.Intelligence < 10)
             .ToList();
         
-        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(action.User);
+        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(action.User, _context);
 
         var niveauIntelADonner = GetLevelOfUserBat(userBatimentData, new ActionRequest { BatimentToUpgrade = action.BatimentToUpgrade });
 
+        var cardNameForIntelUp = new Dictionary<string, int>();
+        
         while (niveauIntelADonner > 0 && userCards.Any(uc => uc.Competences.Intelligence < 10))
         {
             foreach (var card in userCards
@@ -188,13 +192,20 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             {
                 card.Competences.Intelligence++;
                 niveauIntelADonner--;
+                
+                // add card name to dictionary for notification
+                if (cardNameForIntelUp.ContainsKey(card.Card.Name))
+                    cardNameForIntelUp[card.Card.Name]++;
+                else
+                    cardNameForIntelUp.Add(card.Card.Name, 1);
             }
-
-            // You might want to resort the list if the intelligence distribution changes the order
-            userCards = userCards.OrderBy(uc => uc.Competences.Intelligence).ToList();
         }
         
-        // TODO notify user
+        // notify user
+        _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
+            "Amélioration terminée", 
+            $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}"), 
+            _context);
 
         // up batiment level
         switch (action.BatimentToUpgrade)
@@ -216,7 +227,10 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         _context.Actions.Remove(action);
 
         // notify user
-        // TODO notify user
+        _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
+            "Amélioration terminée", 
+            $"Votre bâtiment {action.BatimentToUpgrade} a été amélioré !"), 
+            _context);
 
         return _context.SaveChangesAsync();
     }

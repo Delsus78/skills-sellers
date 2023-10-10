@@ -105,6 +105,29 @@ public class UsersController : ControllerBase
         
         return await _userService.AmeliorerCard(user, cardId, competencesPointsToGive);
     }
+    
+    [Authorize]
+    [HttpGet("{id}/notifications")]
+    public async Task<IEnumerable<NotificationResponse>> GetNotifications(int id)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id)
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
+        
+        return await _userService.GetNotifications(user);
+    }
+    
+    [Authorize]
+    [HttpDelete("{id}/notifications/{notificationId}")]
+    public async Task DeleteNotification(int id, int notificationId)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id)
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
+        
+        await _userService.DeleteNotification(user, notificationId);
+    }
+    
 
     #endregion
 
@@ -142,8 +165,13 @@ public class UsersController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPost("{id}/actions/forceopencard")]
-    public async Task<UserCardResponse> ForceOpenCard(int id)
+    public async Task<UserCardResponse?> ForceOpenCard(int id)
         => await _userService.OpenCard(id);
+    
+    [Authorize(Roles = "admin")]
+    [HttpPost("sendnotification")]
+    public async Task ForceOpenCard(NotificationRequest notification)
+        => await _userService.SendNotificationToAll(notification);
 
     #endregion
 }

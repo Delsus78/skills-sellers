@@ -16,17 +16,19 @@ public class ExplorerActionService : IActionService<ActionExplorer>
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IResourcesService _resourcesService;
+    private readonly INotificationService _notificationService;
     
     public ExplorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
         IServiceProvider serviceProvider,
-        IResourcesService resourcesService)
+        IResourcesService resourcesService, INotificationService notificationService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
         _resourcesService = resourcesService;
+        _notificationService = notificationService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -163,49 +165,69 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         
         var userCard = action.UserCards.First();
 
-        #region REWARDS
-        
-        // give resources and turn on the cardOpeningAvailable flag
-
-        user.Creatium += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
-        user.Or += _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
-        
-        // chance to get a card based on charisme
-        if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
-        {
-            // TODO notify user
-            user.NbCardOpeningAvailable++;
-        }
-
-        // // chance to up cuisine competence
-        // - 20% de chance de up
-        if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
-        {
-            userCard.Competences.Exploration += 1;
-            // TODO notify user
-            
-            _context.UserCards.Update(userCard);
-        }
-
-        // TODO notify user
-
-        _context.Users.Update(user);
-        #endregion
-        
-        // remove action if returning
         if (action.IsReturningToHome)
+            // remove action if returning
             _context.Actions.Remove(action);
         else
         {
-            // else update action to returning
+            #region REWARDS
+            // give resources and turn on the cardOpeningAvailable flag
+
+            var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
+            var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+            user.Creatium += creatiumWin;
+            user.Or += orWin;
+
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Explorer",
+                $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
+            ), _context);
+
+            // chance to get a card based on charisme
+            if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
+            {
+                // notify user
+                _notificationService.SendNotificationToUser(user, new NotificationRequest
+                (
+                    "Explorer",
+                    $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
+                ), _context);
+
+                user.NbCardOpeningAvailable++;
+            }
+
+            // // chance to up cuisine competence
+            // - 20% de chance de up
+            if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
+            {
+                userCard.Competences.Exploration += 1;
+                // notify user
+                _notificationService.SendNotificationToUser(user, new NotificationRequest
+                (
+                    "Compétence exploration",
+                    $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
+                ), _context);
+
+                _context.UserCards.Update(userCard);
+            }
+
+            _context.Users.Update(user);
+            
+            #endregion
+            
+            // update action to returning
             action.IsReturningToHome = true;
             action.DueDate = CalculateActionEndTime(userCard.Competences.Exploration, true);
             _context.Actions.Update(action);
-            RegisterNewTaskForActionAsync(action, user);
-        }
+            
+            // start timer for returning
+            var cts = new CancellationTokenSource();
+            TaskCancellations.TryAdd(action.Id, cts);
 
-        // notify user
-        // TODO notify user
+            _ = StartTaskForActionAsync(action, cts.Token);
+        }
 
         return _context.SaveChangesAsync();
     }
@@ -219,7 +241,7 @@ public class ExplorerActionService : IActionService<ActionExplorer>
 
         return StartTaskForActionAsync(action, cts.Token);
     }
-    
+
     private async Task StartTaskForActionAsync(
         ActionExplorer action,
         CancellationToken cancellationToken)

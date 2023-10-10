@@ -32,6 +32,9 @@ public interface IUserService
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
     UserCardResponse GetUserCard(int id, int cardId);
+    Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
+    Task DeleteNotification(User user, int notificationId);
+    Task SendNotificationToAll(NotificationRequest notification);
 }
 
 public class UserService : IUserService
@@ -41,6 +44,7 @@ public class UserService : IUserService
     private readonly IAuthService _authService;
     private readonly IStatsService _statsService;
     private readonly IUserBatimentsService _userBatimentsService;
+    private readonly INotificationService _notificationService;
     
     // actions services
     private readonly IActionService<ActionCuisiner> _cuisinerActionService;
@@ -57,7 +61,7 @@ public class UserService : IUserService
         IActionService<ActionCuisiner> cuisinerActionService,
         IActionService<ActionExplorer> explorerActionService,
         IActionService<ActionMuscler> musclerActionService,
-        IActionService<ActionAmeliorer> ameliorerActionService)
+        IActionService<ActionAmeliorer> ameliorerActionService, INotificationService notificationService)
     {
         _context = context;
         _cardService = cardService;
@@ -68,6 +72,7 @@ public class UserService : IUserService
         _explorerActionService = explorerActionService;
         _musclerActionService = musclerActionService;
         _ameliorerActionService = ameliorerActionService;
+        _notificationService = notificationService;
     }
 
     public IEnumerable<UserResponse> GetAll()
@@ -158,6 +163,18 @@ public class UserService : IUserService
             throw new AppException("Le joueur ne possède pas cette carte !", 404);
 
         return userCard.ToResponse();
+    }
+
+    public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
+        => await _notificationService.GetNotifications(user);
+
+    public Task DeleteNotification(User user, int notificationId)
+        => _notificationService.DeleteNotification(user, notificationId);
+
+    public async Task SendNotificationToAll(NotificationRequest notification)
+    {
+        await _notificationService.SendNotificationToAll(notification, _context);
+        await _context.SaveChangesAsync();
     }
 
     public StatsResponse GetUserStats(int id)

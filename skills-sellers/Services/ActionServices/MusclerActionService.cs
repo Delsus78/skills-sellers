@@ -15,15 +15,17 @@ public class MusclerActionService : IActionService<ActionMuscler>
     private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly INotificationService _notificationService;
     
     public MusclerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, INotificationService notificationService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
+        _notificationService = notificationService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest model)
@@ -148,15 +150,18 @@ public class MusclerActionService : IActionService<ActionMuscler>
         // up force competence
         
         userCard.Competences.Force += 1;
-        // TODO notify user
-        
+
         _context.UserCards.Update(userCard);
 
         // remove action
         _context.Actions.Remove(action);
 
         // notify user
-        // TODO notify user
+        _notificationService.SendNotificationToUser(userCard.User, new NotificationRequest
+        (
+            "Salle de sport",
+            $"Votre carte {userCard.Card.Name} a gagné 1 point de force !"
+        ), _context);
 
         return _context.SaveChangesAsync();
     }
