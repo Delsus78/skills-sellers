@@ -165,72 +165,69 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         
         var userCard = action.UserCards.First();
 
-        #region REWARDS
-        
-        // give resources and turn on the cardOpeningAvailable flag
-
-        var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
-        var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
-        user.Creatium += creatiumWin;
-        user.Or += orWin;
-        
-        // notify user
-        _notificationService.SendNotificationToUser(user, new NotificationRequest
-        (
-            "Explorer",
-            $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
-        ));
-        
-        // chance to get a card based on charisme
-        if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
+        if (action.IsReturningToHome)
+            // remove action if returning
+            _context.Actions.Remove(action);
+        else
         {
+            #region REWARDS
+            // give resources and turn on the cardOpeningAvailable flag
+
+            var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
+            var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+            user.Creatium += creatiumWin;
+            user.Or += orWin;
+
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Explorer",
-                $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
-            ));
-            
-            user.NbCardOpeningAvailable++;
-        }
+                $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
+            ), _context);
 
-        // // chance to up cuisine competence
-        // - 20% de chance de up
-        if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
-        {
-            userCard.Competences.Exploration += 1;
-            // notify user
-            _notificationService.SendNotificationToUser(user, new NotificationRequest
-            (
-                "Compétence exploration",
-                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
-            ));
-            
-            _context.UserCards.Update(userCard);
-        }
+            // chance to get a card based on charisme
+            if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
+            {
+                // notify user
+                _notificationService.SendNotificationToUser(user, new NotificationRequest
+                (
+                    "Explorer",
+                    $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
+                ), _context);
 
-        _context.Users.Update(user);
-        #endregion
-        
-        // remove action if returning
-        if (action.IsReturningToHome)
-            _context.Actions.Remove(action);
-        else
-        {
-            // else update action to returning
+                user.NbCardOpeningAvailable++;
+            }
+
+            // // chance to up cuisine competence
+            // - 20% de chance de up
+            if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
+            {
+                userCard.Competences.Exploration += 1;
+                // notify user
+                _notificationService.SendNotificationToUser(user, new NotificationRequest
+                (
+                    "Compétence exploration",
+                    $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
+                ), _context);
+
+                _context.UserCards.Update(userCard);
+            }
+
+            _context.Users.Update(user);
+            
+            #endregion
+            
+            // update action to returning
             action.IsReturningToHome = true;
             action.DueDate = CalculateActionEndTime(userCard.Competences.Exploration, true);
             _context.Actions.Update(action);
-            RegisterNewTaskForActionAsync(action, user);
-        }
+            
+            // start timer for returning
+            var cts = new CancellationTokenSource();
+            TaskCancellations.TryAdd(action.Id, cts);
 
-        // notify user
-        _notificationService.SendNotificationToUser(user, new NotificationRequest
-        (
-            "Explorer",
-            $"Votre carte {userCard.Card.Name} a exploré {action.PlanetName} !" +
-            (action.IsReturningToHome ? " Elle est en train de revenir à la maison." : "")
-        ));
+            _ = StartTaskForActionAsync(action, cts.Token);
+        }
 
         return _context.SaveChangesAsync();
     }
@@ -244,7 +241,7 @@ public class ExplorerActionService : IActionService<ActionExplorer>
 
         return StartTaskForActionAsync(action, cts.Token);
     }
-    
+
     private async Task StartTaskForActionAsync(
         ActionExplorer action,
         CancellationToken cancellationToken)

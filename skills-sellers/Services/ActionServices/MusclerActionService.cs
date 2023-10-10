@@ -161,7 +161,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         (
             "Salle de sport",
             $"Votre carte {userCard.Card.Name} a gagné 1 point de force !"
-        ));
+        ), _context);
 
         return _context.SaveChangesAsync();
     }

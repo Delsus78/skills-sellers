@@ -204,7 +204,8 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         // notify user
         _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
             "Amélioration terminée", 
-            $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}"));
+            $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}"), 
+            _context);
 
         // up batiment level
         switch (action.BatimentToUpgrade)
@@ -228,7 +229,8 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         // notify user
         _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
             "Amélioration terminée", 
-            $"Votre bâtiment {action.BatimentToUpgrade} a été amélioré !"));
+            $"Votre bâtiment {action.BatimentToUpgrade} a été amélioré !"), 
+            _context);
 
         return _context.SaveChangesAsync();
     }

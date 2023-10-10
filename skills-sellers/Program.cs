@@ -48,7 +48,7 @@ services.AddScoped<IStatsService, StatsService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
 services.AddHostedService<HostedTasksService>();
-services.AddScoped<INotificationService, NotificationService>();
+services.AddSingleton<INotificationService, NotificationService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();

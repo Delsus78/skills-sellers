@@ -172,7 +172,7 @@ public class UserService : IUserService
         => _notificationService.DeleteNotification(user, notificationId);
 
     public Task SendNotificationToAll(NotificationRequest notification)
-        => _notificationService.SendNotificationToAll(notification);
+        => _notificationService.SendNotificationToAll(notification, _context);
 
     public StatsResponse GetUserStats(int id)
     {

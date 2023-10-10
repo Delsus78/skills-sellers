@@ -10,8 +10,8 @@ namespace skills_sellers.Services;
 
 public interface INotificationService
 {
-    Task SendNotificationToUser(User user, NotificationRequest notification);
-    Task SendNotificationToAll(NotificationRequest notification);
+    Task SendNotificationToUser(User user, NotificationRequest notification, DataContext context);
+    Task SendNotificationToAll(NotificationRequest notification, DataContext context);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotification(User user, int notificationId);
 }
@@ -19,49 +19,52 @@ public interface INotificationService
 public class NotificationService : INotificationService
 {
     private readonly IHubContext<NotificationHub> _hubContext;
-    private readonly DataContext _context;
-    
-    public NotificationService(IHubContext<NotificationHub> hubContext, DataContext context)
+    private IServiceProvider _serviceProvider;
+
+    public NotificationService(
+        IHubContext<NotificationHub> hubContext,
+        IServiceProvider serviceProvider)
     {
         _hubContext = hubContext;
-        _context = context;
+        _serviceProvider = serviceProvider;
     }
     
-    public async Task SendNotificationToUser(User user, NotificationRequest notification)
+    public async Task SendNotificationToUser(User user, NotificationRequest notification, DataContext context)
     {
         var notificationEntity = notification.CreateNotification();
         
         notificationEntity.User = user;
         
         // save notification in database
-        var notifResulted = _context.Notifications.Add(notificationEntity).Entity;
-        await _context.SaveChangesAsync();
+        var notifResulted = context.Notifications.Add(notificationEntity).Entity;
         
         await _hubContext.Clients.Group(user.Id.ToString()).SendAsync("ReceiveNotification", notifResulted.ToResponse());
     }
     
-    public async Task SendNotificationToAll(NotificationRequest notification)
+    public async Task SendNotificationToAll(NotificationRequest notification, DataContext context)
     {
-        var users = await _context.Users.ToListAsync();
+        var users = await context.Users.ToListAsync();
         foreach (var user in users)
         {
-            await SendNotificationToUser(user, notification);
+            await SendNotificationToUser(user, notification, context);
         }
     }
     
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
     {
-        var notifications = await _context.Notifications.Where(n => n.User.Id == user.Id).ToListAsync();
+        await using var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+        var notifications = await context.Notifications.Where(n => n.User.Id == user.Id).ToListAsync();
         return notifications.Select(n => n.ToResponse());
     }
     
     public async Task DeleteNotification(User user, int notificationId)
     {
-        var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == notificationId && n.User.Id == user.Id);
+        await using var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+        var notification = await context.Notifications.FirstOrDefaultAsync(n => n.Id == notificationId && n.User.Id == user.Id);
         if (notification == null)
             throw new AppException("Notification not found", 404);
-        _context.Notifications.Remove(notification);
-        await _context.SaveChangesAsync();
+        context.Notifications.Remove(notification);
+        await context.SaveChangesAsync();
     }
     
 }

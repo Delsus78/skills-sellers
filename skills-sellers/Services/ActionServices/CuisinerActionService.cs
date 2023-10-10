@@ -216,12 +216,9 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             (
                 "Compétence cuisine",
                 $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !"
-            ));
-            
-            _context.UserCards.Update(userCard);
+            ), _context);
         }
         
-        _context.Users.Update(user);
         #endregion
         
         
@@ -233,8 +230,8 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         (
             "Cuisiner",
             $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture !"
-        ));
-
+        ), _context);
+        
         return _context.SaveChangesAsync();
     }
     

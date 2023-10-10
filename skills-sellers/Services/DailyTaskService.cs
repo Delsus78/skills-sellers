@@ -15,17 +15,20 @@ public interface IDailyTaskService
 }
 public class DailyTaskService : IDailyTaskService
 {
-    private readonly DataContext _context;
+    private DataContext _context;
     private readonly INotificationService _notificationService;
+    private readonly IServiceProvider _serviceProvider;
     
-    public DailyTaskService(DataContext context, INotificationService notificationService)
+    public DailyTaskService(DataContext context, INotificationService notificationService, IServiceProvider serviceProvider)
     {
         _context = context;
         _notificationService = notificationService;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task ExecuteDailyTaskAsync()
     {
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var today = DateTime.Today;
         var logEntry = await _context.DailyTaskLog.SingleOrDefaultAsync(e => e.ExecutionDate == today);
         if (logEntry == null)
@@ -42,6 +45,7 @@ public class DailyTaskService : IDailyTaskService
 
     public async Task DailyResetCuisineAsync()
     {
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var usersBatimentsData = await _context.UserBatiments.ToListAsync();
         
         foreach (var userBatimentData in usersBatimentsData)
@@ -50,13 +54,14 @@ public class DailyTaskService : IDailyTaskService
         }
         
         // notify all users
-        await _notificationService.SendNotificationToAll(new NotificationRequest("Cuisine", "Les cuisines ont été réinitialisées !"));
+        await _notificationService.SendNotificationToAll(new NotificationRequest("Cuisine", "Les cuisines ont été réinitialisées !"), _context);
 
         await _context.SaveChangesAsync();
     }
     
     public async Task DailyCheckAndDeleteNotifications()
     {
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var notifications = await _context.Notifications.ToListAsync();
         foreach (var notification in notifications.Where(notification => notification.CreatedAt.AddDays(7) < DateTime.Now))
         {
