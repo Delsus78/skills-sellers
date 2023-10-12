@@ -24,7 +24,7 @@ services.AddCors(options =>
     options.AddDefaultPolicy(corsPolicyBuilder =>
     {
         Console.Out.WriteLine("Adding cors policy");
-        corsPolicyBuilder.WithOrigins("http://localhost:5173", "http://skills-sellers.team-unc.fr")
+        corsPolicyBuilder.WithOrigins("http://localhost:5173", "https://skills-sellers.fr")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // Important pour SignalR
