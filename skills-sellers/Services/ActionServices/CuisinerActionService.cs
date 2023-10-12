@@ -55,7 +55,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         var userCard = userCards.First();
         
         // Carte déjà en action
-        if (GetAction(userCard) != null)
+        if (userCard.Action != null)
             return (false, "Carte déjà en action");
         
         // Batiment déjà plein

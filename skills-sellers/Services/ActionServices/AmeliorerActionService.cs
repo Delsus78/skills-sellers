@@ -42,7 +42,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             return (false, "Une carte ou plus est nécessaire pour améliorer un bâtiment !");
 
         // une des carte est déjà en action
-        if (userCards.Any(uc => GetAction(uc) != null))
+        if (userCards.Any(uc => uc.Action != null))
             return (false, "Une des cartes est déjà en action");
         
         // Batiment déjà plein
