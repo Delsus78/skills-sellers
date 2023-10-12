@@ -36,7 +36,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         var userCard = userCards.First();
         
         // Carte déjà en action
-        if (GetAction(userCard) != null)
+        if (userCard.Action != null)
             return (false, "Carte déjà en action");
         
         // Batiment déjà plein

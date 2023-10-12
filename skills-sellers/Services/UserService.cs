@@ -35,6 +35,8 @@ public interface IUserService
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotification(User user, int notificationId);
     Task SendNotificationToAll(NotificationRequest notification);
+    RegistrationLinkResponse CreateLink(LinkCreateRequest model);
+    Task<UserResponse> Register(UserRegisterRequest model);
 }
 
 public class UserService : IUserService
@@ -45,6 +47,7 @@ public class UserService : IUserService
     private readonly IStatsService _statsService;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly INotificationService _notificationService;
+    private readonly IRegistrationLinkCreatorService _registrationLinkCreatorService;
     
     // actions services
     private readonly IActionService<ActionCuisiner> _cuisinerActionService;
@@ -61,7 +64,9 @@ public class UserService : IUserService
         IActionService<ActionCuisiner> cuisinerActionService,
         IActionService<ActionExplorer> explorerActionService,
         IActionService<ActionMuscler> musclerActionService,
-        IActionService<ActionAmeliorer> ameliorerActionService, INotificationService notificationService)
+        IActionService<ActionAmeliorer> ameliorerActionService, 
+        INotificationService notificationService,
+        IRegistrationLinkCreatorService registrationLinkCreatorService)
     {
         _context = context;
         _cardService = cardService;
@@ -73,6 +78,7 @@ public class UserService : IUserService
         _musclerActionService = musclerActionService;
         _ameliorerActionService = ameliorerActionService;
         _notificationService = notificationService;
+        _registrationLinkCreatorService = registrationLinkCreatorService;
     }
 
     public IEnumerable<UserResponse> GetAll()
@@ -91,6 +97,9 @@ public class UserService : IUserService
 
         // map model to new user object
         var user = model.CreateUser();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        user = GetUserEntity(u => u.Pseudo == model.Pseudo);
         
         // create user stats
         _statsService.GetOrCreateStatsEntity(user);
@@ -103,10 +112,10 @@ public class UserService : IUserService
         if (resultAuthRegister.Item1 == 0)
             throw new AppException(resultAuthRegister.Item2, 400);
 
-        // save user
-        _context.Users.Add(user);
+        // create first card
+        AddCardToUser(user.Id, model.FirstCardId, new CompetencesRequest(3, 3, 3, 3, 3));
+
         await _context.SaveChangesAsync();
-        
         return user.ToResponse();
     }
 
@@ -175,6 +184,28 @@ public class UserService : IUserService
     {
         await _notificationService.SendNotificationToAll(notification, _context);
         await _context.SaveChangesAsync();
+    }
+
+    public RegistrationLinkResponse CreateLink(LinkCreateRequest model)
+    {
+        return new RegistrationLinkResponse(_registrationLinkCreatorService.CreateRegistrationLink(model.Role, model.FirstCardId));
+    }
+
+    public async Task<UserResponse> Register(UserRegisterRequest model)
+    {
+        // link verification
+        var linkInfo = _registrationLinkCreatorService.GetLink(model.link);
+        
+        if (!linkInfo.valid)
+            throw new AppException("Link not valid", 400);
+        
+        // user creation
+        var user = await Create(new UserCreateRequest(model.Pseudo, model.Password, linkInfo.role, linkInfo.firstCardId));
+
+        // link deletion
+        _registrationLinkCreatorService.DeleteLink(model.link);
+        
+        return user;
     }
 
     public StatsResponse GetUserStats(int id)

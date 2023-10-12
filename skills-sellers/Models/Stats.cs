@@ -6,7 +6,6 @@ public record StatsResponse(
     int TotalFailedCardsCauseOfCharisme,
     int TotalMessagesSent,
     IDictionary<string, int> TotalResourcesMined,
-    int TotalPlanetDiscovered,
     int TotalCardWithAStatMaxed,
     int TotalBuildingsUpgraded,
     int TotalRocketLaunched,

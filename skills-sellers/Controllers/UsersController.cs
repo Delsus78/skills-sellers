@@ -37,11 +37,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id}/cards")]
     public IEnumerable<UserCardResponse> GetUserCards(int id)
         => _userService.GetUserCards(id);
-
-    [Authorize]
-    [HttpGet("{id}/cards/{cardId}")]
-    public UserCardResponse GetUserCard(int id, int cardId)
-        => _userService.GetUserCard(id, cardId);
+    
     [Authorize]
     [HttpGet("{id}/stats")]
     public StatsResponse GetUserStats(int id)
@@ -84,6 +80,17 @@ public class UsersController : ControllerBase
         return _userService.EstimateAction(user, model);
     }
     
+    [Authorize]
+    [HttpGet("{id}/cards/{cardId}")]
+    public UserCardResponse GetUserCard(int id, int cardId)
+    {
+        var user = GetUserAuthenticated();
+        if (user.Id != id)
+            throw new AppException("Vous n'êtes pas autorisé à effectuer cette action.", 400);
+        
+        return _userService.GetUserCard(id, cardId);
+    }
+
     [Authorize]
     [HttpPost("{id}/actions/opencard")]
     public async Task<UserCardResponse?> OpenCard(int id)
@@ -136,6 +143,10 @@ public class UsersController : ControllerBase
     [HttpPost("authenticate")]
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         => await _userService.Authenticate(model);
+    
+    [HttpPost("register")]
+    public Task<UserResponse> Register(UserRegisterRequest model)
+        => _userService.Register(model);
 
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
@@ -150,6 +161,11 @@ public class UsersController : ControllerBase
     public async Task<UserResponse> Create(UserCreateRequest model)
         => await _userService.Create(model);
     
+    [Authorize(Roles = "admin")]
+    [HttpPut("createLink")]
+    public RegistrationLinkResponse CreateLink(LinkCreateRequest model)
+        => _userService.CreateLink(model);
+
     [Authorize(Roles = "admin")]
     [HttpPost("{id}/cards/{cardId}")]
     public IActionResult AddCardToUser(int id, int cardId, CompetencesRequest competences)

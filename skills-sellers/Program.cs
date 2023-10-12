@@ -24,7 +24,7 @@ services.AddCors(options =>
     options.AddDefaultPolicy(corsPolicyBuilder =>
     {
         Console.Out.WriteLine("Adding cors policy");
-        corsPolicyBuilder.WithOrigins("http://localhost:5173", "http://skills-sellers.team-unc.fr")
+        corsPolicyBuilder.WithOrigins("http://localhost:5173", "https://skills-sellers.fr")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // Important pour SignalR
@@ -39,16 +39,19 @@ services.AddControllers(options =>
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 services.AddSignalR();
+services.AddMemoryCache();
 
 // add services
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
-services.AddScoped<IStatsService, StatsService>();
+services.AddSingleton<IStatsService, StatsService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddSingleton<INotificationService, NotificationService>();
+services.AddHostedService<HostedStatsService>();
+services.AddSingleton<IRegistrationLinkCreatorService, RegistrationLinkCreatorService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();

@@ -52,14 +52,12 @@ public class UserBatimentsService : IUserBatimentsService
         // create new userBatimentData
         userBatimentData = new UserBatimentData
         {
-            User = user,
             CuisineLevel = 1,
             SalleSportLevel = 1,
             LaboLevel = 1,
             SpatioPortLevel = 1
         };
         user.UserBatimentData = userBatimentData;
-        _context.SaveChanges();
         return userBatimentData;
     }
 

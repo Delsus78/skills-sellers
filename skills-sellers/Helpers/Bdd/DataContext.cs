@@ -53,6 +53,9 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<UserCard>()
          .HasKey(uc => new { uc.UserId, uc.CardId });
+        
+        // define user and auth_user relationship
+        
 
         // link between user and stats
         modelBuilder.Entity<Stats>().HasOne(s => s.User)

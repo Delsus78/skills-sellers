@@ -21,7 +21,7 @@ public static class StatsModelsExtensions
         var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
 
         return new StatsResponse(nbCards, nbCardsByRarity, stats.TotalFailedCardsCauseOfCharisme,
-            stats.TotalMessagesSent, totalResourcesMined, stats.TotalPlanetDiscovered, totalCardsWithAStatMaxed,
+            stats.TotalMessagesSent, totalResourcesMined, totalCardsWithAStatMaxed,
             stats.TotalBuildingsUpgraded, stats.TotalRocketLaunched, stats.TotalMealCooked);
     }
 

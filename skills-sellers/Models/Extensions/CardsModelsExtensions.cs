@@ -10,10 +10,10 @@ public static class CardsModelsExtensions
         {
             Name = model.Name,
             Description = model.Description,
-            ImageUrl = model.ImageUrl,
+            Collection = model.Collection,
             Rarity = model.Rarity
         };
 
     public static CardResponse ToResponse(this Card card) 
-        => new(card.Id, card.Name, card.ImageUrl, card.Description, card.Rarity);
+        => new(card.Id, card.Name, card.Collection, card.Description, card.Rarity);
 }
