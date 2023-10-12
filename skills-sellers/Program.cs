@@ -19,6 +19,7 @@ var configuration = builder.Configuration;
 builder.WebHost.UseUrls("https://*:5002");
 
 // cors
+/*
 services.AddCors(options =>
 {
     options.AddDefaultPolicy(corsPolicyBuilder =>
@@ -30,7 +31,7 @@ services.AddCors(options =>
             .AllowCredentials(); // Important pour SignalR
     });
 });
-
+*/
 // Add services to the container.
 services.AddControllers(options =>
 {
@@ -155,7 +156,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 
-app.UseCors();
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true) // allow any origin
+    .AllowCredentials());
 app.UseAuthentication();
 app.UseAuthorization();
 
