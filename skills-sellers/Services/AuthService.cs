@@ -35,7 +35,7 @@ public class AuthService : IAuthService
             return (0, "User auth instance is already created");
         
         var authUser = new AuthUser{
-            UserId = user.Id, 
+            UserId = user.Id,
             Hash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13), 
             Role = role
         };

@@ -16,16 +16,20 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
     private readonly INotificationService _notificationService;
+    private readonly IStatsService _statsService;
     
     public CuisinerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider, INotificationService notificationService)
+        IServiceProvider serviceProvider, 
+        INotificationService notificationService, 
+        IStatsService statsService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
+        _statsService = statsService;
     }
 
     public ActionCuisiner? GetAction(UserCard userCard)
@@ -205,6 +209,9 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         // give nourriture
         var amount = userCard.Competences.Cuisine - 1;
         user.Nourriture += amount;
+        
+        // stats
+        _statsService.OnMealCooked(user.Id);
 
         // chance to up cuisine competence
         // - 20% de chance de up
@@ -229,7 +236,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Cuisiner",
-            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture !"
+            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {action.Plat} !"
         ), _context);
         
         return _context.SaveChangesAsync();

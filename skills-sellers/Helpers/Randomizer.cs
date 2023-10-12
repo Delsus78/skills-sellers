@@ -28,8 +28,8 @@ public static class Randomizer
         var randomInt = Random.Next(0, 100);
         return randomInt switch
         {
-            < 10 => "legendaire",
-            < 40 => "epic",
+            < 5 => "legendaire",
+            < 25 => "epic",
             _ => "commune"
         };
     }
@@ -66,7 +66,7 @@ public static class Randomizer
                 cuisine = Random.Next(0, 15 - force - intel);
                 charisme = 15 - force - intel - cuisine;
                 break;
-            case "epique":
+            case "epic":
                 force = Random.Next(0, 10);
                 intel = Random.Next(0, 10 - force);
                 cuisine = Random.Next(0, 10 - force - intel);

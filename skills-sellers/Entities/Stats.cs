@@ -10,7 +10,6 @@ public class Stats
     public int TotalMessagesSent { get; set; }
     public int TotalCreatiumMined { get; set; }
     public int TotalOrMined { get; set; }
-    public int TotalPlanetDiscovered { get; set; }
     public int TotalBuildingsUpgraded { get; set; }
     public int TotalRocketLaunched { get; set; }
     public int TotalMealCooked { get; set; }

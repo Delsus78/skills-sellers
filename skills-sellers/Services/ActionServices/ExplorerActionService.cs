@@ -17,18 +17,20 @@ public class ExplorerActionService : IActionService<ActionExplorer>
     private readonly IServiceProvider _serviceProvider;
     private readonly IResourcesService _resourcesService;
     private readonly INotificationService _notificationService;
+    private readonly IStatsService _statsService;
     
     public ExplorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
         IServiceProvider serviceProvider,
-        IResourcesService resourcesService, INotificationService notificationService)
+        IResourcesService resourcesService, INotificationService notificationService, IStatsService statsService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
         _resourcesService = resourcesService;
         _notificationService = notificationService;
+        _statsService = statsService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -95,6 +97,9 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         
         // actualise bdd
         await _context.Actions.AddAsync(action);
+        
+        // stats
+        _statsService.OnRocketLaunched(user.Id);
         
         // consume resources
         user.Nourriture -= 2;
@@ -178,6 +183,10 @@ public class ExplorerActionService : IActionService<ActionExplorer>
             user.Creatium += creatiumWin;
             user.Or += orWin;
 
+            // stats
+            _statsService.OnCreatiumMined(user.Id, creatiumWin);
+            _statsService.OnOrMined(user.Id, orWin);
+            
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
@@ -197,6 +206,8 @@ public class ExplorerActionService : IActionService<ActionExplorer>
 
                 user.NbCardOpeningAvailable++;
             }
+            else // stats
+                _statsService.OnCardFailedCauseOfCharisme(user.Id);
 
             // // chance to up cuisine competence
             // - 20% de chance de up

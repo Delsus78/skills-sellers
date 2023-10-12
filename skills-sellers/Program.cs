@@ -39,16 +39,19 @@ services.AddControllers(options =>
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 services.AddSignalR();
+services.AddMemoryCache();
 
 // add services
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
-services.AddScoped<IStatsService, StatsService>();
+services.AddSingleton<IStatsService, StatsService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddSingleton<INotificationService, NotificationService>();
+services.AddHostedService<HostedStatsService>();
+services.AddSingleton<IRegistrationLinkCreatorService, RegistrationLinkCreatorService>();
 
 // add action services
 services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();

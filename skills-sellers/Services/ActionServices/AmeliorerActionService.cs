@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.VisualBasic;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -17,16 +16,20 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
     private readonly INotificationService _notificationService;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IStatsService _statsService;
 
     public AmeliorerActionService(
         DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider, INotificationService notificationService)
+        IServiceProvider serviceProvider, 
+        INotificationService notificationService, 
+        IStatsService statsService)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
+        _statsService = statsService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -222,6 +225,9 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             default:
                 throw new AppException("Bâtiment non reconnu", 400);
         }
+        
+        // stats
+        _statsService.OnBuildingsUpgraded(action.User.Id);
         
         // remove action
         _context.Actions.Remove(action);

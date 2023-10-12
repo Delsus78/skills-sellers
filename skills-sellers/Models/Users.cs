@@ -11,7 +11,13 @@ public record UpdateRequest([Required] string Pseudo);
 /// <param name="Password"></param>
 /// <param name="ConfirmPassword"></param>
 /// <param name="Role"></param>
-public record UserCreateRequest([Required] string Pseudo, [Required] [MinLength(6)] string Password, [Required] string Role)
+public record UserCreateRequest([Required] string Pseudo, [Required] [MinLength(6)] string Password, [Required] string Role, int FirstCardId)
+{
+    [Required] [Compare("Password")] 
+    public string ConfirmPassword { get; init; }
+}
+
+public record UserRegisterRequest([Required] string Pseudo, [Required] [MinLength(6)] string Password, string link)
 {
     [Required] [Compare("Password")] 
     public string ConfirmPassword { get; init; }
