@@ -25,4 +25,20 @@
       <Folder Include="Images\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="all_foods.txt" />
+      <Resource Include="all_foods.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Resource>
+      <None Remove="gutenberg.txt" />
+      <Resource Include="gutenberg.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="Images\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
 </Project>
