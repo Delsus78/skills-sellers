@@ -28,8 +28,8 @@ public static class Randomizer
         var randomInt = Random.Next(0, 100);
         return randomInt switch
         {
-            < 5 => "legendaire",
-            < 25 => "epic",
+            < 3 => "legendaire",
+            < 13 => "epic",
             _ => "commune"
         };
     }
@@ -51,35 +51,46 @@ public static class Randomizer
     public static Competences GetRandomCompetenceBasedOnRarity(string rarity)
     {
         // repartir les points en fonction de la rareté sur les 4 stats (force, intel, cuisine, charisme)
+        // chaque compétence ne peut pas dépasser 10 pts
         // 15 pts pour legendaire
         // 10 pts pour epic
         // 5 pts pour commune
-        var force = 0;
-        var intel = 0;
-        var cuisine = 0;
-        var charisme = 0;
-        switch (rarity.ToLower())
+        var ptsLeft = 0;
+        var valuesDicto = new Dictionary<string, int>
         {
-            case "legendaire":
-                force = Random.Next(0, 15);
-                intel = Random.Next(0, 15 - force);
-                cuisine = Random.Next(0, 15 - force - intel);
-                charisme = 15 - force - intel - cuisine;
-                break;
-            case "epic":
-                force = Random.Next(0, 10);
-                intel = Random.Next(0, 10 - force);
-                cuisine = Random.Next(0, 10 - force - intel);
-                charisme = 10 - force - intel - cuisine;
-                break;
-            case "commune":
-                force = Random.Next(0, 5);
-                intel = Random.Next(0, 5 - force);
-                cuisine = Random.Next(0, 5 - force - intel);
-                charisme = 5 - force - intel - cuisine;
-                break;
+            { "force", 0 },
+            { "intel", 0 },
+            { "cuisine", 0 },
+            { "charisme", 0 }
+        };
+        var stillAvailable = new List<string> { "force", "intel", "cuisine", "charisme" };
+
+        ptsLeft = rarity switch
+        {
+            "legendaire" => 15,
+            "epic" => 10,
+            "commune" => 5,
+            _ => ptsLeft
+        };
+
+        while (ptsLeft > 0)
+        {
+            var index = Random.Next(0, 5);
+            var key = stillAvailable[index];
+            if (valuesDicto[key] < 10)
+            {
+                valuesDicto[key] += 1;
+                ptsLeft -= 1;
+            }
+            else stillAvailable.RemoveAt(index);
+
         }
         
+        var force = valuesDicto["force"];
+        var intel = valuesDicto["intel"];
+        var cuisine = valuesDicto["cuisine"];
+        var charisme = valuesDicto["charisme"];
+
         var explo = Random.Next(0, 100) switch
         {
             < 40 => 0,
