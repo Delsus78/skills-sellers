@@ -12,7 +12,7 @@ public static class UsersModelsExtensions
             Pseudo = model.Pseudo,
             Creatium = 600,
             Or = 0,
-            Nourriture = 5,
+            Nourriture = 10,
             NbCardOpeningAvailable = 1
         };
     }
