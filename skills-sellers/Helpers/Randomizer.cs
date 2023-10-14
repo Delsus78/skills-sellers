@@ -75,7 +75,7 @@ public static class Randomizer
 
         while (ptsLeft > 0)
         {
-            var index = Random.Next(0, 5);
+            var index = Random.Next(0, 4);
             var key = stillAvailable[index];
             if (valuesDicto[key] < 10)
             {
