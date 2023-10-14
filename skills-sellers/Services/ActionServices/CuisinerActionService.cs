@@ -207,7 +207,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         #region REWARDS
 
         // give nourriture
-        var amount = userCard.Competences.Cuisine - 1;
+        var amount = userCard.Competences.Cuisine;
         user.Nourriture += amount;
         
         // stats
