@@ -48,9 +48,7 @@ services.AddSingleton<IStatsService, StatsService>();
 services.AddScoped<IMarchandService, MarchandService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
-services.AddHostedService<HostedTasksService>();
 services.AddSingleton<INotificationService, NotificationService>();
-services.AddHostedService<HostedStatsService>();
 services.AddSingleton<IRegistrationLinkCreatorService, RegistrationLinkCreatorService>();
 
 // add action services
@@ -61,7 +59,12 @@ services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
 
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
+
+// hosted services
+services.AddHostedService<HostedStatsService>();
+services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
+
 
 // DbContext
 services.AddDbContext<DataContext>(options =>

@@ -61,11 +61,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         // Batiment déjà plein
         if (_userBatimentsService.IsUserBatimentFull(user, "cuisine"))
             return (false, "Batiment déjà plein, attendez demain !");
-        
-        // Stats et ressources suffisantes ?
-        if (user.Nourriture < 1)
-            return (false, "Pas assez de nourriture");
-        
+
         return (true, "");
     }
 
@@ -98,7 +94,6 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday += 1;
-        user.Nourriture -= 1;
         
         await _context.Actions.AddAsync(action);
         await _context.SaveChangesAsync();
@@ -134,7 +129,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
             {
-                { "nourriture", (userCards.First().Competences.Cuisine - 1).ToString() },
+                { "nourriture", (userCards.First().Competences.Cuisine).ToString() },
                 { "Up cuisine", "20%" }
             },
             Error = !validation.valid ? "Impossible de cuisiner : " + validation.why : null
