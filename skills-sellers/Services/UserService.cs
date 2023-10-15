@@ -31,7 +31,7 @@ public interface IUserService
     Task<UserCardResponse?> OpenCard(User user);
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
-    UserCardResponse GetUserCard(int id, int cardId);
+    UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotification(User user, int notificationId);
     Task SendNotificationToAll(NotificationRequest notification);
@@ -164,9 +164,8 @@ public class UserService : IUserService
         return user.UserCards.Select(uc => uc.ToResponse());
     }
     
-    public UserCardResponse GetUserCard(int id, int cardId)
+    public UserCardResponse GetUserCard(User user, int cardId)
     {
-        var user = GetUserEntity(u => u.Id == id);
         var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
         if (userCard == null)
             throw new AppException("Le joueur ne possède pas cette carte !", 404);
