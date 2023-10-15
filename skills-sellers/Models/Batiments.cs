@@ -8,11 +8,14 @@ public record UserBatimentResponse(
     int LaboLevel,
     int ActualLaboUsed,
     int SpatioPortLevel,
-    int ActualSpatioPortUsed);
+    int ActualSpatioPortUsed,
+    int NbBuyMarchandToday,
+    int NbBuyMarchandMaxPerDay);
     
 public record UserBatimentRequest(
     int CuisineLevel,
     int NbCuisineUsedToday,
     int SalleSportLevel,
     int LaboLevel,
-    int SpatioPortLevel);
+    int SpatioPortLevel,
+    int NbBuyMarchandToday);

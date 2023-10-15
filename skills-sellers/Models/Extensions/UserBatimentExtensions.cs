@@ -1,5 +1,5 @@
 using skills_sellers.Entities;
-using skills_sellers.Helpers;
+using skills_sellers.Services;
 
 namespace skills_sellers.Models.Extensions;
 
@@ -15,7 +15,9 @@ public static class UserBatimentExtensions
             userBatiment.LaboLevel,
             actualLaboUsed,
             userBatiment.SpatioPortLevel,
-            actualSpatioPortUsed);
+            actualSpatioPortUsed,
+            userBatiment.NbBuyMarchandToday,
+            MarchandService.MaxBuyMarchandPerDay);
     }
 
     public static UserBatimentData UpdateUserBatimentData(this UserBatimentRequest userBatimentRequest, UserBatimentData userBatiment)
@@ -25,6 +27,7 @@ public static class UserBatimentExtensions
         userBatiment.SalleSportLevel = userBatimentRequest.SalleSportLevel;
         userBatiment.LaboLevel = userBatimentRequest.LaboLevel;
         userBatiment.SpatioPortLevel = userBatimentRequest.SpatioPortLevel;
+        userBatiment.NbBuyMarchandToday = userBatimentRequest.NbBuyMarchandToday;
         
         return userBatiment;
     }

@@ -10,7 +10,7 @@ public interface IDailyTaskService
 {
     Task ExecuteDailyTaskAsync();
     
-    Task DailyResetCuisineAsync();
+    Task DailyResetBatimentDataAsync();
     Task DailyCheckAndDeleteNotifications();
 }
 public class DailyTaskService : IDailyTaskService
@@ -34,7 +34,7 @@ public class DailyTaskService : IDailyTaskService
         if (logEntry == null)
         {
             // Execute the task
-            await DailyResetCuisineAsync();
+            await DailyResetBatimentDataAsync();
             await DailyCheckAndDeleteNotifications();
 
             // Log the execution
@@ -43,7 +43,7 @@ public class DailyTaskService : IDailyTaskService
         }
     }
 
-    public async Task DailyResetCuisineAsync()
+    public async Task DailyResetBatimentDataAsync()
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var usersBatimentsData = await _context.UserBatiments.ToListAsync();
@@ -51,10 +51,12 @@ public class DailyTaskService : IDailyTaskService
         foreach (var userBatimentData in usersBatimentsData)
         {
             userBatimentData.NbCuisineUsedToday = 0;
+            userBatimentData.NbBuyMarchandToday = 0;
         }
         
         // notify all users
         await _notificationService.SendNotificationToAll(new NotificationRequest("Cuisine", "Les cuisines ont été réinitialisées !"), _context);
+        await _notificationService.SendNotificationToAll(new NotificationRequest("Marchand BonnBouff", "Le marchand a été réinitialisé !"), _context);
 
         await _context.SaveChangesAsync();
     }
