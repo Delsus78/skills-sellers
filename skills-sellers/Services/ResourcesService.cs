@@ -57,12 +57,12 @@ public class ResourcesService : IResourcesService
     public (int min, int max) GetLimitsForForceStat(int forceLevel, string resourceType)
     {
         if (forceLevel is < 1 or > 10)
-            throw new ArgumentOutOfRangeException(nameof(forceLevel));
+            throw new AppException("La force doit être comprise entre 1 et 10.", 400);
         
         resourceType = resourceType.ToLower();
         
         if (!Limits.TryGetValue(resourceType, out var levelLimits) || !levelLimits.TryGetValue(forceLevel, out var limits))
-            throw new AppException("Invalid resource type or force level.", 400);
+            throw new AppException("Le type de ressource ou le niveau de force est invalide.", 400);
 
         return limits;
     }
@@ -75,7 +75,7 @@ public class ResourcesService : IResourcesService
         resourceType = resourceType.ToLower();
         
         if (!Limits.TryGetValue(resourceType, out var levelLimits) || !levelLimits.TryGetValue(forceLevel, out var limits))
-            throw new AppException("Invalid resource type or force level.", 400);
+            throw new AppException("Le type de ressource ou le niveau de force est invalide.", 400);
 
         return Random.Next(limits.min, limits.max);
     }

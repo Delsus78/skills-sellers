@@ -16,6 +16,8 @@ public class UserBatimentData
     
     public int SpatioPortLevel { get; set; }
     
+    public int NbBuyMarchandToday { get; set; }
+    
     // One to one
     public User User { get; set; }
     

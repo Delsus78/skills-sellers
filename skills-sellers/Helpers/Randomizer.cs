@@ -14,9 +14,12 @@ public static class Randomizer
         Gutenberg = File.ReadAllLines("gutenberg.txt");
     }
 
-    public static string RandomPlat()
+    public static string RandomPlat(int? seed = null)
     {
-        var randomLine = Random.Next(0, AllFoods.Length);
+        var random = Random;
+        if (seed.HasValue) random = new Random(seed.Value);
+        
+        var randomLine = random.Next(0, AllFoods.Length);
         return AllFoods[randomLine];
     }
 
