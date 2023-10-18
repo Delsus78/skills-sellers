@@ -287,6 +287,7 @@ public class UserService : IUserService
             };
             user.UserCardsDoubled.Add(usercardDoubled);
             _context.Users.Update(user);
+            _statsService.OnDoublonsEarned(user.Id);
             await _context.SaveChangesAsync();
             return null;
         }

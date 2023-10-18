@@ -16,6 +16,9 @@ public interface IStatsService
     void OnRocketLaunched(int userId);
     void OnMealCooked(int userId);
     void OnBuildingsUpgraded(int userId);
+    void OnDoublonsEarned(int userId);
+    void OnLooseGoldAtCharismeCasino(int userId, int amount);
+    void OnWinAtCharismeCasino(int userId);
     Stats GetOrCreateStatsEntity(User user);
 }
 public class StatsService : IStatsService
@@ -83,6 +86,21 @@ public class StatsService : IStatsService
     {
         AddStat(userId, "TotalBuildingsUpgraded");
     }
+    
+    public void OnDoublonsEarned(int userId)
+    {
+        AddStat(userId, "TotalDoublonsEarned");
+    }
+    
+    public void OnLooseGoldAtCharismeCasino(int userId, int amount)
+    {
+        AddStat(userId, "TotalLooseAtCharismeCasino", amount);
+    }
+    
+    public void OnWinAtCharismeCasino(int userId)
+    {
+        AddStat(userId, "TotalWinAtCharismeCasino");
+    }
 
 
     #region Helpers methods
@@ -101,7 +119,10 @@ public class StatsService : IStatsService
             TotalOrMined = 0,
             TotalBuildingsUpgraded = 0,
             TotalRocketLaunched = 0,
-            TotalMealCooked = 0
+            TotalMealCooked = 0,
+            TotalDoublonsEarned = 0,
+            TotalLooseAtCharismeCasino = 0,
+            TotalWinAtCharismeCasino = 0
         };
 
         user.Stats = stats;

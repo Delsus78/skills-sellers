@@ -7,11 +7,13 @@ public static class Randomizer
     private static readonly Random Random = new();
     private static readonly string[] AllFoods;
     private static readonly string[] Gutenberg;
+    private static readonly string[] AllMuscles;
 
     static Randomizer()
     {
         AllFoods = File.ReadAllLines("all_foods.txt");
         Gutenberg = File.ReadAllLines("gutenberg.txt");
+        AllMuscles = File.ReadAllLines("all_muscles.txt");
     }
 
     public static string RandomPlat(int? seed = null)
@@ -21,6 +23,15 @@ public static class Randomizer
         
         var randomLine = random.Next(0, AllFoods.Length);
         return AllFoods[randomLine];
+    }
+    
+    public static string RandomMuscle(int? seed = null)
+    {
+        var random = Random;
+        if (seed.HasValue) random = new Random(seed.Value);
+        
+        var randomLine = random.Next(0, AllMuscles.Length);
+        return AllMuscles[randomLine];
     }
 
     public static bool RandomPourcentageUp(int pourcentage = 20)

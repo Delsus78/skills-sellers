@@ -9,6 +9,7 @@ using skills_sellers.Helpers.Bdd;
 using skills_sellers.Hubs;
 using skills_sellers.Services;
 using skills_sellers.Services.ActionServices;
+using skills_sellers.Services.GameServices;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ var configuration = builder.Configuration;
 
 // ssl security
 builder.WebHost.UseUrls("https://*:5002");
+
+builder.Logging.AddConsole();
 
 // cors
 services.AddCors(options =>
@@ -58,14 +61,19 @@ services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
 services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
 services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
 
+// add games services
+services.AddScoped<IGameService, GamesService>();
+services.AddScoped<CasinoService>();
+
+
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
 
 // hosted services
-services.AddHostedService<HostedStatsService>();
+/*services.AddHostedService<HostedStatsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
-
+*/
 
 // DbContext
 services.AddDbContext<DataContext>(options =>
