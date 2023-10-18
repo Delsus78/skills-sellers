@@ -13,7 +13,10 @@ public class Stats
     public int TotalBuildingsUpgraded { get; set; }
     public int TotalRocketLaunched { get; set; }
     public int TotalMealCooked { get; set; }
-    
+    public int TotalDoublonsEarned { get; set; }
+    public int TotalLooseAtCharismeCasino { get; set; }
+    public int TotalWinAtCharismeCasino { get; set; }
+
     // One to one
     public User User { get; set; }
 }

@@ -188,7 +188,13 @@ namespace skills_sellers.Migrations
                     b.Property<int>("TotalCreatiumMined")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TotalDoublonsEarned")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TotalFailedCardsCauseOfCharisme")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalLooseAtCharismeCasino")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalMealCooked")
@@ -201,6 +207,9 @@ namespace skills_sellers.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalRocketLaunched")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalWinAtCharismeCasino")
                         .HasColumnType("integer");
 
                     b.HasKey("UserId");
@@ -361,6 +370,10 @@ namespace skills_sellers.Migrations
             modelBuilder.Entity("skills_sellers.Entities.Actions.ActionMuscler", b =>
                 {
                     b.HasBaseType("skills_sellers.Entities.Action");
+
+                    b.Property<string>("Muscle")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasDiscriminator().HasValue("Muscler");
                 });
