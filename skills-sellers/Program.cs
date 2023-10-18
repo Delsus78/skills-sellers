@@ -70,10 +70,10 @@ services.AddScoped<CasinoService>();
 services.AddScoped<IDailyTaskService, DailyTaskService>();
 
 // hosted services
-/*services.AddHostedService<HostedStatsService>();
+services.AddHostedService<HostedStatsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
-*/
+
 
 // DbContext
 services.AddDbContext<DataContext>(options =>
