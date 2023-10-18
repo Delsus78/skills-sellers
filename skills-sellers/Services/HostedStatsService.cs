@@ -37,8 +37,8 @@ public class HostedStatsService : IHostedService
             foreach (var (userId, stats) in _statsService.Stats)
             {
                 var userStats = context.Stats.FirstOrDefault(s => s.UserId == userId);
-                if (userStats is null)
-                    throw new AppException($"Stats not found for user {userId}", 500);
+                if (userStats is null) // skip if user has no stats
+                    continue;
             
                 foreach (var (statName, amount) in stats)
                 {

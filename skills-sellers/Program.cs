@@ -17,7 +17,7 @@ var services = builder.Services;
 var configuration = builder.Configuration;
 
 // ssl security
-builder.WebHost.UseUrls("https://*:5002");
+builder.WebHost.UseUrls("http://*:5002");
 
 builder.Logging.AddConsole();
 
@@ -33,7 +33,6 @@ services.AddCors(options =>
             .AllowCredentials(); // Important pour SignalR
     });
 });
-
 // Add services to the container.
 services.AddControllers(options =>
 {
@@ -159,7 +158,7 @@ services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
