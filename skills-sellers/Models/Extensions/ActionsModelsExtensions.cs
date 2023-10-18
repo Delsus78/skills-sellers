@@ -34,7 +34,8 @@ public static class ActionsModelsExtensions
             {
                 ActionName = "muscler",
                 EndTime = actionMuscler.DueDate,
-                Cards = actionMuscler.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
+                Cards = actionMuscler.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
+                Muscle = actionMuscler.Muscle
             },
             _ => throw new ArgumentException("Action inconnue")
         };

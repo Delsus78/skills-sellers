@@ -77,12 +77,16 @@ public class MusclerActionService : IActionService<ActionMuscler>
         
         // calculate action end time
         var endTime = CalculateActionEndTime(userCards.First().Competences.Force  + 1);
-
+        
+        // random muscle
+        var muscle = Randomizer.RandomMuscle();
+        
         var action = new ActionMuscler
         {
             UserCards = userCards,
             DueDate = endTime,
-            User = user
+            User = user,
+            Muscle = muscle
         };
         
         // actualise bdd

@@ -64,6 +64,7 @@ public class ActionAmeliorerResponse : ActionResponse
 
 public class ActionMusclerResponse : ActionResponse
 {
+    public string Muscle { get; set; }
 }
 
 public class ActionEstimationResponse : ActionResponse
