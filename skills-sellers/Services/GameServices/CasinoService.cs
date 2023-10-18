@@ -64,10 +64,7 @@ public class CasinoService : IGameService
         var card = user.UserCards.FirstOrDefault(c => c.Card.Id == model.CardsIds[0]);
         
         card.Competences.Charisme += 1;
-        
-        // add gold
-        user.Or += model.Bet;
-        
+
         // save stats total win at casino
         _statsService.OnWinAtCharismeCasino(user.Id);
 
