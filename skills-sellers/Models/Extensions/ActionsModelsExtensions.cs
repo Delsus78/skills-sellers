@@ -11,6 +11,7 @@ public static class ActionsModelsExtensions
             ActionCuisiner actionCuisiner => new ActionCuisinerResponse
             {
                 ActionName = "cuisiner",
+                Id = actionCuisiner.Id,
                 EndTime = actionCuisiner.DueDate,
                 Plat = actionCuisiner.Plat,
                 Cards = actionCuisiner.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
@@ -18,6 +19,7 @@ public static class ActionsModelsExtensions
             ActionExplorer actionExplorer => new ActionExplorerResponse
             {
                 ActionName = "explorer",
+                Id = actionExplorer.Id,
                 EndTime = actionExplorer.DueDate,
                 Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 IsReturningToHome = actionExplorer.IsReturningToHome,
@@ -26,6 +28,7 @@ public static class ActionsModelsExtensions
             ActionAmeliorer actionAmeliorer => new ActionAmeliorerResponse
             {
                 ActionName = "ameliorer",
+                Id = actionAmeliorer.Id,
                 EndTime = actionAmeliorer.DueDate,
                 BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
@@ -33,6 +36,7 @@ public static class ActionsModelsExtensions
             ActionMuscler actionMuscler => new ActionMusclerResponse
             {
                 ActionName = "muscler",
+                Id = actionMuscler.Id,
                 EndTime = actionMuscler.DueDate,
                 Cards = actionMuscler.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 Muscle = actionMuscler.Muscle

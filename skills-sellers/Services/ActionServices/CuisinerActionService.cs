@@ -139,8 +139,26 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         return action;
     }
 
+    public Task DeleteAction(User user, int actionId)
+    {
+        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+        
+        _context.Actions.Remove(action);
+        
+        // actualise bdd and nb cuisine used today
+        user.UserBatimentData.NbCuisineUsedToday -= 1;
+        
+        // cancel task
+        if (TaskCancellations.TryGetValue(action.Id, out var cts))
+            cts.Cancel();
+        
+        return _context.SaveChangesAsync();
+    }
+    
     #endregion
-
+    
     #region TaskService
     
     public Task RegisterNewTaskForActionAsync(ActionCuisiner action, User user)
@@ -152,8 +170,6 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
 
         return StartTaskForActionAsync(action, cts.Token);
     }
-    
-    
     private async Task StartTaskForActionAsync(
         ActionCuisiner action,
         CancellationToken cancellationToken)
@@ -174,8 +190,6 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             catch (TaskCanceledException)
             {
                 Console.WriteLine($"Task {action.Id} cancelled");
-                _context.Actions.Remove(action);
-                await _context.SaveChangesAsync(cancellationToken);
             }
         }
         else

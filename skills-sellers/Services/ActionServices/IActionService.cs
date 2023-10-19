@@ -19,6 +19,8 @@ public interface IActionService<T> where T : Action
 
     Task EndAction(int actionId);
 
+    Task DeleteAction(User user, int actionId);
+    
     Task RegisterNewTaskForActionAsync(T action, User user);
 
     ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; }
