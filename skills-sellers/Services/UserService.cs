@@ -37,6 +37,7 @@ public interface IUserService
     Task SendNotificationToAll(NotificationRequest notification);
     RegistrationLinkResponse CreateLink(LinkCreateRequest model);
     Task<UserResponse> Register(UserRegisterRequest model);
+    Task DeleteAction(User user, int actionId);
 }
 
 public class UserService : IUserService
@@ -81,6 +82,7 @@ public class UserService : IUserService
         _registrationLinkCreatorService = registrationLinkCreatorService;
     }
 
+    #region USER
     public IEnumerable<UserResponse> GetAll()
     {
         var users = IncludeGetUsers().ToList();
@@ -126,26 +128,6 @@ public class UserService : IUserService
         _context.SaveChanges();
     }
 
-    public void AddCardToUser(int id, int cardId, CompetencesRequest competences)
-    {
-        var user = GetUserEntity(u => u.Id == id);
-        var card = _cardService.GetCardEntity(c => c.Id == cardId);
-        
-        // Créez une nouvelle instance de UserCard
-        var userCard = new UserCard
-        {
-            User = user,
-            Card = card,
-            Competences = competences.CreateCompetences()
-        };
-        
-        // Ajoutez cette nouvelle instance à la base de données
-        _context.UserCards.Add(userCard);
-
-        // Enregistrez les modifications
-        _context.SaveChanges();
-    }
-
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
     {
         var user = GetUserEntity(u => u.Pseudo == model.Pseudo);
@@ -157,34 +139,7 @@ public class UserService : IUserService
         
         return new AuthenticateResponse(user.Id, user.Pseudo, loginResult.Item2);
     }
-
-    public IEnumerable<UserCardResponse> GetUserCards(int id)
-    {
-        var user = GetUserEntity(u => u.Id == id);
-        return user.UserCards.Select(uc => uc.ToResponse());
-    }
     
-    public UserCardResponse GetUserCard(User user, int cardId)
-    {
-        var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
-        if (userCard == null)
-            throw new AppException("Le joueur ne possède pas cette carte !", 404);
-
-        return userCard.ToResponse();
-    }
-
-    public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
-        => await _notificationService.GetNotifications(user);
-
-    public Task DeleteNotification(User user, int notificationId)
-        => _notificationService.DeleteNotification(user, notificationId);
-
-    public async Task SendNotificationToAll(NotificationRequest notification)
-    {
-        await _notificationService.SendNotificationToAll(notification, _context);
-        await _context.SaveChangesAsync();
-    }
-
     public RegistrationLinkResponse CreateLink(LinkCreateRequest model)
     {
         return new RegistrationLinkResponse(_registrationLinkCreatorService.CreateRegistrationLink(model.Role, model.FirstCardId));
@@ -206,65 +161,45 @@ public class UserService : IUserService
         
         return user;
     }
-
-    public StatsResponse GetUserStats(int id)
+    
+    #endregion
+    
+    #region USERCARDS
+    public void AddCardToUser(int id, int cardId, CompetencesRequest competences)
     {
         var user = GetUserEntity(u => u.Id == id);
-        var userCards = user.UserCards;
-        var stats = _statsService.GetOrCreateStatsEntity(user);
+        var card = _cardService.GetCardEntity(c => c.Id == cardId);
         
-        return stats.ToResponse(userCards);
-    }
-
-    public UserBatimentResponse GetUserBatiments(int id)
-    {
-        var user = GetUserEntity(u => u.Id == id);
-        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
-
-        var nbLaboUsed = _ameliorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        
-        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
-    }
-
-    public async Task<ActionResponse> CreateAction(User user, ActionRequest model)
-    {
-        return model.ActionName switch
+        // Créez une nouvelle instance de UserCard
+        var userCard = new UserCard
         {
-            "cuisiner" => await _cuisinerActionService.StartAction(user, model),
-            "explorer" => await _explorerActionService.StartAction(user, model),
-            "muscler" => await _musclerActionService.StartAction(user, model),
-            "ameliorer" => await _ameliorerActionService.StartAction(user, model),
-            _ => throw new AppException("Action not found", 404)
+            User = user,
+            Card = card,
+            Competences = competences.CreateCompetences()
         };
+        
+        // Ajoutez cette nouvelle instance à la base de données
+        _context.UserCards.Add(userCard);
+
+        // Enregistrez les modifications
+        _context.SaveChanges();
+    }
+
+    public IEnumerable<UserCardResponse> GetUserCards(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserCards.Select(uc => uc.ToResponse());
     }
     
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    public UserCardResponse GetUserCard(User user, int cardId)
     {
-        return model.ActionName switch
-        {
-            "cuisiner" => _cuisinerActionService.EstimateAction(user, model),
-            "explorer" => _explorerActionService.EstimateAction(user, model),
-            "muscler" => _musclerActionService.EstimateAction(user, model),
-            "ameliorer" => _ameliorerActionService.EstimateAction(user, model),
-            _ => throw new AppException("Action not found", 404)
-        };
+        var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
+        if (userCard == null)
+            throw new AppException("Le joueur ne possède pas cette carte !", 404);
+
+        return userCard.ToResponse();
     }
-
-    public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
-    {
-        var user = GetUserEntity(u => u.Id == id);
-        
-        var userBatimentData = batimentsRequest.UpdateUserBatimentData(user.UserBatimentData);
-        
-        // save user batiment data
-        _context.UserBatiments.Update(userBatimentData);
-        await _context.SaveChangesAsync();
-
-        return userBatimentData.ToResponse(-1, -1, -1);
-    }
-
+    
     public async Task<UserCardResponse?> OpenCard(User user)
     {
         // remove card opening
@@ -368,8 +303,118 @@ public class UserService : IUserService
         
         return userCard.ToResponse();
     }
+    
+    #endregion
 
-    // helper methods
+    #region Stats and notifications
+    public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
+        => await _notificationService.GetNotifications(user);
+
+    public Task DeleteNotification(User user, int notificationId)
+        => _notificationService.DeleteNotification(user, notificationId);
+
+    public async Task SendNotificationToAll(NotificationRequest notification)
+    {
+        await _notificationService.SendNotificationToAll(notification, _context);
+        await _context.SaveChangesAsync();
+    }
+
+    public StatsResponse GetUserStats(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userCards = user.UserCards;
+        var stats = _statsService.GetOrCreateStatsEntity(user);
+        
+        return stats.ToResponse(userCards);
+    }
+
+    #endregion
+
+    #region ACTIONS
+
+    public async Task<ActionResponse> CreateAction(User user, ActionRequest model)
+    {
+        return model.ActionName switch
+        {
+            "cuisiner" => await _cuisinerActionService.StartAction(user, model),
+            "explorer" => await _explorerActionService.StartAction(user, model),
+            "muscler" => await _musclerActionService.StartAction(user, model),
+            "ameliorer" => await _ameliorerActionService.StartAction(user, model),
+            _ => throw new AppException("Action not found", 404)
+        };
+    }
+    
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    {
+        return model.ActionName switch
+        {
+            "cuisiner" => _cuisinerActionService.EstimateAction(user, model),
+            "explorer" => _explorerActionService.EstimateAction(user, model),
+            "muscler" => _musclerActionService.EstimateAction(user, model),
+            "ameliorer" => _ameliorerActionService.EstimateAction(user, model),
+            _ => throw new AppException("Action not found", 404)
+        };
+    }
+    
+    public async Task DeleteAction(User user, int actionId)
+    {
+        var action = _context.Actions.FirstOrDefault(a => a.Id == actionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+        
+        // delete action
+        switch (action)
+        {
+            case ActionAmeliorer:
+                await _ameliorerActionService.DeleteAction(user, action.Id);
+                break;
+            case ActionCuisiner:
+                await _cuisinerActionService.DeleteAction(user, action.Id);
+                break;
+            case ActionMuscler:
+                await _musclerActionService.DeleteAction(user, action.Id);
+                break;
+            case ActionExplorer:
+                await _explorerActionService.DeleteAction(user, action.Id);
+                break;
+            
+            default:
+                throw new ArgumentOutOfRangeException();
+        };
+    }
+
+    #endregion
+    
+    #region BATIMENTS
+    
+    public UserBatimentResponse GetUserBatiments(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
+
+        var nbLaboUsed = _ameliorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        
+        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
+    }
+    
+    public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        
+        var userBatimentData = batimentsRequest.UpdateUserBatimentData(user.UserBatimentData);
+        
+        // save user batiment data
+        _context.UserBatiments.Update(userBatimentData);
+        await _context.SaveChangesAsync();
+
+        return userBatimentData.ToResponse(-1, -1, -1);
+    }
+    
+    #endregion
+
+    #region helper methods
 
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
     {
@@ -392,4 +437,6 @@ public class UserService : IUserService
             .Include(u => u.UserBatimentData)
             .Include(u => u.UserCardsDoubled);
     }
+    
+    #endregion
 }

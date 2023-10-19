@@ -31,6 +31,7 @@ public class ActionRequest
 [JsonDerivedType(typeof(ActionMusclerResponse))]
 public abstract class ActionResponse
 {
+    public int Id { get; set; }
     public List<UserCardResponse> Cards { get; set; }
     
     public string ActionName { get; set; }

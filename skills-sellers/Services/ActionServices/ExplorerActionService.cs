@@ -243,6 +243,25 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         return _context.SaveChangesAsync();
     }
 
+    public Task DeleteAction(User user, int actionId)
+    {
+        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+        
+        _context.Actions.Remove(action);
+        
+        // refund resources
+        user.Nourriture += 2;
+        
+        
+        // cancel task
+        if (TaskCancellations.TryGetValue(action.Id, out var cts))
+            cts.Cancel();
+        
+        return _context.SaveChangesAsync();
+    }
+    
     public Task RegisterNewTaskForActionAsync(ActionExplorer action, User user)
     {
         var cts = new CancellationTokenSource();
@@ -273,8 +292,6 @@ public class ExplorerActionService : IActionService<ActionExplorer>
             catch (TaskCanceledException)
             {
                 Console.WriteLine($"Task {action.Id} cancelled");
-                _context.Actions.Remove(action);
-                await _context.SaveChangesAsync(cancellationToken);
             }
         }
         else
