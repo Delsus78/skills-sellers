@@ -9,5 +9,6 @@ public record StatsResponse(
     int TotalCardWithAStatMaxed,
     int TotalBuildingsUpgraded,
     int TotalRocketLaunched,
-    int TotalMealCooked
+    int TotalMealCooked,
+    int TotalDoublonsEarned
     );

@@ -22,7 +22,8 @@ public static class StatsModelsExtensions
 
         return new StatsResponse(nbCards, nbCardsByRarity, stats.TotalFailedCardsCauseOfCharisme,
             stats.TotalMessagesSent, totalResourcesMined, totalCardsWithAStatMaxed,
-            stats.TotalBuildingsUpgraded, stats.TotalRocketLaunched, stats.TotalMealCooked);
+            stats.TotalBuildingsUpgraded, stats.TotalRocketLaunched, stats.TotalMealCooked,
+            stats.TotalDoublonsEarned);
     }
 
     
