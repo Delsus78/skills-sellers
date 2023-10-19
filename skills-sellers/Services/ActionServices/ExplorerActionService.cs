@@ -249,6 +249,9 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         if (action == null)
             throw new AppException("Action not found", 404);
         
+        if (action.IsReturningToHome)
+            throw new AppException("Vous ne pouvez pas annuler cette action !", 400);
+        
         _context.Actions.Remove(action);
         
         // refund resources
