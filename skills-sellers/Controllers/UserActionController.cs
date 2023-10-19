@@ -56,6 +56,11 @@ public class UserActionController : ControllerBase
     [HttpPost("estimate/actions")]
     public ActionEstimationResponse EstimateAction(int id, ActionRequest model)
         => _userService.EstimateAction(GetUserAuthenticated(id), model);
+    
+    [Authorize]
+    [HttpDelete("actions/{actionId}")]
+    public async Task DeleteAction(int id, int actionId)
+        => await _userService.DeleteAction(GetUserAuthenticated(id), actionId);
 
     [Authorize]
     [HttpGet("cards/{cardId}")]

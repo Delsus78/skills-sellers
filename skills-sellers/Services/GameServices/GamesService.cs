@@ -17,19 +17,26 @@ public class GamesService : IGameService
     {
         return DateTime.Now.DayOfWeek switch
         {
-            DayOfWeek.Monday => _casinoService.GetGameOfTheDay(),
+            DayOfWeek.Monday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
             DayOfWeek.Tuesday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
             DayOfWeek.Wednesday => _casinoService.GetGameOfTheDay(),
-            DayOfWeek.Thursday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
-            DayOfWeek.Friday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
+            DayOfWeek.Thursday => _casinoService.GetGameOfTheDay(),
+            DayOfWeek.Friday => _casinoService.GetGameOfTheDay(),
             DayOfWeek.Saturday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
-            DayOfWeek.Sunday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
+            DayOfWeek.Sunday => _casinoService.GetGameOfTheDay(),
             _ => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400)
         };
     }
 
     public Task<GamesPlayResponse> PlayGameOfTheDay(User user, GamesRequest model)
     {
+        
+        // check if its the game day
+        var game = GetGameOfTheDay();
+
+        if (!string.Equals(game.Name, model.Name, StringComparison.CurrentCultureIgnoreCase))
+            throw new AppException("Le jeu demandé n'est pas disponible aujourd'hui.", 400);
+        
         return model.Name.ToLower() switch
         {
             "casino" => _casinoService.PlayGameOfTheDay(user, model),

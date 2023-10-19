@@ -22,11 +22,11 @@ public class DailyTaskHostedService : IHostedService
         return Task.CompletedTask;
     }
     
-    private void ExecuteTask(object? state)
+    private async void ExecuteTask(object? state)
     {
         using var scope = _serviceProvider.CreateScope();
         var dailyTaskService = scope.ServiceProvider.GetRequiredService<IDailyTaskService>();
-        dailyTaskService.ExecuteDailyTaskAsync().Wait();
+        await dailyTaskService.ExecuteDailyTaskAsync();
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
