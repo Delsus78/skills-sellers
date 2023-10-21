@@ -33,7 +33,7 @@ public interface IUserService
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
     UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
-    Task DeleteNotification(User user, int notificationId);
+    Task DeleteNotifications(User user, List<int> notificationIds);
     Task SendNotificationToAll(NotificationRequest notification);
     RegistrationLinkResponse CreateLink(LinkCreateRequest model);
     Task<UserResponse> Register(UserRegisterRequest model);
@@ -312,8 +312,8 @@ public class UserService : IUserService
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
         => await _notificationService.GetNotifications(user);
 
-    public Task DeleteNotification(User user, int notificationId)
-        => _notificationService.DeleteNotification(user, notificationId);
+    public Task DeleteNotifications(User user, List<int> notificationIds)
+        => _notificationService.DeleteNotifications(user, notificationIds);
 
     public async Task SendNotificationToAll(NotificationRequest notification)
     {

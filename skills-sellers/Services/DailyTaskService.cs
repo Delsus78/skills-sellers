@@ -65,10 +65,13 @@ public class DailyTaskService : IDailyTaskService
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var notifications = await _context.Notifications.ToListAsync();
+        var count = 0;
         foreach (var notification in notifications.Where(notification => notification.CreatedAt.AddDays(7) < DateTime.Now))
         {
             _context.Notifications.Remove(notification);
+            count++;
         }
+        Console.Out.WriteLine($"Deleted {count} notifications");
         await _context.SaveChangesAsync();
     }
 }
