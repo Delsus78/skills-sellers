@@ -96,8 +96,13 @@ public class UsersController : ControllerBase
     
     [Authorize(Roles = "admin")]
     [HttpPost("sendnotification")]
-    public async Task ForceOpenCard(NotificationRequest notification)
+    public async Task SendNotification(NotificationRequest notification)
         => await _userService.SendNotificationToAll(notification);
 
+    [Authorize(Roles = "admin")]
+    [HttpPost("createGiftCode")]
+    public async Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreation)
+        => await _userService.CreateGiftCode(giftCodeCreation);
+    
     #endregion
 }

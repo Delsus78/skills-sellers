@@ -13,7 +13,7 @@ public interface INotificationService
     Task SendNotificationToUser(User user, NotificationRequest notification, DataContext context);
     Task SendNotificationToAll(NotificationRequest notification, DataContext context);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
-    Task DeleteNotification(User user, int notificationId);
+    Task DeleteNotifications(User user, List<int> notificationIds);
 }
 
 public class NotificationService : INotificationService
@@ -57,13 +57,14 @@ public class NotificationService : INotificationService
         return notifications.Select(n => n.ToResponse());
     }
     
-    public async Task DeleteNotification(User user, int notificationId)
+    public async Task DeleteNotifications(User user, List<int> notificationIds)
     {
         await using var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-        var notification = await context.Notifications.FirstOrDefaultAsync(n => n.Id == notificationId && n.User.Id == user.Id);
-        if (notification == null)
-            throw new AppException("Notification not found", 404);
-        context.Notifications.Remove(notification);
+        var notifications = await context.Notifications.Where(n => notificationIds.Contains(n.Id)).ToListAsync();
+        if (notifications.Count == 0)
+            throw new AppException("No Notification was found for this user", 404);
+        
+        context.Notifications.RemoveRange(notifications);
         await context.SaveChangesAsync();
     }
     

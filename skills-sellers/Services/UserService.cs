@@ -33,11 +33,13 @@ public interface IUserService
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
     UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
-    Task DeleteNotification(User user, int notificationId);
+    Task DeleteNotifications(User user, List<int> notificationIds);
     Task SendNotificationToAll(NotificationRequest notification);
     RegistrationLinkResponse CreateLink(LinkCreateRequest model);
     Task<UserResponse> Register(UserRegisterRequest model);
     Task DeleteAction(User user, int actionId);
+    Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
+    Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
 }
 
 public class UserService : IUserService
@@ -310,8 +312,8 @@ public class UserService : IUserService
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
         => await _notificationService.GetNotifications(user);
 
-    public Task DeleteNotification(User user, int notificationId)
-        => _notificationService.DeleteNotification(user, notificationId);
+    public Task DeleteNotifications(User user, List<int> notificationIds)
+        => _notificationService.DeleteNotifications(user, notificationIds);
 
     public async Task SendNotificationToAll(NotificationRequest notification)
     {
@@ -389,7 +391,10 @@ public class UserService : IUserService
     
     public UserBatimentResponse GetUserBatiments(int id)
     {
-        var user = GetUserEntity(u => u.Id == id);
+        var user = _context.Users.FirstOrDefault(u => u.Id == id);
+        if (user == null)
+            throw new AppException("User not found", 404);
+        
         var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
 
         var nbLaboUsed = _ameliorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
@@ -414,6 +419,54 @@ public class UserService : IUserService
     
     #endregion
 
+    #region GIFTS
+
+    public async Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest)
+    {
+        var code = Guid.NewGuid().ToString()[..8];
+        var giftCode = giftCodeCreationRequest.CreateGiftCode(code);
+        
+        _context.GiftCodes.Add(giftCode);
+        await _context.SaveChangesAsync();
+
+        return giftCode.ToResponse();
+    }
+    
+    public async Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode)
+    {
+        var giftCodeEntity = _context.GiftCodes.FirstOrDefault(gc => gc.Code == giftCode.Code);
+        if (giftCodeEntity == null)
+            throw new AppException("Ce code cadeau n'existe pas !", 404);
+
+        if (giftCodeEntity.Used)
+            throw new AppException("Ce code cadeau a déjà été utilisé !", 400);
+
+        // add resources
+        user.NbCardOpeningAvailable += giftCodeEntity.NbCards;
+        user.Creatium += giftCodeEntity.NbCreatium;
+        user.Or += giftCodeEntity.NbOr;
+        _context.Users.Update(user);
+        
+        // notify user
+        await _notificationService.SendNotificationToUser(
+            user, 
+            new NotificationRequest(
+                "Code cadeau", 
+                $"Vous avez reçu {giftCodeEntity.NbCards} ouverture de carte, {giftCodeEntity.NbCreatium} créatium et {giftCodeEntity.NbOr} or !"),
+            _context);
+        
+        // set gift code as used
+        giftCodeEntity.Used = true;
+        _context.GiftCodes.Update(giftCodeEntity);
+        
+        // save changes
+        await _context.SaveChangesAsync();
+
+        return giftCodeEntity.ToResponse();
+    }
+
+    #endregion
+    
     #region helper methods
 
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
@@ -424,10 +477,10 @@ public class UserService : IUserService
         return user;
     }
 
-    private IIncludableQueryable<User,Object> IncludeGetUsers()
+    private IIncludableQueryable<User, object> IncludeGetUsers()
     {
-        // include usercards of user, cards of usercards, competences of usercards and actions of usercards
         return _context.Users
+            .AsSplitQuery()
             .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Action)
             .Include(u => u.UserCards)

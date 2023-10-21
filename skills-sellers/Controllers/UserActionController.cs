@@ -75,9 +75,9 @@ public class UserActionController : ControllerBase
     
     
     [Authorize]
-    [HttpDelete("notifications/{notificationId}")]
-    public async Task DeleteNotification(int id, int notificationId)
-        => await _userService.DeleteNotification(GetUserAuthenticated(id), notificationId);
+    [HttpDelete("notifications")]
+    public async Task DeleteNotifications(int id, List<int> notificationIds)
+        => await _userService.DeleteNotifications(GetUserAuthenticated(id), notificationIds);
     
     [Authorize]
     [HttpPost("marchand/buy")]
@@ -88,4 +88,9 @@ public class UserActionController : ControllerBase
     [HttpGet("marchand/offer")]
     public MarchandShopResponse GetMarchandOffer()
         => _marchandService.GetMarchandShop();
+    
+    [Authorize]
+    [HttpPost("gift")]
+    public Task<GiftCodeResponse> EnterGiftCode(int id, GiftCodeRequest giftCode)
+        => _userService.EnterGiftCode(GetUserAuthenticated(id), giftCode);
 }
