@@ -88,4 +88,9 @@ public class UserActionController : ControllerBase
     [HttpGet("marchand/offer")]
     public MarchandShopResponse GetMarchandOffer()
         => _marchandService.GetMarchandShop();
+    
+    [Authorize]
+    [HttpPost("gift")]
+    public Task<GiftCodeResponse> EnterGiftCode(int id, GiftCodeRequest giftCode)
+        => _userService.EnterGiftCode(GetUserAuthenticated(id), giftCode);
 }

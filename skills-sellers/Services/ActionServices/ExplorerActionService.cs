@@ -171,8 +171,17 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         var userCard = action.UserCards.First();
 
         if (action.IsReturningToHome)
+        {
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Explorer",
+                $"Votre carte {userCard.Card.Name} est revenue de l'exploration !"
+            ), _context);
+
             // remove action if returning
             _context.Actions.Remove(action);
+        } 
         else
         {
             #region REWARDS

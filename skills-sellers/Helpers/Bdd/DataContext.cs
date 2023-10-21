@@ -36,6 +36,9 @@ public class DataContext : DbContext
     // Notifications
     public DbSet<Notification> Notifications { get; set; }
     
+    // Gift codes
+    public DbSet<GiftCode> GiftCodes { get; set; }
+    
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

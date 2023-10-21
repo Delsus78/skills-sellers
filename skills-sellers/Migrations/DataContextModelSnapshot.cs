@@ -148,6 +148,35 @@ namespace skills_sellers.Migrations
                     b.ToTable("DailyTaskLog");
                 });
 
+            modelBuilder.Entity("skills_sellers.Entities.GiftCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("NbCards")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NbCreatium")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NbOr")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GiftCodes");
+                });
+
             modelBuilder.Entity("skills_sellers.Entities.Notification", b =>
                 {
                     b.Property<int>("Id")
