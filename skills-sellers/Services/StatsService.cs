@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
+using skills_sellers.Models.Extensions;
 
 namespace skills_sellers.Services;
 
@@ -20,6 +22,7 @@ public interface IStatsService
     void OnLooseGoldAtCharismeCasino(int userId, int amount);
     void OnWinAtCharismeCasino(int userId);
     Stats GetOrCreateStatsEntity(User user);
+    Dictionary<string, int> GetRanks(User user);
 }
 public class StatsService : IStatsService
 {
@@ -128,6 +131,80 @@ public class StatsService : IStatsService
         user.Stats = stats;
         return stats;
     }
+
+    public Dictionary<string, int> GetRanks(User user)
+    {
+        var res = new Dictionary<string, int>();
+
+        var statsCriteria = new List<Func<Stats, int>> {
+            s => s.TotalFailedCardsCauseOfCharisme,
+            s => s.TotalMessagesSent,
+            s => s.TotalCreatiumMined,
+            s => s.TotalOrMined,
+            s => s.TotalBuildingsUpgraded,
+            s => s.TotalRocketLaunched,
+            s => s.TotalMealCooked,
+            s => s.TotalDoublonsEarned
+        };
+
+        var userCriteria = new List<Func<User, int>> {
+            u => u.UserCards.Count,
+            u => u.UserCards.Count(c => c.Competences.GotOneMaxed()),
+            u => u.UserCards.Count(c => c.Card.Rarity == "commune"),
+            u => u.UserCards.Count(c => c.Card.Rarity == "epic"),
+            u => u.UserCards.Count(c => c.Card.Rarity == "legendaire")
+        };
+
+        var statsRanks = statsCriteria.AsParallel().Select(criterion => GetRankForStatCriteria(criterion, user.Id)).ToList();
+        var userRanks = userCriteria.AsParallel().Select(criterion => GetRankForUserCriteria(criterion, user.Id)).ToList();
+
+        var criteriaNames = new List<string> {
+            "TotalFailedCardsCauseOfCharisme",
+            "TotalMessagesSent",
+            "TotalCreatiumMined",
+            "TotalOrMined",
+            "TotalBuildingsUpgraded",
+            "TotalRocketLaunched",
+            "TotalMealCooked",
+            "TotalDoublonsEarned",
+            "TotalCards",
+            "TotalCardWithAStatMaxed",
+            "TotalCardsCommune",
+            "TotalCardsEpic",
+            "TotalCardsLegendaire"
+        };
+
+        var combinedRanks = statsRanks.Concat(userRanks).ToList();
+
+        for (int index = 0; index < combinedRanks.Count; index++)
+        {
+            res[criteriaNames[index]] = combinedRanks[index];
+        }
+
+        return res;
+    }
+
+    private int GetRankForStatCriteria(Func<Stats, int> criterion, int userId)
+    {
+        using var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+        var orderedList = context.Stats.OrderByDescending(criterion).ToList();
+        return orderedList.FindIndex(x => x.UserId == userId) + 1;
+    }
+
+    private int GetRankForUserCriteria(Func<User, int> criterion, int userId)
+    {
+        using var context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+        var orderedList = context.Users
+            .Include(u => u.UserCards)
+            .ThenInclude(uc => uc.Card)
+            .Include(u => u.UserCards)
+            .ThenInclude(uc => uc.Competences)
+            .OrderByDescending(criterion).ToList();
+        return orderedList.FindIndex(x => x.Id == userId) + 1;
+    }
+
+
+
 
     #endregion
 }

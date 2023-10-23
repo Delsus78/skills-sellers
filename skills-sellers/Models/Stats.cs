@@ -1,14 +1,17 @@
 namespace skills_sellers.Models;
 
 public record StatsResponse(
-    int TotalCards,
-    IDictionary<string, int> TotalCardsByRarity,
-    int TotalFailedCardsCauseOfCharisme,
-    int TotalMessagesSent,
-    IDictionary<string, int> TotalResourcesMined,
-    int TotalCardWithAStatMaxed,
-    int TotalBuildingsUpgraded,
-    int TotalRocketLaunched,
-    int TotalMealCooked,
-    int TotalDoublonsEarned
-    );
+    CustomTuple TotalCards,
+    IDictionary<string, CustomTuple> TotalCardsByRarity,
+    CustomTuple TotalFailedCardsCauseOfCharisme,
+    CustomTuple TotalMessagesSent,
+    IDictionary<string, CustomTuple> TotalResourcesMined,
+    CustomTuple TotalCardWithAStatMaxed,
+    CustomTuple TotalBuildingsUpgraded,
+    CustomTuple TotalRocketLaunched,
+    CustomTuple TotalMealCooked,
+    CustomTuple TotalDoublonsEarned,
+    int TotalCardsInBDD
+);
+
+public record CustomTuple(int Stat, int Rank);

@@ -326,8 +326,12 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         var userCards = user.UserCards;
         var stats = _statsService.GetOrCreateStatsEntity(user);
+        var nbCardsInBDD = _cardService.GetAll().Count();
         
-        return stats.ToResponse(userCards);
+        // get ranks
+        var ranks = _statsService.GetRanks(user);
+
+        return stats.ToResponse(userCards, ranks, nbCardsInBDD);
     }
 
     #endregion
