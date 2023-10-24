@@ -17,6 +17,8 @@ public class User
     public int Or { get; set; }
     public int Nourriture { get; set; }
     public int NbCardOpeningAvailable { get; set; }
+
+    public int StatRepairedObjectMachine { get; set; } = -1;
     
     // One to one
     public Stats Stats { get; set; }
