@@ -59,20 +59,23 @@ services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
 services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
 services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
 services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
+services.AddScoped<IActionService<ActionReparer>, ReparerActionService>();
 
 // add games services
 services.AddScoped<IGameService, GamesService>();
 services.AddScoped<CasinoService>();
+services.AddScoped<MachineRepairService>();
 
 
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
 
 // hosted services
+/*
 services.AddHostedService<HostedStatsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
-
+*/
 
 // DbContext
 services.AddDbContext<DataContext>(options =>

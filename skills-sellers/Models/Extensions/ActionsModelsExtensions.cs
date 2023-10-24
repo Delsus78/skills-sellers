@@ -41,6 +41,14 @@ public static class ActionsModelsExtensions
                 Cards = actionMuscler.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 Muscle = actionMuscler.Muscle
             },
+            ActionReparer actionReparer => new ActionReparerResponse
+            {
+                ActionName = "reparer",
+                Id = actionReparer.Id,
+                EndTime = actionReparer.DueDate,
+                Cards = actionReparer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
+                RepairChances = actionReparer.RepairChances
+            },
             _ => throw new ArgumentException("Action inconnue")
         };
 }
