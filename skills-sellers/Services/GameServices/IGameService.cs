@@ -5,7 +5,7 @@ namespace skills_sellers.Services.GameServices;
 
 public interface IGameService
 {
-    GamesResponse GetGameOfTheDay();
+    GamesResponse GetGameOfTheDay(int userId);
     Task<GamesPlayResponse> PlayGameOfTheDay(User user, GamesRequest model);
     GamesPlayResponse EstimateGameOfTheDay(User user, GamesRequest model);
 }

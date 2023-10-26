@@ -13,13 +13,23 @@ public static class UsersModelsExtensions
             Creatium = 600,
             Or = 0,
             Nourriture = 10,
-            NbCardOpeningAvailable = 1
+            NbCardOpeningAvailable = 1,
+            StatRepairedObjectMachine = -1
         };
     }
     
     public static UserResponse ToResponse(this User user)
     {
         var nbCards = user.UserCards.Count;
-        return new UserResponse(user.Id, user.Pseudo, nbCards, user.Creatium, user.Or, user.Nourriture, user.NbCardOpeningAvailable, user.UserCardsDoubled.Select(x => x.CardId).ToList());
+        return new UserResponse(user.Id,
+            user.Pseudo,
+            nbCards,
+            user.Creatium,
+            user.Or,
+            user.Nourriture,
+            user.NbCardOpeningAvailable,
+            user.UserCardsDoubled.Select(x => x.CardId)
+                .ToList(),
+            user.StatRepairedObjectMachine);
     }
 }

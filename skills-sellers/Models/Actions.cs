@@ -12,6 +12,7 @@ public class ActionRequest
     /// - explorer
     /// - cuisiner
     /// - muscler
+    /// - reparer
     /// </summary>
     [Required]
     public string ActionName { get; set; }
@@ -23,12 +24,14 @@ public class ActionRequest
     public IEnumerable<int> CardsIds { get; set; }
     
     public string? BatimentToUpgrade { get; set; }
+    public double? RepairChances { get; set; }
 }
 
 [JsonDerivedType(typeof(ActionCuisinerResponse))]
 [JsonDerivedType(typeof(ActionExplorerResponse))]
 [JsonDerivedType(typeof(ActionAmeliorerResponse))]
 [JsonDerivedType(typeof(ActionMusclerResponse))]
+[JsonDerivedType(typeof(ActionReparerResponse))]
 public abstract class ActionResponse
 {
     public int Id { get; set; }
@@ -52,6 +55,11 @@ public class ActionExplorerResponse : ActionResponse
 {
     public bool IsReturningToHome { get; set; }
     public string PlanetName { get; set; }
+}
+
+public class ActionReparerResponse : ActionResponse
+{
+    public double? RepairChances { get; set; }
 }
 
 public class ActionAmeliorerResponse : ActionResponse

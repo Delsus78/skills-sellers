@@ -57,6 +57,7 @@ public class UserService : IUserService
     private readonly IActionService<ActionExplorer> _explorerActionService;
     private readonly IActionService<ActionMuscler> _musclerActionService;
     private readonly IActionService<ActionAmeliorer> _ameliorerActionService;
+    private readonly IActionService<ActionReparer> _reparerActionService;
 
     public UserService(
         DataContext context,
@@ -68,6 +69,7 @@ public class UserService : IUserService
         IActionService<ActionExplorer> explorerActionService,
         IActionService<ActionMuscler> musclerActionService,
         IActionService<ActionAmeliorer> ameliorerActionService, 
+        IActionService<ActionReparer> reparerActionService,
         INotificationService notificationService,
         IRegistrationLinkCreatorService registrationLinkCreatorService)
     {
@@ -82,12 +84,14 @@ public class UserService : IUserService
         _ameliorerActionService = ameliorerActionService;
         _notificationService = notificationService;
         _registrationLinkCreatorService = registrationLinkCreatorService;
+        _reparerActionService = reparerActionService;
     }
 
     #region USER
     public IEnumerable<UserResponse> GetAll()
     {
-        var users = IncludeGetUsers().ToList();
+        var users = _context.Users
+            .SelectUserDetails();
         return users.Select(x => x.ToResponse());
     }
 
@@ -326,12 +330,12 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         var userCards = user.UserCards;
         var stats = _statsService.GetOrCreateStatsEntity(user);
-        var nbCardsInBDD = _cardService.GetAll().Count();
+        var nbCardsInBdd = _cardService.GetAll().Count();
         
         // get ranks
         var ranks = _statsService.GetRanks(user);
 
-        return stats.ToResponse(userCards, ranks, nbCardsInBDD);
+        return stats.ToResponse(userCards, ranks, nbCardsInBdd);
     }
 
     #endregion
@@ -382,6 +386,9 @@ public class UserService : IUserService
                 break;
             case ActionExplorer:
                 await _explorerActionService.DeleteAction(user, action.Id);
+                break;
+            case ActionReparer:
+                await _reparerActionService.DeleteAction(user, action.Id);
                 break;
             
             default:
@@ -475,16 +482,24 @@ public class UserService : IUserService
 
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
     {
-        var user = IncludeGetUsers().FirstOrDefault(predicate);
-        
-        if (user == null) throw new AppException("User not found", 404);
-        return user;
+        // Utilisez une méthode spécifique pour charger seulement les données nécessaires.
+        var user = _context.Users
+            .Where(predicate)
+            .SelectUserDetails()
+            .FirstOrDefault();
+
+        return user ?? throw new AppException("User not found", 404);
     }
 
-    private IIncludableQueryable<User, object> IncludeGetUsers()
+    #endregion
+}
+
+public static class UserIncludeExtension 
+{
+    // Utilisez une méthode d'extension pour sélectionner les détails nécessaires.
+    public static IQueryable<User> SelectUserDetails(this IQueryable<User> query)
     {
-        return _context.Users
-            .AsSplitQuery()
+        return query
             .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Action)
             .Include(u => u.UserCards)
@@ -492,8 +507,8 @@ public class UserService : IUserService
             .ThenInclude(c => c.UserCards)
             .ThenInclude(uc => uc.Competences)
             .Include(u => u.UserBatimentData)
-            .Include(u => u.UserCardsDoubled);
+            .Include(u => u.UserCardsDoubled)
+            // ... Autres includes si nécessaire
+            .AsSplitQuery();
     }
-    
-    #endregion
 }

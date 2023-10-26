@@ -38,8 +38,8 @@ public class GamesController : ControllerBase
     }
     
     [HttpGet("gameOfTheDay")]
-    public GamesResponse GetGameOfTheDay()
-        => _gamesService.GetGameOfTheDay();
+    public GamesResponse GetGameOfTheDay(int id)
+        => _gamesService.GetGameOfTheDay(id);
     
     [HttpPost("gameOfTheDay/estimate")]
     public GamesPlayResponse EstimateGameOfTheDay(int id, GamesRequest model)
