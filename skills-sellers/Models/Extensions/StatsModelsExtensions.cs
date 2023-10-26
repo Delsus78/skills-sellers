@@ -25,6 +25,7 @@ public static class StatsModelsExtensions
         CustomTuple totalRocketLaunchedTuple = new(stats.TotalRocketLaunched, ranks["TotalRocketLaunched"]);
         CustomTuple totalMealCookedTuple = new(stats.TotalMealCooked, ranks["TotalMealCooked"]);
         CustomTuple totalDoublonsEarnedTuple = new(stats.TotalDoublonsEarned, ranks["TotalDoublonsEarned"]);
+        CustomTuple totalMachineUsedTuple = new(stats.TotalMachineUsed, ranks["TotalMachineUsed"]);
 
         var totalResourcesMinedTuples = new Dictionary<string, CustomTuple>
         {
@@ -50,6 +51,7 @@ public static class StatsModelsExtensions
             totalRocketLaunchedTuple, 
             totalMealCookedTuple,
             totalDoublonsEarnedTuple,
+            totalMachineUsedTuple,
             nbCardsInBDD);
     }
 

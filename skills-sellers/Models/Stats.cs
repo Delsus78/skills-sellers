@@ -11,6 +11,7 @@ public record StatsResponse(
     CustomTuple TotalRocketLaunched,
     CustomTuple TotalMealCooked,
     CustomTuple TotalDoublonsEarned,
+    CustomTuple TotalMachineUsed,
     int TotalCardsInBDD
 );
 

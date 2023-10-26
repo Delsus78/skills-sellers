@@ -17,6 +17,7 @@ public interface IStatsService
     void OnOrMined(int userId, int amount);
     void OnRocketLaunched(int userId);
     void OnMealCooked(int userId);
+    void OnMachineUsed(int userId);
     void OnBuildingsUpgraded(int userId);
     void OnDoublonsEarned(int userId);
     void OnLooseGoldAtCharismeCasino(int userId, int amount);
@@ -70,9 +71,9 @@ public class StatsService : IStatsService
         AddStat(userId, "TotalOrMined", amount);
     }
 
-    public void OnPlanetDiscovered(int userId)
+    public void OnMachineUsed(int userId)
     {
-        AddStat(userId, "TotalPlanetDiscovered");
+        AddStat(userId, "TotalMachineUsed");
     }
 
     public void OnRocketLaunched(int userId)
@@ -124,6 +125,7 @@ public class StatsService : IStatsService
             TotalRocketLaunched = 0,
             TotalMealCooked = 0,
             TotalDoublonsEarned = 0,
+            TotalMachineUsed = 0,
             TotalLooseAtCharismeCasino = 0,
             TotalWinAtCharismeCasino = 0
         };
@@ -144,7 +146,8 @@ public class StatsService : IStatsService
             s => s.TotalBuildingsUpgraded,
             s => s.TotalRocketLaunched,
             s => s.TotalMealCooked,
-            s => s.TotalDoublonsEarned
+            s => s.TotalDoublonsEarned,
+            s => s.TotalMachineUsed
         };
 
         var userCriteria = new List<Func<User, int>> {
@@ -167,6 +170,7 @@ public class StatsService : IStatsService
             "TotalRocketLaunched",
             "TotalMealCooked",
             "TotalDoublonsEarned",
+            "TotalMachineUsed",
             "TotalCards",
             "TotalCardWithAStatMaxed",
             "TotalCardsCommune",

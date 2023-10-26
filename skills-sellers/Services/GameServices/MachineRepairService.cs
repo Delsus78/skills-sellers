@@ -11,11 +11,15 @@ public class MachineRepairService : IGameService
 {
     private readonly DataContext _context;
     private readonly IActionService<ActionReparer> _reparerActionService;
+    private readonly IStatsService _statsService;
     
-    public MachineRepairService(DataContext context, IActionService<ActionReparer> reparerActionService)
+    public MachineRepairService(DataContext context, 
+        IActionService<ActionReparer> reparerActionService,
+        IStatsService statsService)
     {
         _context = context;
         _reparerActionService = reparerActionService;
+        _statsService = statsService;
     }
     
     public GamesResponse GetGameOfTheDay(int userId)
@@ -54,7 +58,8 @@ public class MachineRepairService : IGameService
             if (!valid)
                 throw new AppException(error, 400);
             
-            // give pack to user
+            // stats
+            _statsService.OnMachineUsed(user.Id);
             
             // promo ?
             if (user.StatRepairedObjectMachine > 0) // no promo
