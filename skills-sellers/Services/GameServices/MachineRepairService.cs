@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -19,9 +18,9 @@ public class MachineRepairService : IGameService
         _reparerActionService = reparerActionService;
     }
     
-    public GamesResponse GetGameOfTheDay()
+    public GamesResponse GetGameOfTheDay(int userId)
     {
-        return new GamesResponse
+        return new GamesMachineResponse
         {
             Name = "MACHINE",
             Description = "Bonjour bonjour ! Escusez-moi de vous déranger, mais j'ai un petit soucis avec ma machine ᒲᔑᓵ⍑╎リᒷ !" +
@@ -42,7 +41,8 @@ public class MachineRepairService : IGameService
                     "Votre probabilité de réparer la machine est calculé de la façon suivante :",
                     "Somme INTEL des cartes déposées / Nombre TOTAL des cartes de votre collection * 4"
                 }
-            }
+            },
+            IsRepairing = _context.Actions.Any(a => a is ActionReparer && userId == a.UserId)
         };
     }
 
@@ -75,13 +75,13 @@ public class MachineRepairService : IGameService
         else if (model.CardsIds.Count > 0 && model.Bet == 0) // repair action
         {
             var cards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
-            var (valid, error) = CanRepair(cards);
+            var (valid, error) = CanRepair(cards, user.Id);
             if (!valid)
                 throw new AppException(error, 400);
             
             // set cards in action
             var totalIntel = cards.Sum(c => c.Competences.Intelligence);
-            var chances = (totalIntel / user.UserCards.Count * 4) * 100;
+            var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
             
             await _reparerActionService.StartAction(user, new ActionRequest
             {
@@ -120,13 +120,13 @@ public class MachineRepairService : IGameService
             case > 0 when model.Bet == 0:
             {
                 var cards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
-                var (valid, error) = CanRepair(cards);
+                var (valid, error) = CanRepair(cards, user.Id);
                 if (!valid)
                     throw new AppException(error, 400);
             
                 // set cards in action
                 var totalIntel = cards.Sum(c => c.Competences.Intelligence);
-                var chances = (totalIntel / user.UserCards.Count * 4) * 100;
+                var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
             
                 return new GamesPlayResponse
                 {
@@ -154,7 +154,7 @@ public class MachineRepairService : IGameService
         };
     }
 
-    private (bool valid, string error) CanRepair(List<UserCard> cards)
+    private (bool valid, string error) CanRepair(List<UserCard> cards, int userId)
     {
         // 1 card minimum
         if (cards.Count < 1)
@@ -164,7 +164,16 @@ public class MachineRepairService : IGameService
         if (cards.Any(c => c.Action != null))
             return (false, "Une de vos cartes est déjà en action !");
         
+        // user already repairing ?
+        if (_context.Actions.Any(a => a is ActionReparer && a.UserId == userId))
+            return (false, "Vous êtes déjà en train de réparer la machine !");
+        
         return (true, "");
+    }
+
+    private double CalculateRepairChances(int totalIntel, int totalCards)
+    {
+        return totalIntel / ((double)totalCards * 4) * 100;
     }
 
     #endregion

@@ -24,13 +24,14 @@ public class ActionRequest
     public IEnumerable<int> CardsIds { get; set; }
     
     public string? BatimentToUpgrade { get; set; }
-    public int? RepairChances { get; set; }
+    public double? RepairChances { get; set; }
 }
 
 [JsonDerivedType(typeof(ActionCuisinerResponse))]
 [JsonDerivedType(typeof(ActionExplorerResponse))]
 [JsonDerivedType(typeof(ActionAmeliorerResponse))]
 [JsonDerivedType(typeof(ActionMusclerResponse))]
+[JsonDerivedType(typeof(ActionReparerResponse))]
 public abstract class ActionResponse
 {
     public int Id { get; set; }
@@ -58,7 +59,7 @@ public class ActionExplorerResponse : ActionResponse
 
 public class ActionReparerResponse : ActionResponse
 {
-    public int? RepairChances { get; set; }
+    public double? RepairChances { get; set; }
 }
 
 public class ActionAmeliorerResponse : ActionResponse

@@ -16,7 +16,7 @@ public class CasinoService : IGameService
         _statsService = statsService;
     }
     
-    public GamesResponse GetGameOfTheDay()
+    public GamesResponse GetGameOfTheDay(int userId)
     {
         return new GamesResponse
         {

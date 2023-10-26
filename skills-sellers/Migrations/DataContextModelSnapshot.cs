@@ -410,6 +410,16 @@ namespace skills_sellers.Migrations
                     b.HasDiscriminator().HasValue("Muscler");
                 });
 
+            modelBuilder.Entity("skills_sellers.Entities.Actions.ActionReparer", b =>
+                {
+                    b.HasBaseType("skills_sellers.Entities.Action");
+
+                    b.Property<double?>("RepairChances")
+                        .HasColumnType("double precision");
+
+                    b.HasDiscriminator().HasValue("Reparer");
+                });
+
             modelBuilder.Entity("skills_sellers.Entities.Action", b =>
                 {
                     b.HasOne("skills_sellers.Entities.User", "User")

@@ -24,9 +24,12 @@ public class DailyTaskHostedService : IHostedService
     
     private async void ExecuteTask(object? state)
     {
+        Console.WriteLine("Starting Execution of daily tasks...");
+        
         using var scope = _serviceProvider.CreateScope();
         var dailyTaskService = scope.ServiceProvider.GetRequiredService<IDailyTaskService>();
         await dailyTaskService.ExecuteDailyTaskAsync();
+        Console.WriteLine("DailyTask done.");
     }
     
     public Task StopAsync(CancellationToken cancellationToken)

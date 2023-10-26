@@ -68,7 +68,8 @@ public class ReparerActionService : IActionService<ActionReparer>
         {
             UserCards = userCards,
             DueDate = CalculateActionEndTime(),
-            RepairChances = model.RepairChances
+            RepairChances = model.RepairChances,
+            User = user
         };
         
         // actualise bdd
@@ -133,19 +134,23 @@ public class ReparerActionService : IActionService<ActionReparer>
         if (chances < action.RepairChances)
         {
             user.StatRepairedObjectMachine = 0;
+            await _context.SaveChangesAsync();
             
             // notify user
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Réparation terminée", 
                     $"La réparation de la machine est terminée ! Vous pouvez maintenant l'utiliser !"), 
                 _context);
-            
-            await _context.SaveChangesAsync();
         }
         else await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Réparation échouée",
                     $"La réparation de la machine a échouée ! Vous pouvez retenter votre chance !"),
                 _context);
+        
+        // remove action
+        _context.Actions.Remove(action);
+        
+        await _context.SaveChangesAsync();
     }
 
     public Task DeleteAction(User user, int actionId)
@@ -223,6 +228,6 @@ public class ReparerActionService : IActionService<ActionReparer>
     
     private DateTime CalculateActionEndTime()
     {
-        return DateTime.Now.AddHours(1);
+        return DateTime.Now.AddMinutes(1);
     }
 }
