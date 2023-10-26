@@ -48,7 +48,8 @@ public class DataContext : DbContext
          .HasValue<ActionCuisiner>("Cuisine")
          .HasValue<ActionExplorer>("Explorer")
          .HasValue<ActionAmeliorer>("Ameliorer")
-         .HasValue<ActionMuscler>("Muscler");
+         .HasValue<ActionMuscler>("Muscler")
+        .HasValue<ActionReparer>("Reparer");
         
         // adding user id to action
         modelBuilder.Entity<Action>()

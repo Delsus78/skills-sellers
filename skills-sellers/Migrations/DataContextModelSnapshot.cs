@@ -270,6 +270,9 @@ namespace skills_sellers.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("StatRepairedObjectMachine")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("users");
@@ -405,6 +408,16 @@ namespace skills_sellers.Migrations
                         .HasColumnType("text");
 
                     b.HasDiscriminator().HasValue("Muscler");
+                });
+
+            modelBuilder.Entity("skills_sellers.Entities.Actions.ActionReparer", b =>
+                {
+                    b.HasBaseType("skills_sellers.Entities.Action");
+
+                    b.Property<double?>("RepairChances")
+                        .HasColumnType("double precision");
+
+                    b.HasDiscriminator().HasValue("Reparer");
                 });
 
             modelBuilder.Entity("skills_sellers.Entities.Action", b =>

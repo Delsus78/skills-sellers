@@ -50,6 +50,11 @@ public class HostedTasksService : IHostedService
                         scope.ServiceProvider.GetRequiredService<IActionService<ActionAmeliorer>>()
                             .RegisterNewTaskForActionAsync(actionAmeliorer, actionAmeliorer.User));
                     break;
+                case ActionReparer actionReparer:
+                    taskList.Add(
+                        scope.ServiceProvider.GetRequiredService<IActionService<ActionReparer>>()
+                            .RegisterNewTaskForActionAsync(actionReparer, actionReparer.User));
+                    break;
             }
 
         _ = Task.WhenAll(taskList).ContinueWith(t =>
@@ -79,6 +84,10 @@ public class HostedTasksService : IHostedService
                 .ForEach(cts => cts.Cancel());
             
             scope.ServiceProvider.GetRequiredService<IActionService<ActionAmeliorer>>()
+                .TaskCancellations.Values.ToList()
+                .ForEach(cts => cts.Cancel());
+            
+            scope.ServiceProvider.GetRequiredService<IActionService<ActionReparer>>()
                 .TaskCancellations.Values.ToList()
                 .ForEach(cts => cts.Cancel());
         }

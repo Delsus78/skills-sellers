@@ -30,15 +30,18 @@ public class DailyTaskService : IDailyTaskService
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var today = DateTime.Today;
-        var logEntry = await _context.DailyTaskLog.SingleOrDefaultAsync(e => e.ExecutionDate == today);
+        var logEntry = await _context.DailyTaskLog.SingleOrDefaultAsync(e => e.ExecutionDate == today.Date);
         if (logEntry == null)
         {
+            Console.WriteLine("Daily task needed");
+            
             // Execute the task
             await DailyResetBatimentDataAsync();
             await DailyCheckAndDeleteNotifications();
+            await DailyResetUserRepairedMachine();
 
             // Log the execution
-            _context.DailyTaskLog.Add(new DailyTaskLog { ExecutionDate = today, IsExecuted = true });
+            _context.DailyTaskLog.Add(new DailyTaskLog { ExecutionDate = today.Date, IsExecuted = true });
             await _context.SaveChangesAsync();
         }
     }
@@ -47,12 +50,16 @@ public class DailyTaskService : IDailyTaskService
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         var usersBatimentsData = await _context.UserBatiments.ToListAsync();
-        
+
+        var count = 0;
         foreach (var userBatimentData in usersBatimentsData)
         {
             userBatimentData.NbCuisineUsedToday = 0;
             userBatimentData.NbBuyMarchandToday = 0;
+            count++;
         }
+        
+        Console.WriteLine($"DailyTask : {count} users batiments data reset");
         
         // notify all users
         await _notificationService.SendNotificationToAll(new NotificationRequest("Cuisine", "Les cuisines ont été réinitialisées !"), _context);
@@ -61,17 +68,32 @@ public class DailyTaskService : IDailyTaskService
         await _context.SaveChangesAsync();
     }
     
+    public async Task DailyResetUserRepairedMachine()
+    {
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+        var usersWithRepairedMachine = await _context.Users.Where(u => u.StatRepairedObjectMachine != -1).ToListAsync();
+
+        var count = 0;
+        foreach (var user in usersWithRepairedMachine)
+        {
+            user.StatRepairedObjectMachine = -1;
+            count++;
+        }
+        Console.WriteLine($"DailyTask : {count} users StatRepairedObjectMachine reset");
+        await _context.SaveChangesAsync();
+    }
+    
     public async Task DailyCheckAndDeleteNotifications()
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-        var notifications = await _context.Notifications.ToListAsync();
+        var notifications = await _context.Notifications.Where(notification => notification.CreatedAt.AddDays(7).Date <= DateTime.Now.Date).ToListAsync();
         var count = 0;
-        foreach (var notification in notifications.Where(notification => notification.CreatedAt.AddDays(7) < DateTime.Now))
+        foreach (var notification in notifications)
         {
             _context.Notifications.Remove(notification);
             count++;
         }
-        Console.Out.WriteLine($"Deleted {count} notifications");
+        Console.Out.WriteLine($"DailyTask : Deleted {count} notifications");
         await _context.SaveChangesAsync();
     }
 }

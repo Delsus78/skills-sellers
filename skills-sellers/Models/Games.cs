@@ -1,12 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace skills_sellers.Models;
 
 #region BASES CLASSES
 
+[JsonDerivedType(typeof(GamesMachineResponse))]
 public class GamesResponse
 {
     public string Name { get; set; }
     public string Description { get; set; }
     public Dictionary<string, string> Regles { get; set; }
+}
+
+public class GamesMachineResponse : GamesResponse
+{
+    public bool IsRepairing { get; set; }
 }
 
 public class GamesPlayResponse
