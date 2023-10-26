@@ -226,6 +226,9 @@ namespace skills_sellers.Migrations
                     b.Property<int>("TotalLooseAtCharismeCasino")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TotalMachineUsed")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TotalMealCooked")
                         .HasColumnType("integer");
 
