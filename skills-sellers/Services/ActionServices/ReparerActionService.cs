@@ -228,6 +228,6 @@ public class ReparerActionService : IActionService<ActionReparer>
     
     private DateTime CalculateActionEndTime()
     {
-        return DateTime.Now.AddMinutes(1);
+        return DateTime.Now.AddHours(1);
     }
 }
