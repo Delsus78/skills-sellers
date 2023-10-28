@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 
 namespace skills_sellers.Helpers;
@@ -8,6 +9,7 @@ public static class Randomizer
     private static readonly string[] AllFoods;
     private static readonly string[] Gutenberg;
     private static readonly string[] AllMuscles;
+    private static List<string> AllCardWords { get; set; } = new();
 
     static Randomizer()
     {
@@ -46,6 +48,57 @@ public static class Randomizer
             < 13 => "epic",
             _ => "commune"
         };
+    }
+
+    public static List<string> GetAllCardNameWord(this DbSet<Card> cardsDb)
+    {
+        if (AllCardWords.Count != 0) return AllCardWords;
+
+        // take all cards name, split them by space, and take a random word
+        AllCardWords = cardsDb
+            .Select(c => c.Name)
+            .ToList()
+            .SelectMany(name => name.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .ToList();
+            
+        // remove all duplicates
+        AllCardWords = AllCardWords.Distinct().ToList();
+            
+        // remove all words with a '
+        AllCardWords = AllCardWords.Where(w => !w.Contains('\'')).ToList();
+
+        // remove ( ) from words
+        AllCardWords = AllCardWords.Select(w => w.Replace("(", "").Replace(")", "")).ToList();
+        
+        // remove ? + ! from words
+        AllCardWords = AllCardWords.Select(w => w.Replace("?", "").Replace("!", "")).ToList();
+        
+        
+        // remove all accents and replace them by the letter without accent
+        for (var i = 0; i < AllCardWords.Count; i++)
+        {
+            var word = AllCardWords[i];
+            word = word.Replace("é", "e");
+            word = word.Replace("è", "e");
+            word = word.Replace("ê", "e");
+            word = word.Replace("à", "a");
+            word = word.Replace("â", "a");
+            word = word.Replace("î", "i");
+            word = word.Replace("ï", "i");
+            word = word.Replace("ô", "o");
+            word = word.Replace("ù", "u");
+            word = word.Replace("û", "u");
+            word = word.Replace("ç", "c");
+            word = word.Replace("œ", "oe");
+            word = word.Replace("æ", "ae");
+            AllCardWords[i] = word;
+        }
+            
+        // remove all words with less than 3 letters
+        AllCardWords = AllCardWords.Where(w => w.Length > 2).ToList();
+            
+        
+        return AllCardWords;
     }
 
     /// <summary>

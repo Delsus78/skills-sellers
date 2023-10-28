@@ -27,10 +27,10 @@ public class MachineRepairService : IGameService
         return new GamesMachineResponse
         {
             Name = "MACHINE",
-            Description = "Bonjour bonjour ! Escusez-moi de vous déranger, mais j'ai un petit soucis avec ma machine ᒲᔑᓵ⍑╎リᒷ !" +
-                          "Je ne sais pas ce qu'il se passe, mais elle ne fonctionne plus." +
-                          "Avez vous des gens qualiés pour réparer ma machine ?" +
-                          "En échange je vous laisserai utiliser ma machine ! Avec une réduction de 50% sur la première utilisation!",
+            Description = "Bonjour bonjour! Excusez-moi de vous déranger, mais j'ai un petit soucis avec ma machine ᒲᔑᓵ⍑╎リᒷ ! " +
+                          "Je ne sais pas ce qu'il se passe, mais elle ne fonctionne plus. " +
+                          "Avez-vous des gens qualifiés pour réparer ma machine? " +
+                          "En échange je vous laisserai utiliser ma machine! Avec une réduction de 50% sur la première utilisation!",
             Regles = new Dictionary<string, string>
             {
                 {

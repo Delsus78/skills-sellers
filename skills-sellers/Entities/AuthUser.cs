@@ -8,6 +8,6 @@ namespace skills_sellers.Entities;
 public class AuthUser
 {
     public int UserId { get; set; }
-    public string Hash { get; init; }
+    public string Hash { get; set; }
     public string Role { get; init; }
 }

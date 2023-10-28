@@ -65,15 +65,18 @@ services.AddScoped<IActionService<ActionReparer>, ReparerActionService>();
 services.AddScoped<IGameService, GamesService>();
 services.AddScoped<CasinoService>();
 services.AddScoped<MachineRepairService>();
+services.AddScoped<WordleGameService>();
 
 
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
 
 // hosted services
+/*
 services.AddHostedService<HostedStatsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
+*/
 
 // DbContext
 services.AddDbContext<DataContext>(options =>

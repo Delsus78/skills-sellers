@@ -37,6 +37,8 @@ public interface IUserService
     Task SendNotificationToAll(NotificationRequest notification);
     RegistrationLinkResponse CreateLink(LinkCreateRequest model);
     Task<UserResponse> Register(UserRegisterRequest model);
+    Task<ResetPasswordLinkResponse> CreateResetPasswordLink(ResetPasswordLinkRequest model);
+    Task<AuthenticateResponse> ResetPassword(ResetPasswordRequest model);
     Task DeleteAction(User user, int actionId);
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
@@ -149,6 +151,42 @@ public class UserService : IUserService
     public RegistrationLinkResponse CreateLink(LinkCreateRequest model)
     {
         return new RegistrationLinkResponse(_registrationLinkCreatorService.CreateRegistrationLink(model.Role, model.FirstCardId));
+    }
+    
+    public async Task<AuthenticateResponse> ResetPassword(ResetPasswordRequest model)
+    {
+        // link verification
+        var linkInfo = _registrationLinkCreatorService.GetResetPasswordLink(model.link);
+        
+        if (!linkInfo.valid)
+            throw new AppException("Link not valid", 400);
+        
+        // change password
+        var result = await _authService.ResetPassword(linkInfo.userId, model.Password);
+        
+        if (result.Item1 == 0)
+            throw new AppException(result.Item2, 400);
+        
+        // link deletion
+        _registrationLinkCreatorService.DeletePasswordLink(model.link);
+        
+        // authenticate
+        var userPseudo = _context.Users.FirstOrDefault(u => u.Id == linkInfo.userId)?.Pseudo;
+        if (userPseudo == null)
+            throw new AppException("User not found", 404);
+        
+        return await Authenticate(new AuthenticateRequest(userPseudo, model.Password));
+    }
+
+    public Task<ResetPasswordLinkResponse> CreateResetPasswordLink(ResetPasswordLinkRequest model)
+    {
+        var userId = _context.Users.FirstOrDefault(u => u.Pseudo == model.Pseudo)?.Id;
+        if (!userId.HasValue)
+            throw new AppException("User not found", 404);
+        
+        var link = _registrationLinkCreatorService.CreateResetPasswordLink(userId.Value);
+        
+        return Task.FromResult(new ResetPasswordLinkResponse(link));
     }
 
     public async Task<UserResponse> Register(UserRegisterRequest model)

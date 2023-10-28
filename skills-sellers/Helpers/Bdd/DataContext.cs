@@ -32,6 +32,9 @@ public class DataContext : DbContext
     
     // Daily task log
     public DbSet<DailyTaskLog> DailyTaskLog { get; set; }
+    
+    // Wordle game
+    public DbSet<WordleGame> WordleGames { get; set; }
 
     // Notifications
     public DbSet<Notification> Notifications { get; set; }
@@ -58,12 +61,14 @@ public class DataContext : DbContext
         modelBuilder.Entity<UserCard>()
          .HasKey(uc => new { uc.UserId, uc.CardId });
         
-        // define user and auth_user relationship
-        
-
         // link between user and stats
         modelBuilder.Entity<Stats>().HasOne(s => s.User)
             .WithOne(u => u.Stats)
             .HasForeignKey<Stats>(s => s.UserId);
+        
+        // link between user and wordle game
+        modelBuilder.Entity<WordleGame>().HasOne(w => w.User)
+            .WithOne(u => u.WordleGame)
+            .HasForeignKey<WordleGame>(w => w.UserId);
     }
 }
