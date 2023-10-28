@@ -14,6 +14,7 @@ public interface IAuthService
 {
     Task<(int,string)> Registeration(User user, string password, string role);
     Task<(int,string)> Login(User user, AuthenticateRequest model);
+    Task<(int,string)> ResetPassword(int userId, string password);
 }
 
 public class AuthService : IAuthService
@@ -41,7 +42,7 @@ public class AuthService : IAuthService
         };
         
         _context.AuthUsers.Add(authUser);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         
         return (1,"User created successfully!");
     }
@@ -72,7 +73,21 @@ public class AuthService : IAuthService
         string token = GenerateToken(authClaims);
         return (1, token);
     }
-    
+
+    public async Task<(int, string)> ResetPassword(int userId, string password)
+    {
+        var userAuth = _context.AuthUsers.FirstOrDefault(u => u.UserId == userId);
+        if (userAuth == null)
+            return (0, "User auth instance not found");
+        
+        userAuth.Hash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
+        
+        _context.AuthUsers.Update(userAuth);
+        await _context.SaveChangesAsync();
+        
+        return (1, "Password updated successfully!");
+    }
+
     private string GenerateToken(IEnumerable<Claim> claims)
     {
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["jwt:secret"]));

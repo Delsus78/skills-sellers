@@ -54,6 +54,10 @@ public class UsersController : ControllerBase
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         => await _userService.Authenticate(model);
     
+    [HttpPost("resetpassword")]
+    public async Task<AuthenticateResponse> ResetPassword(ResetPasswordRequest model)
+        => await _userService.ResetPassword(model);
+    
     [HttpPost("register")]
     public Task<UserResponse> Register(UserRegisterRequest model)
         => _userService.Register(model);
@@ -75,6 +79,11 @@ public class UsersController : ControllerBase
     [HttpPut("createLink")]
     public RegistrationLinkResponse CreateLink(LinkCreateRequest model)
         => _userService.CreateLink(model);
+
+    [Authorize(Roles = "admin")]
+    [HttpPut("createresetpasswordlink")]
+    public Task<ResetPasswordLinkResponse> CreateResetPasswordLink(ResetPasswordLinkRequest model)
+        => _userService.CreateResetPasswordLink(model);
 
     [Authorize(Roles = "admin")]
     [HttpPost("{id}/cards/{cardId}")]

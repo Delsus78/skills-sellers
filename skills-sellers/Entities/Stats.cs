@@ -14,6 +14,7 @@ public class Stats
     public int TotalRocketLaunched { get; set; }
     public int TotalMealCooked { get; set; }
     public int TotalDoublonsEarned { get; set; }
+    public int TotalWordleWon { get; set; }
     public int TotalLooseAtCharismeCasino { get; set; }
     public int TotalWinAtCharismeCasino { get; set; }
     public int TotalMachineUsed { get; set; }
