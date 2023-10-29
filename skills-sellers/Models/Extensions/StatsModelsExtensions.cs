@@ -17,7 +17,7 @@ public static class StatsModelsExtensions
         nbCardsByRarity.TryAdd("epic", 0);
         nbCardsByRarity.TryAdd("legendaire", 0);
 
-            var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
+        var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
         
         // add rank to stats
         CustomTuple totalCardsTuple = new(nbCards, ranks["TotalCards"]);
