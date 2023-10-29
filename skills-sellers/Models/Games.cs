@@ -22,6 +22,7 @@ public class GamesWordleResponse : GamesResponse
 {
     public int NbLetters { get; set; }
     public List<List<ReplaceTuple>> Words { get; set; }
+    public bool IsWin { get; set; }
 }
 
 public class GamesPlayResponse

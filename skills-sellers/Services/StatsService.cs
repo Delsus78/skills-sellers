@@ -147,7 +147,8 @@ public class StatsService : IStatsService
             s => s.TotalRocketLaunched,
             s => s.TotalMealCooked,
             s => s.TotalDoublonsEarned,
-            s => s.TotalMachineUsed
+            s => s.TotalMachineUsed,
+            s => s.TotalWordleWon
         };
 
         var userCriteria = new List<Func<User, int>> {
@@ -171,6 +172,7 @@ public class StatsService : IStatsService
             "TotalMealCooked",
             "TotalDoublonsEarned",
             "TotalMachineUsed",
+            "TotalWordleWon",
             "TotalCards",
             "TotalCardWithAStatMaxed",
             "TotalCardsCommune",

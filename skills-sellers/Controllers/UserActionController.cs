@@ -72,7 +72,11 @@ public class UserActionController : ControllerBase
     [HttpGet("notifications")]
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(int id)
         => await _userService.GetNotifications(GetUserAuthenticated(id));
-    
+
+    [Authorize]
+    [HttpPost("notification/{userId}")]
+    public async Task SendNotification(int id, int userId, NotificationRequest notification)
+        => await _userService.SendNotification(GetUserAuthenticated(id), userId, notification);
     
     [Authorize]
     [HttpDelete("notifications")]
