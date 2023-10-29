@@ -11,8 +11,13 @@ public static class StatsModelsExtensions
         var nbCardsByRarity = userCards
             .GroupBy(c => c.Card.Rarity)
             .ToDictionary(g => g.Key, g => g.Count());
+        
+        // set 0 if no cards of this rarity
+        nbCardsByRarity.TryAdd("commune", 0);
+        nbCardsByRarity.TryAdd("epic", 0);
+        nbCardsByRarity.TryAdd("legendaire", 0);
 
-        var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
+            var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
         
         // add rank to stats
         CustomTuple totalCardsTuple = new(nbCards, ranks["TotalCards"]);
