@@ -8,15 +8,19 @@ namespace skills_sellers.Services.GameServices;
 public class WordleGameService : IGameService
 {
     private readonly DataContext _context;
+    private readonly IStatsService _statsService;
+    private readonly INotificationService _notificationService;
 
-    public WordleGameService(DataContext context)
+    public WordleGameService(DataContext context, IStatsService statsService, INotificationService notificationService)
     {
         _context = context;
+        _statsService = statsService;
+        _notificationService = notificationService;
     }
 
     private string GetRandomWord()
     {
-        Random random = new(DateTime.Today.DayOfYear + DateTime.Today.DayOfYear);
+        Random random = new(DateTime.Today.DayOfYear);
         
         // take all cards name, split them by space, and take a random word
         var allCardsWords = _context.Cards.GetAllCardNameWord();
@@ -83,7 +87,6 @@ public class WordleGameService : IGameService
         else if (wordleData.GameDate != DateTime.Today)
         {
             wordleData.Words = new List<string>();
-            wordleData.Words.Add(GetRandomWord());
             wordleData.Win = null;
             wordleData.GameDate = DateTime.Today;
             
@@ -109,8 +112,9 @@ public class WordleGameService : IGameService
                     "Le mot est directement tiré au hasard parmis les titres des cartes!"
                 }
             },
+            Words = RetrieveWords(userId),
             NbLetters = GetRandomWord().Length,
-            Words = RetrieveWords(userId)
+            IsWin = GetWordleGame(userId).Win ?? false
         };
     }
 
@@ -141,6 +145,15 @@ public class WordleGameService : IGameService
         {
             wordleData.Win = true;
             user.NbCardOpeningAvailable++;
+            
+            // stats
+            _statsService.OnMachineUsed(user.Id);
+            
+            // notify player
+            await _notificationService.SendNotificationToUser(user, new NotificationRequest(
+                    "WORDLE WIN", 
+                    $"Vous avez gagné 1 ouverture de carte !"), 
+                _context);
         }
         else if (wordleData.Words.Count >= 5)
         {
