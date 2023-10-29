@@ -35,6 +35,7 @@ public interface IUserService
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotifications(User user, List<int> notificationIds);
     Task SendNotificationToAll(NotificationRequest notification);
+    Task SendNotification(User user, int userId, NotificationRequest notificationRequest);
     RegistrationLinkResponse CreateLink(LinkCreateRequest model);
     Task<UserResponse> Register(UserRegisterRequest model);
     Task<ResetPasswordLinkResponse> CreateResetPasswordLink(ResetPasswordLinkRequest model);
@@ -360,6 +361,21 @@ public class UserService : IUserService
     public async Task SendNotificationToAll(NotificationRequest notification)
     {
         await _notificationService.SendNotificationToAll(notification, _context);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SendNotification(User user, int userId, NotificationRequest notificationRequest)
+    {
+        var userToNotify = GetUserEntity(u => u.Id == userId);
+
+        // price of 10 or
+        if (user.Or < 10)
+            throw new AppException("Vous n'avez pas assez d'or pour envoyer une notification !", 400);
+        
+        // remove 10 or
+        user.Or -= 10;
+
+        await _notificationService.SendNotificationToUser(userToNotify, notificationRequest with { Title = "DM de " + user.Pseudo }, _context);
         await _context.SaveChangesAsync();
     }
 
