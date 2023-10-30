@@ -147,7 +147,7 @@ public class WordleGameService : IGameService
             user.NbCardOpeningAvailable++;
             
             // stats
-            _statsService.OnMachineUsed(user.Id);
+            _statsService.OnWordleWin(user.Id);
             
             // notify player
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(
