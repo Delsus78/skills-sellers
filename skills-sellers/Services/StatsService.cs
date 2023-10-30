@@ -18,6 +18,7 @@ public interface IStatsService
     void OnRocketLaunched(int userId);
     void OnMealCooked(int userId);
     void OnMachineUsed(int userId);
+    void OnWordleWin(int userId);
     void OnBuildingsUpgraded(int userId);
     void OnDoublonsEarned(int userId);
     void OnLooseGoldAtCharismeCasino(int userId, int amount);
@@ -75,6 +76,11 @@ public class StatsService : IStatsService
     {
         AddStat(userId, "TotalMachineUsed");
     }
+    
+    public void OnWordleWin(int userId)
+    {
+        AddStat(userId, "TotalWordleWon");
+    }
 
     public void OnRocketLaunched(int userId)
     {
@@ -126,6 +132,7 @@ public class StatsService : IStatsService
             TotalMealCooked = 0,
             TotalDoublonsEarned = 0,
             TotalMachineUsed = 0,
+            TotalWordleWon = 0,
             TotalLooseAtCharismeCasino = 0,
             TotalWinAtCharismeCasino = 0
         };
