@@ -247,6 +247,10 @@ public class UserService : IUserService
     
     public async Task<UserCardResponse?> OpenCard(User user)
     {
+        // 0 card ?
+        if (user.NbCardOpeningAvailable == 0)
+            throw new AppException("Vous n'avez plus d'ouverture de carte disponible !", 400);
+        
         // remove card opening
         user.NbCardOpeningAvailable--;
         

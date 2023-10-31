@@ -155,6 +155,8 @@ public class StatsService : IStatsService
             s => s.TotalMealCooked,
             s => s.TotalDoublonsEarned,
             s => s.TotalMachineUsed,
+            s => s.TotalLooseAtCharismeCasino,
+            s => s.TotalWinAtCharismeCasino,
             s => s.TotalWordleWon
         };
 
@@ -179,6 +181,8 @@ public class StatsService : IStatsService
             "TotalMealCooked",
             "TotalDoublonsEarned",
             "TotalMachineUsed",
+            "TotalLooseAtCharismeCasino",
+            "TotalWinAtCharismeCasino",
             "TotalWordleWon",
             "TotalCards",
             "TotalCardWithAStatMaxed",

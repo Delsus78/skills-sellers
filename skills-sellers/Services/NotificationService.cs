@@ -38,6 +38,9 @@ public class NotificationService : INotificationService
         // save notification in database
         var notifResulted = context.Notifications.Add(notificationEntity).Entity;
         
+        // log
+        Console.Out.WriteLine($"[NOTIFICATION] {user.Id}: {notificationEntity.Title} | {notificationEntity.Message} | {notificationEntity.CreatedAt}");
+        
         await _hubContext.Clients.Group(user.Id.ToString()).SendAsync("ReceiveNotification", notifResulted.ToResponse());
     }
     

@@ -13,6 +13,8 @@ public record StatsResponse(
     CustomTuple TotalDoublonsEarned,
     CustomTuple TotalMachineUsed,
     CustomTuple TotalWordleWon,
+    CustomTuple TotalLooseAtCharismeCasino,
+    CustomTuple TotalWinAtCharismeCasino,
     int TotalCardsInBDD
 );
 

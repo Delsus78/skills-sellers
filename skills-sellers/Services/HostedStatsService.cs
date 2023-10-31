@@ -49,7 +49,11 @@ public class HostedStatsService : IHostedService
                     propertyInfo.SetValue(userStats, currentValue + amount);
                 }
             }
-        
+            
+            // log stats in one line
+            var statsString = string.Join(" | ", _statsService.Stats.Select(s => $"{s.Key}: {string.Join(", ", s.Value.Select(v => $"{v.Key}: {v.Value}"))}"));
+            Console.Out.WriteLine($"Stats: {statsString}");
+
             // clear cache
             _statsService.ResetStats();
         
