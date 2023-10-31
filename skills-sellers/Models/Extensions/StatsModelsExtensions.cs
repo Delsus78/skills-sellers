@@ -32,6 +32,8 @@ public static class StatsModelsExtensions
         CustomTuple totalDoublonsEarnedTuple = new(stats.TotalDoublonsEarned, ranks["TotalDoublonsEarned"]);
         CustomTuple totalMachineUsedTuple = new(stats.TotalMachineUsed, ranks["TotalMachineUsed"]);
         CustomTuple totalWordleWonTuple = new(stats.TotalWordleWon, ranks["TotalWordleWon"]);
+        CustomTuple totalLooseAtCharismeCasinoTuple = new(stats.TotalLooseAtCharismeCasino, ranks["TotalLooseAtCharismeCasino"]);
+        CustomTuple totalWinAtCharismeCasinoTuple = new(stats.TotalWinAtCharismeCasino, ranks["TotalWinAtCharismeCasino"]);
 
         var totalResourcesMinedTuples = new Dictionary<string, CustomTuple>
         {
@@ -59,6 +61,8 @@ public static class StatsModelsExtensions
             totalDoublonsEarnedTuple,
             totalMachineUsedTuple,
             totalWordleWonTuple,
+            totalLooseAtCharismeCasinoTuple,
+            totalWinAtCharismeCasinoTuple,
             nbCardsInBDD);
     }
 
