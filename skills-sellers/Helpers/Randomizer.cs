@@ -5,7 +5,6 @@ namespace skills_sellers.Helpers;
 
 public static class Randomizer
 {
-    private static readonly Random Random = new();
     private static readonly string[] AllFoods;
     private static readonly string[] Gutenberg;
     private static readonly string[] AllMuscles;
@@ -20,8 +19,7 @@ public static class Randomizer
 
     public static string RandomPlat(int? seed = null)
     {
-        var random = Random;
-        if (seed.HasValue) random = new Random(seed.Value);
+        var random = seed.HasValue ? new Random(seed.Value) : new Random();
         
         var randomLine = random.Next(0, AllFoods.Length);
         return AllFoods[randomLine];
@@ -29,25 +27,32 @@ public static class Randomizer
     
     public static string RandomMuscle(int? seed = null)
     {
-        var random = Random;
-        if (seed.HasValue) random = new Random(seed.Value);
+        var random = seed.HasValue ? new Random(seed.Value) : new Random();
         
         var randomLine = random.Next(0, AllMuscles.Length);
         return AllMuscles[randomLine];
     }
 
     public static bool RandomPourcentageUp(int pourcentage = 20)
-        => Random.Next(0, 100) < pourcentage;
-    
+    {
+        var res = new Random().Next(0, 100);
+        var boolRes = res < pourcentage;
+        Console.Out.WriteLine($"Random pourcentage up {res}/{pourcentage} = {boolRes}");
+        return boolRes;
+    }
+
     public static string RandomCardType()
     {
-        var randomInt = Random.Next(0, 100);
-        return randomInt switch
+        var randomInt = new Random().Next(0, 100);
+        var type = randomInt switch
         {
             < 3 => "legendaire",
             < 13 => "epic",
             _ => "commune"
         };
+        Console.Out.WriteLine($"Random card res : {randomInt} => {type}");
+        
+        return type;
     }
 
     public static List<string> GetAllCardNameWord(this DbSet<Card> cardsDb)
@@ -142,7 +147,7 @@ public static class Randomizer
 
         while (ptsLeft > 0)
         {
-            var index = Random.Next(0, 4);
+            var index = new Random().Next(0, 4);
             var key = stillAvailable[index];
             if (valuesDicto[key] < 10)
             {
@@ -158,7 +163,7 @@ public static class Randomizer
         var cuisine = valuesDicto["cuisine"];
         var charisme = valuesDicto["charisme"];
 
-        var explo = Random.Next(0, 100) switch
+        var explo = new Random().Next(0, 100) switch
         {
             < 40 => 0,
             < 65 => 1,
@@ -179,11 +184,11 @@ public static class Randomizer
     
     
     public static int RandomInt(int min, int max)
-        => Random.Next(min, max);
+        => new Random().Next(min, max);
 
     public static string RandomPlanet()
     {
-        var randomLine = Random.Next(0, Gutenberg.Length);
+        var randomLine = new Random().Next(0, Gutenberg.Length);
         return Gutenberg[randomLine];
     }
 }
