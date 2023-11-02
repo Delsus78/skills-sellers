@@ -13,6 +13,7 @@ public static class ActionsModelsExtensions
                 ActionName = "cuisiner",
                 Id = actionCuisiner.Id,
                 EndTime = actionCuisiner.DueDate,
+                CreatedAt = actionCuisiner.CreatedAt ?? DateTime.Now,
                 Plat = actionCuisiner.Plat,
                 Cards = actionCuisiner.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
@@ -21,6 +22,7 @@ public static class ActionsModelsExtensions
                 ActionName = "explorer",
                 Id = actionExplorer.Id,
                 EndTime = actionExplorer.DueDate,
+                CreatedAt = actionExplorer.CreatedAt ?? DateTime.Now,
                 Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 IsReturningToHome = actionExplorer.IsReturningToHome,
                 PlanetName = actionExplorer.PlanetName
@@ -30,6 +32,7 @@ public static class ActionsModelsExtensions
                 ActionName = "ameliorer",
                 Id = actionAmeliorer.Id,
                 EndTime = actionAmeliorer.DueDate,
+                CreatedAt = actionAmeliorer.CreatedAt ?? DateTime.Now,
                 BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
@@ -38,6 +41,7 @@ public static class ActionsModelsExtensions
                 ActionName = "muscler",
                 Id = actionMuscler.Id,
                 EndTime = actionMuscler.DueDate,
+                CreatedAt = actionMuscler.CreatedAt ?? DateTime.Now,
                 Cards = actionMuscler.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 Muscle = actionMuscler.Muscle
             },
@@ -46,6 +50,7 @@ public static class ActionsModelsExtensions
                 ActionName = "reparer",
                 Id = actionReparer.Id,
                 EndTime = actionReparer.DueDate,
+                CreatedAt = actionReparer.CreatedAt ?? DateTime.Now,
                 Cards = actionReparer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 RepairChances = actionReparer.RepairChances
             },
