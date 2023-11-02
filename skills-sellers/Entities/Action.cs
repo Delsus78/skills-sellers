@@ -6,6 +6,7 @@ public abstract class Action
     
     // Due Date
     public DateTime DueDate { get; set; }
+    public DateTime? CreatedAt { get; set; } = DateTime.Now;
     
     // One to Many
     public List<UserCard> UserCards { get; set; } = new();

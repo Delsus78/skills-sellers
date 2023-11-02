@@ -40,6 +40,7 @@ public abstract class ActionResponse
     public string ActionName { get; set; }
     
     public DateTime EndTime { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 public class ActionCuisinerResponse : ActionResponse
