@@ -86,7 +86,9 @@ public class DailyTaskService : IDailyTaskService
     public async Task DailyCheckAndDeleteNotifications()
     {
         _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-        var notifications = await _context.Notifications.Where(notification => notification.CreatedAt.AddDays(7).Date <= DateTime.Now.Date).ToListAsync();
+        var notifications = await _context.Notifications
+            .Where(notification => notification.CreatedAt.AddDays(7).Date <= DateTime.Now.Date && !notification.Title.Contains("DM") && !notification.Title.Contains("SPECIAL"))
+            .ToListAsync();
         var count = 0;
         foreach (var notification in notifications)
         {
