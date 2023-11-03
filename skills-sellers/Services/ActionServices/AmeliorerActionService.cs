@@ -96,8 +96,10 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         // get user bat level
         var level = GetLevelOfUserBat(user.UserBatimentData, model);
         
-        // calculate action end time
-        var endTime = CalculateActionEndTime(level);
+        // calculate action end time with extra levels
+        var intelTotal = userCards.Sum(uc => uc.Competences.Intelligence);
+        var extraLevels = intelTotal - _userBatimentsService.GetBatimentPrices(level).intelPrice;
+        var endTime = CalculateActionEndTime(level, extraLevels);
 
         var action = new ActionAmeliorer
         {
@@ -143,9 +145,10 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         var level = GetLevelOfUserBat(user.UserBatimentData, model);
         
         // calculate action end time and resources
-        var endTime = CalculateActionEndTime(level);
-        var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level);
-
+        var (creatiumPrice, intelPrice, _) = _userBatimentsService.GetBatimentPrices(level);
+        var extraLevels = userCards.Sum(uc => uc.Competences.Intelligence) - intelPrice;
+        var endTime = CalculateActionEndTime(level, extraLevels);
+        
         var action = new ActionEstimationResponse
         {
             EndTime = endTime,
@@ -319,9 +322,10 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             .ThenInclude(uc => uc.Competences);
     } 
     
-    private DateTime CalculateActionEndTime(int level)
+    private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
-        return DateTime.Now.AddHours(12 * level);
+        var hours = 12 * level - extraLevels;
+        return DateTime.Now.AddHours(hours);
     }
     
     private static int GetLevelOfUserBat(UserBatimentData batimentData, ActionRequest model)

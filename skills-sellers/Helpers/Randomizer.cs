@@ -172,6 +172,8 @@ public static class Randomizer
             _ => 4
         };
 
+        if (explo == 4) Console.Out.WriteLine("4 explo !");
+        
         return new Competences
         {
             Force = force,
