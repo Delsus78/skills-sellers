@@ -157,7 +157,8 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             Gains = new Dictionary<string, string>
             {
                 { "Up intel", level + " fois random" },
-                { "Up lvl bâtiment", "+1"}
+                { "Up lvl bâtiment", "+1"},
+                { "Heures réduites", extraLevels.ToString()}
             },
             Couts = new Dictionary<string, string>
             {
