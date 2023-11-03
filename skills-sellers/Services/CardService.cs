@@ -49,7 +49,7 @@ public class CardService : ICardService
     
     public Card GetRandomCard()
     {
-        // Legendaire 5% , Epic 20%, Commune 75%
+        // Legendaire 3% , Epic 10%, Commune 87%
         var cardType = Randomizer.RandomCardType();
         var cards = _context.Cards.Where(c => c.Rarity == cardType).ToList();
         
