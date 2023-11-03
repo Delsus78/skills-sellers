@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 
@@ -35,7 +36,7 @@ public static class Randomizer
 
     public static bool RandomPourcentageUp(int pourcentage = 20)
     {
-        var res = new Random().Next(0, 100);
+        var res = RandomInt(0, 100);
         var boolRes = res < pourcentage;
         Console.Out.WriteLine($"Random pourcentage up {res}/{pourcentage} = {boolRes}");
         return boolRes;
@@ -43,7 +44,7 @@ public static class Randomizer
 
     public static string RandomCardType()
     {
-        var randomInt = new Random().Next(0, 100);
+        var randomInt = RandomInt(0, 100);
         var type = randomInt switch
         {
             < 3 => "legendaire",
@@ -184,9 +185,8 @@ public static class Randomizer
         };
     }
     
-    
     public static int RandomInt(int min, int max)
-        => new Random().Next(min, max);
+        => RandomNumberGenerator.GetInt32(min, max);
 
     public static string RandomPlanet()
     {

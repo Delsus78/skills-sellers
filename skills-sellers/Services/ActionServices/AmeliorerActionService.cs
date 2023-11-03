@@ -147,7 +147,8 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         // calculate action end time and resources
         var (creatiumPrice, intelPrice, _) = _userBatimentsService.GetBatimentPrices(level);
         var extraLevels = userCards.Sum(uc => uc.Competences.Intelligence) - intelPrice;
-        var endTime = CalculateActionEndTime(level, extraLevels);
+        var finalExtraLevels = extraLevels < 0 ? 0 : extraLevels;
+        var endTime = CalculateActionEndTime(level, finalExtraLevels);
         
         var action = new ActionEstimationResponse
         {
@@ -158,7 +159,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
             {
                 { "Up intel", level + " fois random" },
                 { "Up lvl bâtiment", "+1"},
-                { "Heures réduites", extraLevels.ToString()}
+                { "Heures réduites", finalExtraLevels.ToString()}
             },
             Couts = new Dictionary<string, string>
             {
