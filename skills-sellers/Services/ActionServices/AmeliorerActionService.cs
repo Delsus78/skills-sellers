@@ -15,7 +15,6 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
     private DataContext _context;
     private readonly INotificationService _notificationService;
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IStatsService _statsService;
 
     public AmeliorerActionService(
@@ -23,16 +22,15 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         IUserBatimentsService userBatimentsService,
         IServiceProvider serviceProvider, 
         INotificationService notificationService, 
-        IStatsService statsService)
+        IStatsService statsService) : base(serviceProvider)
     {
         _context = context;
         _userBatimentsService = userBatimentsService;
-        _serviceProvider = serviceProvider;
         _notificationService = notificationService;
         _statsService = statsService;
     }
     
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
+    public override (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
         if (model?.BatimentToUpgrade == null)
             return (false, "Batiment à améliorer non spécifié");
@@ -71,7 +69,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return (true, "");
     }
 
-    public ActionAmeliorer? GetAction(UserCard userCard)
+    public override ActionAmeliorer? GetAction(UserCard userCard)
     {
         return IncludeGetActionsAmeliorer()
             .FirstOrDefault(a => a.UserCards
@@ -79,12 +77,12 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
                            && uc.UserId == userCard.UserId));
     }
 
-    public List<ActionAmeliorer> GetActions()
+    public override List<ActionAmeliorer> GetActions()
     {
         return IncludeGetActionsAmeliorer().ToList();
     }
 
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public override async Task<ActionResponse> StartAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -134,7 +132,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return action.ToResponse();
     }
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    public override ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -173,7 +171,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return action;
     }
 
-    public Task EndAction(int actionId)
+    public override Task EndAction(int actionId)
     {
         // get data
         var action = GetActions().FirstOrDefault(a => a.Id == actionId);
@@ -246,7 +244,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return _context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public override Task DeleteAction(User user, int actionId)
     {
         var action = GetActions().FirstOrDefault(a => a.Id == actionId);
         if (action == null)
@@ -268,48 +266,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         
         return _context.SaveChangesAsync();
     }
-    
-    public Task RegisterNewTaskForActionAsync(ActionAmeliorer action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
 
-        return StartTaskForActionAsync(action, cts.Token);
-    }
-    
-    private async Task StartTaskForActionAsync(ActionAmeliorer action, CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
-    }
-
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
     
     private IIncludableQueryable<ActionAmeliorer,Object> IncludeGetActionsAmeliorer()

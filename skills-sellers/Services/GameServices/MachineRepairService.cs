@@ -61,19 +61,9 @@ public class MachineRepairService : IGameService
             // stats
             _statsService.OnMachineUsed(user.Id);
             
-            // promo ?
-            if (user.StatRepairedObjectMachine > 0) // no promo
-            {
-                user.Or -= model.Bet;
-            }
-            else // promo
-            {
-                user.Or -= model.Bet / 2;
-            }
-
+            user.Or -= model.Bet;
             user.NbCardOpeningAvailable++;
             user.StatRepairedObjectMachine++;
-            _context.Users.Update(user);
             
             await _context.SaveChangesAsync();
         } 

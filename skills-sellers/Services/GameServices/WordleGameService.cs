@@ -90,7 +90,6 @@ public class WordleGameService : IGameService
             wordleData.Win = null;
             wordleData.GameDate = DateTime.Today;
             
-            _context.WordleGames.Update(wordleData);
             _context.SaveChanges();
         }
         

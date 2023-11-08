@@ -13,7 +13,6 @@ public interface IResourcesService
 
 public class ResourcesService : IResourcesService
 {
-    private readonly DataContext _context;
     private readonly Random Random = new();
     private readonly Dictionary<string, Dictionary<int, (int min, int max)>> Limits = new()
     {
@@ -48,11 +47,6 @@ public class ResourcesService : IResourcesService
             }
         }
     };
-    
-    public ResourcesService(DataContext context)
-    {
-        _context = context;
-    }
     
     public (int min, int max) GetLimitsForForceStat(int forceLevel, string resourceType)
     {

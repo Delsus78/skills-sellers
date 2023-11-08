@@ -22,6 +22,7 @@ public class User
     
     // One to one
     public Stats Stats { get; set; }
+    public Achievement Achievement { get; set; }
     public UserBatimentData UserBatimentData { get; set; }
     public WordleGame WordleGame { get; set; }
 }

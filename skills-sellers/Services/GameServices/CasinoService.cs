@@ -38,7 +38,6 @@ public class CasinoService : IGameService
         
         // remove gold
         user.Or -= model.Bet;
-        _context.Users.Update(user);
         
         // try to win
         var rand = new Random();

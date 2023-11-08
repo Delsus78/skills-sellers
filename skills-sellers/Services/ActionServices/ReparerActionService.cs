@@ -7,22 +7,17 @@ using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
-public class ReparerActionService : IActionService<ActionReparer>
+public class ReparerActionService : IActionService
 {
-    private DataContext _context;
     private readonly INotificationService _notificationService;
-    private readonly IServiceProvider _serviceProvider;
 
     public ReparerActionService(
-        DataContext context,
-        IServiceProvider serviceProvider, 
         INotificationService notificationService)
     {
-        _context = context;
-        _serviceProvider = serviceProvider;
         _notificationService = notificationService;
     }
     
@@ -41,20 +36,7 @@ public class ReparerActionService : IActionService<ActionReparer>
         return (true, "");
     }
 
-    public ActionReparer? GetAction(UserCard userCard)
-    {
-        return IncludeGetActionsReparer()
-            .FirstOrDefault(a => a.UserCards
-                .Any(uc => uc.CardId == userCard.CardId 
-                           && uc.UserId == userCard.UserId));
-    }
-
-    public List<ActionReparer> GetActions()
-    {
-        return IncludeGetActionsReparer().ToList();
-    }
-
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -73,22 +55,12 @@ public class ReparerActionService : IActionService<ActionReparer>
         };
         
         // actualise bdd
-        await _context.Actions.AddAsync(action);
+        await context.Actions.AddAsync(action);
         
-        await _context.SaveChangesAsync();
-        
-        // start timer
-        _ = RegisterNewTaskForActionAsync(action, user)
-            .ContinueWith(t =>
-            {
-                if (t is { IsFaulted: true, Exception: not null })
-                {
-                    Console.Error.WriteLine(t.Exception);
-                }
-            });
-        
+        await context.SaveChangesAsync();
+
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -119,113 +91,51 @@ public class ReparerActionService : IActionService<ActionReparer>
         };
     }
 
-    public async Task EndAction(int actionId)
+    public async Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        // get data
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
-
         var user = action.User;
+        
+        if (action is not ActionReparer actionReparer)
+            throw new AppException("Action is not a reparer action", 400);
         
         // set repaired depending on the chances
         var random = new Random();
         var chances = random.Next(0, 100);
-        if (chances < action.RepairChances)
+        if (chances < actionReparer.RepairChances)
         {
             user.StatRepairedObjectMachine = 0;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             
             // notify user
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Réparation terminée", 
                     $"La réparation de la machine est terminée ! Vous pouvez maintenant l'utiliser !"), 
-                _context);
+                context);
         }
         else await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Réparation échouée",
                     $"La réparation de la machine a échouée ! Vous pouvez retenter votre chance !"),
-                _context);
+                context);
         
         // remove action
-        _context.Actions.Remove(action);
+        context.Actions.Remove(action);
         
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
+        var user = action.User;
         
-        _context.Actions.Remove(action);
+        context.Actions.Remove(action);
         
         // refund
         user.StatRepairedObjectMachine = -1;
 
-        // cancel task
-        if (TaskCancellations.TryGetValue(action.Id, out var cts))
-            cts.Cancel();
-        
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync();
     }
 
-    public Task RegisterNewTaskForActionAsync(ActionReparer action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-
-        return StartTaskForActionAsync(action, cts.Token);
-    }
-    
-    private async Task StartTaskForActionAsync(ActionReparer action, CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
-    }
-
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
-    
-    private IIncludableQueryable<ActionReparer,Object> IncludeGetActionsReparer()
-    {
-        return _context.Actions
-            .OfType<ActionReparer>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    }
-    
     private DateTime CalculateActionEndTime()
     {
         return DateTime.Now.AddHours(1);

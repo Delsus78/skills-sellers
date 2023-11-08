@@ -28,7 +28,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         _notificationService = notificationService;
     }
     
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest model)
+    public override (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest model)
     {
         // une seule carte pour se muscler
         if (userCards.Count != 1)
@@ -53,7 +53,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return (true, "");
     }
 
-    public ActionMuscler? GetAction(UserCard userCard)
+    public override ActionMuscler? GetAction(UserCard userCard)
     {
         return IncludeGetActionsMuscler()
             .FirstOrDefault(a => a.UserCards
@@ -61,12 +61,12 @@ public class MusclerActionService : IActionService<ActionMuscler>
                            && uc.UserId == userCard.UserId));
     }
 
-    public List<ActionMuscler> GetActions()
+    public override List<ActionMuscler> GetActions()
     {
         return IncludeGetActionsMuscler().ToList();
     }
 
-    public async Task<ActionResponse> StartAction(User user, ActionRequest? model)
+    public override async Task<ActionResponse> StartAction(User user, ActionRequest? model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -111,7 +111,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return action.ToResponse();
     }
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    public override ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -141,8 +141,9 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return action;
     }
 
-    public Task EndAction(int actionId)
+    public override Task EndAction(int actionId)
     {
+        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         // get data
         var action = GetActions().FirstOrDefault(a => a.Id == actionId);
         if (action == null)
@@ -170,7 +171,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return _context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public override Task DeleteAction(User user, int actionId)
     {
         var action = GetActions().FirstOrDefault(a => a.Id == actionId);
         if (action == null)
@@ -189,7 +190,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return _context.SaveChangesAsync();
     }
     
-    public Task RegisterNewTaskForActionAsync(ActionMuscler action, User user)
+    public override Task RegisterNewTaskForActionAsync(ActionMuscler action, User user)
     {
         var cts = new CancellationTokenSource();
         TaskCancellations.TryAdd(action.Id, cts);
@@ -199,37 +200,6 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return StartTaskForActionAsync(action, cts.Token);
     }
 
-    private async Task StartTaskForActionAsync(ActionMuscler action, CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
-    }
-    
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
     
     private IIncludableQueryable<ActionMuscler,Object> IncludeGetActionsMuscler()
