@@ -1,51 +1,28 @@
-using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
-public class CuisinerActionService : IActionService<ActionCuisiner>
+public class CuisinerActionService : IActionService
 {
-    private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly INotificationService _notificationService;
     private readonly IStatsService _statsService;
     
     public CuisinerActionService(
-        DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider, 
         INotificationService notificationService, 
         IStatsService statsService)
     {
-        _context = context;
         _userBatimentsService = userBatimentsService;
-        _serviceProvider = serviceProvider;
         _notificationService = notificationService;
         _statsService = statsService;
     }
-
-    public ActionCuisiner? GetAction(UserCard userCard)
-    {
-        return IncludeGetActionsCuisiner()
-            .FirstOrDefault(a => a.UserCards
-                .Any(uc => uc.CardId == userCard.CardId 
-                           && uc.UserId == userCard.UserId));
-    }
-    
-    public List<ActionCuisiner> GetActions()
-    {
-        return IncludeGetActionsCuisiner().ToList();
-    }
-    
-    #region Validator
 
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
@@ -65,11 +42,7 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         return (true, "");
     }
 
-    #endregion
-
-    #region Starters
-    
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -95,21 +68,11 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday += 1;
         
-        await _context.Actions.AddAsync(action);
-        await _context.SaveChangesAsync();
-        
-        // start timer
-        _ = RegisterNewTaskForActionAsync(action, user)
-            .ContinueWith(t =>
-            {
-                if (t is { IsFaulted: true, Exception: not null })
-                {
-                    Console.Error.WriteLine(t.Exception);
-                }
-            });
-        
+        await context.Actions.AddAsync(action);
+        await context.SaveChangesAsync();
+
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -139,79 +102,28 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
         return action;
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
-        
-        _context.Actions.Remove(action);
+        // get user linked to action
+        var user = action.User;
+        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
         
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday -= 1;
+        context.Actions.Remove(action);
         
-        // cancel task
-        if (TaskCancellations.TryGetValue(action.Id, out var cts))
-            cts.Cancel();
-        
-        return _context.SaveChangesAsync();
-    }
-    
-    #endregion
-    
-    #region TaskService
-    
-    public Task RegisterNewTaskForActionAsync(ActionCuisiner action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-
-        return StartTaskForActionAsync(action, cts.Token);
-    }
-    private async Task StartTaskForActionAsync(
-        ActionCuisiner action,
-        CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
+        return context.SaveChangesAsync();
     }
 
-    public Task EndAction(int actionId)
+    public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        // get data
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
-
         var user = action.User;
         
+        if (action is not ActionCuisiner actionCuisiner)
+            throw new AppException("Action not found", 404);
+        
         // only one card
-        var userCard = action.UserCards.First();
+        var userCard = actionCuisiner.UserCards.First();
 
         #region REWARDS
 
@@ -232,42 +144,25 @@ public class CuisinerActionService : IActionService<ActionCuisiner>
             (
                 "Compétence cuisine",
                 $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !"
-            ), _context);
+            ), context);
         }
         
         #endregion
-        
-        
+
         // remove action
-        _context.Actions.Remove(action);
+        context.Actions.Remove(actionCuisiner);
 
         // notify user
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Cuisiner",
-            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {action.Plat} !"
-        ), _context);
+            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !"
+        ), context);
         
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync();
     }
-    
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
 
-    #endregion
-    
     // Helpers
-    
-    private IIncludableQueryable<ActionCuisiner,Object> IncludeGetActionsCuisiner()
-    {
-        return _context.Actions
-            .OfType<ActionCuisiner>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    }
 
     private DateTime CalculateActionEndTime()
     {

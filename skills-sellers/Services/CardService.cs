@@ -10,6 +10,7 @@ namespace skills_sellers.Services;
 public interface ICardService
 {
     IEnumerable<CardResponse> GetAll();
+    int GetCount();
     CardResponse GetById(int id);
     CardResponse Create(CardCreateRequest model);
     Card GetCardEntity(Expression<Func<Card, bool>> predicate);
@@ -27,6 +28,8 @@ public class CardService : ICardService
     }
     
     public IEnumerable<CardResponse> GetAll() => _context.Cards.Select(x => x.ToResponse());
+    
+    public int GetCount() => _context.Cards.Count();
 
     public CardResponse GetById(int id) => GetCardEntity(c => c.Id == id).ToResponse();
 

@@ -1,34 +1,27 @@
-using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
-public class MusclerActionService : IActionService<ActionMuscler>
+public class MusclerActionService : IActionService
 {
-    private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly INotificationService _notificationService;
     
     public MusclerActionService(
-        DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider, INotificationService notificationService)
+        INotificationService notificationService)
     {
-        _context = context;
         _userBatimentsService = userBatimentsService;
-        _serviceProvider = serviceProvider;
         _notificationService = notificationService;
     }
     
-    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest model)
+    public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
         // une seule carte pour se muscler
         if (userCards.Count != 1)
@@ -53,20 +46,7 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return (true, "");
     }
 
-    public ActionMuscler? GetAction(UserCard userCard)
-    {
-        return IncludeGetActionsMuscler()
-            .FirstOrDefault(a => a.UserCards
-                .Any(uc => uc.CardId == userCard.CardId 
-                           && uc.UserId == userCard.UserId));
-    }
-
-    public List<ActionMuscler> GetActions()
-    {
-        return IncludeGetActionsMuscler().ToList();
-    }
-
-    public async Task<ActionResponse> StartAction(User user, ActionRequest? model)
+    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -90,25 +70,15 @@ public class MusclerActionService : IActionService<ActionMuscler>
         };
         
         // actualise bdd
-        await _context.Actions.AddAsync(action);
+        await context.Actions.AddAsync(action);
         
         // consume resources
         user.Nourriture -= 1;
         
-        await _context.SaveChangesAsync();
-        
-        // start timer
-        _ = RegisterNewTaskForActionAsync(action, user)
-            .ContinueWith(t =>
-            {
-                if (t is { IsFaulted: true, Exception: not null })
-                {
-                    Console.Error.WriteLine(t.Exception);
-                }
-            });
-        
+        await context.SaveChangesAsync();
+
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -141,13 +111,8 @@ public class MusclerActionService : IActionService<ActionMuscler>
         return action;
     }
 
-    public Task EndAction(int actionId)
+    public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        // get data
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
-
         // only one card
         var userCard = action.UserCards.First();
 
@@ -155,95 +120,34 @@ public class MusclerActionService : IActionService<ActionMuscler>
         
         userCard.Competences.Force += 1;
 
-        _context.UserCards.Update(userCard);
+        context.UserCards.Update(userCard);
 
         // remove action
-        _context.Actions.Remove(action);
+        context.Actions.Remove(action);
 
         // notify user
         _notificationService.SendNotificationToUser(userCard.User, new NotificationRequest
         (
             "Salle de sport",
             $"Votre carte {userCard.Card.Name} a gagné 1 point de force !"
-        ), _context);
+        ), context);
 
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
+        var user = action.User;
         
-        _context.Actions.Remove(action);
+        context.Actions.Remove(action);
         
         // refund resources
         user.Nourriture += 1;
         
-        
-        // cancel task
-        if (TaskCancellations.TryGetValue(action.Id, out var cts))
-            cts.Cancel();
-        
-        return _context.SaveChangesAsync();
-    }
-    
-    public Task RegisterNewTaskForActionAsync(ActionMuscler action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
-
-        return StartTaskForActionAsync(action, cts.Token);
+        return context.SaveChangesAsync();
     }
 
-    private async Task StartTaskForActionAsync(ActionMuscler action, CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
-    }
-    
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
-    
-    private IIncludableQueryable<ActionMuscler,Object> IncludeGetActionsMuscler()
-    {
-        return _context.Actions
-            .OfType<ActionMuscler>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    } 
-    
     private DateTime CalculateActionEndTime(int forceLevelToUp)
     {
         return DateTime.Now.AddHours(forceLevelToUp);

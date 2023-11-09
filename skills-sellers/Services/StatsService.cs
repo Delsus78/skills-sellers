@@ -121,7 +121,11 @@ public class StatsService : IStatsService
         if (user == null)
             throw new AppException("User not found", 404);
         
-        var stats = context.Stats.FirstOrDefault(s => s.UserId == user.Id) ?? new Stats
+        var stats = context.Stats.FirstOrDefault(s => s.UserId == user.Id);
+
+        if (stats != null) return stats;
+        
+        stats = new Stats
         {
             TotalFailedCardsCauseOfCharisme = 0,
             TotalMessagesSent = 0,
@@ -136,7 +140,6 @@ public class StatsService : IStatsService
             TotalLooseAtCharismeCasino = 0,
             TotalWinAtCharismeCasino = 0
         };
-
         user.Stats = stats;
         return stats;
     }
@@ -163,6 +166,7 @@ public class StatsService : IStatsService
         var userCriteria = new List<Func<User, int>> {
             u => u.UserCards.Count,
             u => u.UserCards.Count(c => c.Competences.GotOneMaxed()),
+            u => u.UserCards.Count(c => c.Competences.GotAllMaxed()),
             u => u.UserCards.Count(c => c.Card.Rarity == "commune"),
             u => u.UserCards.Count(c => c.Card.Rarity == "epic"),
             u => u.UserCards.Count(c => c.Card.Rarity == "legendaire")
@@ -186,6 +190,7 @@ public class StatsService : IStatsService
             "TotalWordleWon",
             "TotalCards",
             "TotalCardWithAStatMaxed",
+            "TotalCardsAtFull10",
             "TotalCardsCommune",
             "TotalCardsEpic",
             "TotalCardsLegendaire"

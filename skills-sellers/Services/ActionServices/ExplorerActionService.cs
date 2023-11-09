@@ -1,36 +1,32 @@
-using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
-public class ExplorerActionService : IActionService<ActionExplorer>
+public class ExplorerActionService : IActionService
 {
-    private DataContext _context;
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IResourcesService _resourcesService;
     private readonly INotificationService _notificationService;
     private readonly IStatsService _statsService;
-    
+    private readonly IActionTaskService _actionTaskService;
     public ExplorerActionService(
-        DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider,
-        IResourcesService resourcesService, INotificationService notificationService, IStatsService statsService)
+        IResourcesService resourcesService, 
+        INotificationService notificationService, 
+        IStatsService statsService,
+        IActionTaskService actionTaskService)
     {
-        _context = context;
         _userBatimentsService = userBatimentsService;
-        _serviceProvider = serviceProvider;
         _resourcesService = resourcesService;
         _notificationService = notificationService;
         _statsService = statsService;
+        _actionTaskService = actionTaskService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -58,20 +54,7 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         return (true, "");
     }
 
-    public ActionExplorer? GetAction(UserCard userCard)
-    {
-        return IncludeGetActionsExplorer()
-            .FirstOrDefault(a => a.UserCards
-                .Any(uc => uc.CardId == userCard.CardId 
-                           && uc.UserId == userCard.UserId));
-    }
-
-    public List<ActionExplorer> GetActions()
-    {
-        return IncludeGetActionsExplorer().ToList();
-    }
-
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -90,13 +73,13 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         {
             UserCards = userCards,
             DueDate = endTime,
-            User = user,
+            UserId = user.Id,
             IsReturningToHome = false,
             PlanetName = randomPlanet
         };
         
         // actualise bdd
-        await _context.Actions.AddAsync(action);
+        await context.Actions.AddAsync(action);
         
         // stats
         _statsService.OnRocketLaunched(user.Id);
@@ -104,20 +87,10 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         // consume resources
         user.Nourriture -= 2;
         
-        await _context.SaveChangesAsync();
-        
-        // start timer
-        _ = RegisterNewTaskForActionAsync(action, user)
-            .ContinueWith(t =>
-            {
-                if (t is { IsFaulted: true, Exception: not null })
-                {
-                    Console.Error.WriteLine(t.Exception);
-                }
-            });
-        
+        await context.SaveChangesAsync();
+
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -159,34 +132,32 @@ public class ExplorerActionService : IActionService<ActionExplorer>
         return action;
     }
 
-    public Task EndAction(int actionId)
+    public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        // get data
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
+        if (action is not ActionExplorer actionExplorer)
             throw new AppException("Action not found", 404);
 
         var user = action.User;
         
         var userCard = action.UserCards.First();
 
-        if (action.IsReturningToHome)
+        if (actionExplorer.IsReturningToHome)
         {
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Explorer",
                 $"Votre carte {userCard.Card.Name} est revenue de l'exploration !"
-            ), _context);
+            ), context);
 
             // remove action if returning
-            _context.Actions.Remove(action);
+            context.Actions.Remove(action);
         } 
         else
         {
             #region REWARDS
+            
             // give resources and turn on the cardOpeningAvailable flag
-
             var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
             var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
             user.Creatium += creatiumWin;
@@ -201,7 +172,7 @@ public class ExplorerActionService : IActionService<ActionExplorer>
             (
                 "Explorer",
                 $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
-            ), _context);
+            ), context);
 
             // chance to get a card based on charisme
             if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
@@ -211,7 +182,7 @@ public class ExplorerActionService : IActionService<ActionExplorer>
                 (
                     "Explorer",
                     $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
-                ), _context);
+                ), context);
 
                 user.NbCardOpeningAvailable++;
             }
@@ -228,109 +199,42 @@ public class ExplorerActionService : IActionService<ActionExplorer>
                 (
                     "Compétence exploration",
                     $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
-                ), _context);
-
-                _context.UserCards.Update(userCard);
+                ), context);
             }
 
-            _context.Users.Update(user);
-            
             #endregion
             
             // update action to returning
-            action.IsReturningToHome = true;
+            actionExplorer.IsReturningToHome = true;
             action.DueDate = CalculateActionEndTime(userCard.Competences.Exploration, true);
-            _context.Actions.Update(action);
             
             // start timer for returning
-            var cts = new CancellationTokenSource();
-            TaskCancellations.TryAdd(action.Id, cts);
-
-            _ = StartTaskForActionAsync(action, cts.Token);
+            _ = _actionTaskService.StartNewTaskForAction(action);
         }
 
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
+        // get user linked to action
+        var user = action.User;
+
+        if (action is not ActionExplorer actionExplorer)
             throw new AppException("Action not found", 404);
         
-        if (action.IsReturningToHome)
+        if (actionExplorer.IsReturningToHome)
             throw new AppException("Vous ne pouvez pas annuler cette action !", 400);
         
-        _context.Actions.Remove(action);
+        context.Actions.Remove(action);
         
         // refund resources
         user.Nourriture += 2;
-        
-        
-        // cancel task
-        if (TaskCancellations.TryGetValue(action.Id, out var cts))
-            cts.Cancel();
-        
-        return _context.SaveChangesAsync();
-    }
-    
-    public Task RegisterNewTaskForActionAsync(ActionExplorer action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
 
-        return StartTaskForActionAsync(action, cts.Token);
+        return context.SaveChangesAsync();
     }
 
-    private async Task StartTaskForActionAsync(
-        ActionExplorer action,
-        CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
-    }
-
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
-    
-    private IIncludableQueryable<ActionExplorer,Object> IncludeGetActionsExplorer()
-    {
-        return _context.Actions
-            .OfType<ActionExplorer>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    }
-    
     private DateTime CalculateActionEndTime(int exploLevel, bool returning = false)
     {
         // l’exploration prendra 5h30 - le niveau x 30 minutes 

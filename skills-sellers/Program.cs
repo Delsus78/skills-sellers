@@ -48,6 +48,7 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddSingleton<IStatsService, StatsService>();
+services.AddScoped<IAchievementsService, AchievementsService>();
 services.AddScoped<IMarchandService, MarchandService>();
 services.AddScoped<IResourcesService, ResourcesService>();
 services.AddScoped<IUserBatimentsService, UserBatimentsService>();
@@ -55,11 +56,12 @@ services.AddSingleton<INotificationService, NotificationService>();
 services.AddSingleton<IRegistrationLinkCreatorService, RegistrationLinkCreatorService>();
 
 // add action services
-services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
-services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
-services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
-services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
-services.AddScoped<IActionService<ActionReparer>, ReparerActionService>();
+services.AddSingleton<IActionTaskService, ActionTaskService>();
+services.AddScoped<ExplorerActionService>();
+services.AddScoped<AmeliorerActionService>();
+services.AddScoped<CuisinerActionService>();
+services.AddScoped<MusclerActionService>();
+services.AddScoped<ReparerActionService>();
 
 // add games services
 services.AddScoped<IGameService, GamesService>();

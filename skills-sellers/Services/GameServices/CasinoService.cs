@@ -38,7 +38,6 @@ public class CasinoService : IGameService
         
         // remove gold
         user.Or -= model.Bet;
-        _context.Users.Update(user);
         
         // try to win
         var rand = new Random();
@@ -134,8 +133,8 @@ public class CasinoService : IGameService
             return (false, "Vous devez jouer une seule carte !");
 
         // card already got 10 charisme
-        if (card.Competences.Charisme >= 10)
-            return (false, "Cette carte a déjà atteint son charisme maximum !");
+        if (card.Competences.Charisme >= 8)
+            return (false, "Cette carte a déjà atteint son charisme maximum (8 pour le casino)!");
         
         return (true, "");
     }

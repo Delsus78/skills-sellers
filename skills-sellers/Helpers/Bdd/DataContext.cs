@@ -7,7 +7,7 @@ namespace skills_sellers.Helpers.Bdd;
 
 public class DataContext : DbContext
 {
-    
+    #region DBSETS
     // cards data
     public DbSet<Card> Cards { get; set; }
     
@@ -42,6 +42,10 @@ public class DataContext : DbContext
     // Gift codes
     public DbSet<GiftCode> GiftCodes { get; set; }
     
+    // Achievements
+    public DbSet<Achievement> Achievements { get; set; }
+    #endregion
+
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -52,7 +56,7 @@ public class DataContext : DbContext
          .HasValue<ActionExplorer>("Explorer")
          .HasValue<ActionAmeliorer>("Ameliorer")
          .HasValue<ActionMuscler>("Muscler")
-        .HasValue<ActionReparer>("Reparer");
+         .HasValue<ActionReparer>("Reparer");
         
         // adding user id to action
         modelBuilder.Entity<Action>()
@@ -66,6 +70,11 @@ public class DataContext : DbContext
             .WithOne(u => u.Stats)
             .HasForeignKey<Stats>(s => s.UserId);
         
+        // link between user and achievements
+        modelBuilder.Entity<Achievement>().HasOne(a => a.User)
+            .WithOne(u => u.Achievement)
+            .HasForeignKey<Achievement>(a => a.UserId);
+
         // link between user and wordle game
         modelBuilder.Entity<WordleGame>().HasOne(w => w.User)
             .WithOne(u => u.WordleGame)

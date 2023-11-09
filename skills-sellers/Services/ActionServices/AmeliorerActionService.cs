@@ -1,33 +1,25 @@
-using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Services.ActionServices;
 
-public class AmeliorerActionService : IActionService<ActionAmeliorer>
+public class AmeliorerActionService : IActionService
 {
-    private DataContext _context;
     private readonly INotificationService _notificationService;
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IStatsService _statsService;
 
     public AmeliorerActionService(
-        DataContext context,
         IUserBatimentsService userBatimentsService,
-        IServiceProvider serviceProvider, 
         INotificationService notificationService, 
         IStatsService statsService)
     {
-        _context = context;
         _userBatimentsService = userBatimentsService;
-        _serviceProvider = serviceProvider;
         _notificationService = notificationService;
         _statsService = statsService;
     }
@@ -71,20 +63,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return (true, "");
     }
 
-    public ActionAmeliorer? GetAction(UserCard userCard)
-    {
-        return IncludeGetActionsAmeliorer()
-            .FirstOrDefault(a => a.UserCards
-                .Any(uc => uc.CardId == userCard.CardId 
-                           && uc.UserId == userCard.UserId));
-    }
-
-    public List<ActionAmeliorer> GetActions()
-    {
-        return IncludeGetActionsAmeliorer().ToList();
-    }
-
-    public async Task<ActionResponse> StartAction(User user, ActionRequest model)
+    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -110,7 +89,7 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         };
         
         // actualise bdd
-        await _context.Actions.AddAsync(action);
+        await context.Actions.AddAsync(action);
         
         // consume resources
         var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level);
@@ -118,20 +97,10 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         user.Nourriture -= userCards.Count;
         user.Creatium -= creatiumPrice;
         
-        await _context.SaveChangesAsync();
-        
-        // start timer
-        _ = RegisterNewTaskForActionAsync(action, user)
-            .ContinueWith(t =>
-            {
-                if (t is { IsFaulted: true, Exception: not null })
-                {
-                    Console.Error.WriteLine(t.Exception);
-                }
-            });
-        
+        await context.SaveChangesAsync();
+
         // return response
-        return action.ToResponse();
+        return action;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -173,22 +142,20 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         return action;
     }
 
-    public Task EndAction(int actionId)
+    public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        // get data
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
+        if (action is not ActionAmeliorer actionAmeliorer)
             throw new AppException("Action not found", 404);
-
+        
         // sort cards by intel and remove all that got are max 10 intel
-        var userCards = action.UserCards
+        var userCards = actionAmeliorer.UserCards
             .OrderBy(uc => uc.Competences.Intelligence)  // Change OrderByDescending to OrderBy to start with the card with the lowest intel
             .Where(uc => uc.Competences.Intelligence < 10)
             .ToList();
         
-        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(action.User, _context);
+        var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(actionAmeliorer.User, context);
 
-        var niveauIntelADonner = GetLevelOfUserBat(userBatimentData, new ActionRequest { BatimentToUpgrade = action.BatimentToUpgrade });
+        var niveauIntelADonner = GetLevelOfUserBat(userBatimentData, new ActionRequest { BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade });
 
         var cardNameForIntelUp = new Dictionary<string, int>();
         
@@ -210,13 +177,13 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         }
         
         // notify user
-        _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
+        _notificationService.SendNotificationToUser(actionAmeliorer.User, new NotificationRequest(
             "Amélioration terminée", 
             $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}"), 
-            _context);
+            context);
 
         // up batiment level
-        switch (action.BatimentToUpgrade)
+        switch (actionAmeliorer.BatimentToUpgrade)
         {
             case "cuisine":
                 userBatimentData.CuisineLevel++;
@@ -232,98 +199,41 @@ public class AmeliorerActionService : IActionService<ActionAmeliorer>
         }
         
         // stats
-        _statsService.OnBuildingsUpgraded(action.User.Id);
+        _statsService.OnBuildingsUpgraded(actionAmeliorer.User.Id);
         
         // remove action
-        _context.Actions.Remove(action);
+        context.Actions.Remove(actionAmeliorer);
 
         // notify user
-        _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
+        _notificationService.SendNotificationToUser(actionAmeliorer.User, new NotificationRequest(
             "Amélioration terminée", 
-            $"Votre bâtiment {action.BatimentToUpgrade} a été amélioré !"), 
-            _context);
+            $"Votre bâtiment {actionAmeliorer.BatimentToUpgrade} a été amélioré !"), 
+            context);
 
-        return _context.SaveChangesAsync();
+        return context.SaveChangesAsync();
     }
 
-    public Task DeleteAction(User user, int actionId)
+    public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
-        var action = GetActions().FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
+        var user = action.User;
+        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
+        
+        if (action is not ActionAmeliorer actionAmeliorer)
             throw new AppException("Action not found", 404);
-        
-        _context.Actions.Remove(action);
-        
+
         // refund resources
-        var level = GetLevelOfUserBat(user.UserBatimentData, new ActionRequest { BatimentToUpgrade = action.BatimentToUpgrade });
+        var level = GetLevelOfUserBat(user.UserBatimentData, new ActionRequest { BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade });
         var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level);
-        
-        user.Nourriture += action.UserCards.Count;
+        user.Nourriture += actionAmeliorer.UserCards.Count;
         user.Creatium += creatiumPrice;
-        
-        
-        // cancel task
-        if (TaskCancellations.TryGetValue(action.Id, out var cts))
-            cts.Cancel();
-        
-        return _context.SaveChangesAsync();
-    }
-    
-    public Task RegisterNewTaskForActionAsync(ActionAmeliorer action, User user)
-    {
-        var cts = new CancellationTokenSource();
-        TaskCancellations.TryAdd(action.Id, cts);
-        
-        _context = _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
 
-        return StartTaskForActionAsync(action, cts.Token);
-    }
-    
-    private async Task StartTaskForActionAsync(ActionAmeliorer action, CancellationToken cancellationToken)
-    {
-        var now = DateTime.Now;
-        var delay = action.DueDate - now;
-        
-        if (delay.TotalMilliseconds > 0)
-        {
-            try
-            {
-                await Task.Delay(delay, cancellationToken);
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    await EndAction(action.Id);
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine($"Task {action.Id} cancelled");
-            }
-        }
-        else
-        {
-            // La date d'échéance est déjà passée
-            await EndAction(action.Id);
-        }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
+        context.Actions.Remove(actionAmeliorer);
+
+        return context.SaveChangesAsync();
     }
 
-    public ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
-    
     // Helpers
-    
-    private IIncludableQueryable<ActionAmeliorer,Object> IncludeGetActionsAmeliorer()
-    {
-        return _context.Actions
-            .OfType<ActionAmeliorer>()
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Card)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences);
-    } 
-    
+
     private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
         var hours = 12 * level - extraLevels;
