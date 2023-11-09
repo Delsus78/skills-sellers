@@ -16,12 +16,14 @@ public class UserActionController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IMarchandService _marchandService;
+    private readonly IAchievementsService _achievementsService;
 
     public UserActionController(
-        IUserService userService, IMarchandService marchandService)
+        IUserService userService, IMarchandService marchandService, IAchievementsService achievementsService)
     {
         _userService = userService;
         _marchandService = marchandService;
+        _achievementsService = achievementsService;
     }
 
     // helper methods
@@ -97,4 +99,14 @@ public class UserActionController : ControllerBase
     [HttpPost("gift")]
     public Task<GiftCodeResponse> EnterGiftCode(int id, GiftCodeRequest giftCode)
         => _userService.EnterGiftCode(GetUserAuthenticated(id), giftCode);
+    
+    [Authorize]
+    [HttpGet("achievements")]
+    public async Task<AchievementResponse> GetAchievements(int id)
+        => await _achievementsService.GetAll(id);
+    
+    [Authorize]
+    [HttpPost("achievements")]
+    public async Task<AchievementResponse?> ClaimAchievement(int id, AchievementRequest achievement)
+        => await _achievementsService.ClaimAchievement(GetUserAuthenticated(id), achievement);
 }

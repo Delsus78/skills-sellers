@@ -166,7 +166,6 @@ public class CuisinerActionService : IActionService
 
     private DateTime CalculateActionEndTime()
     {
-        // TODO CHANGE THIS AAAAAAH
-        return DateTime.Now.AddMinutes(1);
+        return DateTime.Now.AddMinutes(30);
     }
 }

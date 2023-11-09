@@ -236,10 +236,8 @@ public class AmeliorerActionService : IActionService
 
     private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
-        // TODO CHANGE THIS AAAAAAH
-        return DateTime.Now.AddMinutes(1);
         var hours = 12 * level - extraLevels;
-        //return DateTime.Now.AddHours(hours);
+        return DateTime.Now.AddHours(hours);
     }
     
     private static int GetLevelOfUserBat(UserBatimentData batimentData, ActionRequest model)

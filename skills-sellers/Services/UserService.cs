@@ -265,6 +265,9 @@ public class UserService : IUserService
         // random competences
         var competence = Randomizer.GetRandomCompetenceBasedOnRarity(card.Rarity);
         
+        // special case for legendary
+        competence.Exploration++;
+        
         var userCardEntity = new UserCard
         {
             User = user,
@@ -374,7 +377,7 @@ public class UserService : IUserService
         var user = GetUserEntity(u => u.Id == id);
         var userCards = user.UserCards;
         var stats = _statsService.GetOrCreateStatsEntity(user);
-        var nbCardsInBdd = _cardService.GetAll().Count();
+        var nbCardsInBdd = _cardService.GetCount();
         
         // get ranks
         var ranks = _statsService.GetRanks(user);

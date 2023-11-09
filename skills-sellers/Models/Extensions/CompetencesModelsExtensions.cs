@@ -29,4 +29,7 @@ public static class CompetencesModelsExtensions
            || competences.Intelligence == 10 
            || competences.Charisme == 10 
            || competences.Exploration == 10;
+    
+    public static bool GotAllMaxed(this Competences competences)
+        => competences is { Cuisine: 10, Force: 10, Intelligence: 10, Charisme: 10, Exploration: 10 };
 }
