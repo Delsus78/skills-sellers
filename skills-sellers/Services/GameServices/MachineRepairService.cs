@@ -80,6 +80,7 @@ public class MachineRepairService : IGameService
 
             await _actionTaskService.CreateNewActionAsync(user.Id, new ActionRequest
             {
+                ActionName = "REPARER",
                 CardsIds = model.CardsIds,
                 RepairChances = chances
             });
