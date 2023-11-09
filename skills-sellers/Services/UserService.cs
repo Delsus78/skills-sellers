@@ -266,7 +266,8 @@ public class UserService : IUserService
         var competence = Randomizer.GetRandomCompetenceBasedOnRarity(card.Rarity);
         
         // special case for legendary
-        competence.Exploration++;
+        if (card.Rarity == "legendaire")
+            competence.Exploration++;
         
         var userCardEntity = new UserCard
         {
