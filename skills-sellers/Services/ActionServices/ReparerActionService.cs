@@ -135,6 +135,8 @@ public class ReparerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime()
     {
-        return DateTime.Now.AddHours(1);
+        // TODO CHANGE THIS AAAAAAH
+        return DateTime.Now.AddMinutes(1);
+        //return DateTime.Now.AddHours(1);
     }
 }

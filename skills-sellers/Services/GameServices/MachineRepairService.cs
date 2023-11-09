@@ -78,7 +78,7 @@ public class MachineRepairService : IGameService
             var totalIntel = cards.Sum(c => c.Competences.Intelligence);
             var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
 
-            await _actionTaskService.CreateNewActionAsync(user, new ActionRequest
+            await _actionTaskService.CreateNewActionAsync(user.Id, new ActionRequest
             {
                 CardsIds = model.CardsIds,
                 RepairChances = chances

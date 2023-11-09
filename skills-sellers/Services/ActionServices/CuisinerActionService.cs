@@ -106,7 +106,8 @@ public class CuisinerActionService : IActionService
     {
         // get user linked to action
         var user = action.User;
-
+        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
+        
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday -= 1;
         context.Actions.Remove(action);
@@ -165,6 +166,7 @@ public class CuisinerActionService : IActionService
 
     private DateTime CalculateActionEndTime()
     {
+        // TODO CHANGE THIS AAAAAAH
         return DateTime.Now.AddMinutes(1);
     }
 }

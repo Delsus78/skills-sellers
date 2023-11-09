@@ -150,6 +150,8 @@ public class MusclerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime(int forceLevelToUp)
     {
-        return DateTime.Now.AddHours(forceLevelToUp);
+        // TODO CHANGE THIS AAAAAAH
+        return DateTime.Now.AddMinutes(1);
+        //return DateTime.Now.AddHours(forceLevelToUp);
     }
 }

@@ -12,30 +12,31 @@ namespace skills_sellers.Services.ActionServices;
 
 public interface IActionTaskService
 {
-    Task<ActionResponse> CreateNewActionAsync(User user, ActionRequest model);
+    Task<ActionResponse> CreateNewActionAsync(int userId, ActionRequest model);
     Task StartNewTaskForAction(Action action);
     Task RestartAllActionsAsync();
     Task StopAllActionsAsync();
-    Task DeleteActionAsync(User user, int actionId);
-    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
+    Task DeleteActionAsync(int userId, int actionId);
+    ActionEstimationResponse EstimateAction(int userId, ActionRequest model);
 }
 public class ActionTaskService : IActionTaskService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ActionServiceResolver _actionServiceResolver;
     private ConcurrentDictionary<int, CancellationTokenSource> TaskCancellations { get; } = new();
     
     public ActionTaskService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _actionServiceResolver = new ActionServiceResolver(serviceProvider);
     }
 
-    public async Task<ActionResponse> CreateNewActionAsync(User user, ActionRequest model)
+    public async Task<ActionResponse> CreateNewActionAsync(int userId, ActionRequest model)
     {
-        var service = _actionServiceResolver.Resolve(model.ActionName.ToLower());
-        var context = _serviceProvider.GetRequiredService<DataContext>();
+        using var scope = _serviceProvider.CreateScope();
         
+        var service = ActionServiceResolver.Resolve(model.ActionName.ToLower(), scope);
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+        var user = GetUser(userId, context);
+
         // start action
         var responseAction = await service.StartAction(user, model, context, _serviceProvider);
         
@@ -60,6 +61,7 @@ public class ActionTaskService : IActionTaskService
 
         foreach (var action in ongoingActions)
         {
+            Console.Out.WriteLine("Reprise de l'action " + action.Id + " : " + action.GetType().Name + " pour " + action.User.Pseudo);
             _ = RegisterNewTaskForActionAsync(action).ContinueWith(t =>
             {
                 if (t is { IsFaulted: true, Exception: not null })
@@ -103,13 +105,19 @@ public class ActionTaskService : IActionTaskService
         return Task.CompletedTask;
     }
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    public ActionEstimationResponse EstimateAction(int userId, ActionRequest model)
     {
-        var service = _actionServiceResolver.Resolve(model.ActionName);
+        using var scope = _serviceProvider.CreateScope();
+        
+        var service = ActionServiceResolver.Resolve(model.ActionName, scope);
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+        
+        var user = GetUser(userId, context);
+        
         return service.EstimateAction(user, model);
     }
     
-    public async Task DeleteActionAsync(User user, int actionId)
+    public async Task DeleteActionAsync(int userId, int actionId)
     {
         await DispatchToCorrectDeleteActionService(actionId);
 
@@ -179,8 +187,10 @@ public class ActionTaskService : IActionTaskService
         if (actionEntity == null)
             throw new AppException("Action non trouvée", 404);
 
-        var service = _actionServiceResolver.Resolve(actionEntity);
+        var service = ActionServiceResolver.Resolve(actionEntity, scope);
         await actionFunc(service, actionEntity, context, _serviceProvider);
+        
+        await context.DisposeAsync();
     }
 
     private Task DispatchToCorrectEndActionService(int actionId) =>
@@ -193,41 +203,47 @@ public class ActionTaskService : IActionTaskService
             (service, action, context, serviceProvider) 
             => service.DeleteAction(action, context, serviceProvider));
 
+    private User GetUser(int id, DataContext context)
+    {
+        var user = context.Users
+            .Where(u => u.Id == id)
+            .SelectUserDetails()
+            .FirstOrDefault();
+        
+        if (user == null)
+            throw new AppException("Utilisateur non trouvé", 404);
+        
+        return user;
+    }
+    
     #endregion
 }
 
 // Factory ou stratégie pour résoudre le service d'action approprié
 public class ActionServiceResolver
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    public ActionServiceResolver(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
-    public IActionService Resolve(Action action)
+    public static IActionService Resolve(Action action, IServiceScope scope)
     {
         return action switch
         {
-            ActionMuscler _ => _serviceProvider.GetRequiredService<MusclerActionService>(),
-            ActionCuisiner _ => _serviceProvider.GetRequiredService<CuisinerActionService>(),
-            ActionReparer _ => _serviceProvider.GetRequiredService<ReparerActionService>(),
-            ActionAmeliorer _ => _serviceProvider.GetRequiredService<AmeliorerActionService>(),
-            ActionExplorer _ => _serviceProvider.GetRequiredService<ExplorerActionService>(),
+            ActionMuscler _ => scope.ServiceProvider.GetRequiredService<MusclerActionService>(),
+            ActionCuisiner _ => scope.ServiceProvider.GetRequiredService<CuisinerActionService>(),
+            ActionReparer _ => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
+            ActionAmeliorer _ => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
+            ActionExplorer _ => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }
     
-    public IActionService Resolve(string type)
+    public static IActionService Resolve(string type, IServiceScope scope)
     {
         return type switch
         {
-            "muscler" => _serviceProvider.GetRequiredService<MusclerActionService>(),
-            "cuisiner" => _serviceProvider.GetRequiredService<CuisinerActionService>(),
-            "reparer" => _serviceProvider.GetRequiredService<ReparerActionService>(),
-            "ameliorer" => _serviceProvider.GetRequiredService<AmeliorerActionService>(),
-            "explorer" => _serviceProvider.GetRequiredService<ExplorerActionService>(),
+            "muscler" => scope.ServiceProvider.GetRequiredService<MusclerActionService>(),
+            "cuisiner" => scope.ServiceProvider.GetRequiredService<CuisinerActionService>(),
+            "reparer" => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
+            "ameliorer" => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
+            "explorer" => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }

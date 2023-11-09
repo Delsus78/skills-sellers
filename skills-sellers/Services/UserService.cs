@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -388,15 +387,15 @@ public class UserService : IUserService
     #region ACTIONS
 
     public async Task<ActionResponse> CreateAction(User user, ActionRequest model) 
-        => await _actionTaskService.CreateNewActionAsync(user, model);
+        => await _actionTaskService.CreateNewActionAsync(user.Id, model);
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
-        return _actionTaskService.EstimateAction(user, model);
+        return _actionTaskService.EstimateAction(user.Id, model);
     }
     
     public async Task DeleteAction(User user, int actionId)
-        => await _actionTaskService.DeleteActionAsync(user, actionId);
+        => await _actionTaskService.DeleteActionAsync(user.Id, actionId);
 
     #endregion
     
@@ -492,6 +491,9 @@ public class UserService : IUserService
 
         return user ?? throw new AppException("User not found", 404);
     }
+    
+    public bool IsUserExist(Expression<Func<User, bool>> predicate) 
+        => _context.Users.Any(predicate);
 
     #endregion
 }

@@ -20,7 +20,7 @@ public class ExplorerActionService : IActionService
         IResourcesService resourcesService, 
         INotificationService notificationService, 
         IStatsService statsService,
-        ActionTaskService actionTaskService)
+        IActionTaskService actionTaskService)
     {
         _userBatimentsService = userBatimentsService;
         _resourcesService = resourcesService;
@@ -73,7 +73,7 @@ public class ExplorerActionService : IActionService
         {
             UserCards = userCards,
             DueDate = endTime,
-            User = user,
+            UserId = user.Id,
             IsReturningToHome = false,
             PlanetName = randomPlanet
         };
@@ -237,7 +237,9 @@ public class ExplorerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime(int exploLevel, bool returning = false)
     {
+        // TODO CHANGE THIS AAAAAAH
+        return DateTime.Now.AddMinutes(2);
         // l’exploration prendra 5h30 - le niveau x 30 minutes 
-        return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
+        //return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
     }
 }

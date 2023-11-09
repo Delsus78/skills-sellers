@@ -216,6 +216,7 @@ public class AmeliorerActionService : IActionService
     public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
         var user = action.User;
+        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
         
         if (action is not ActionAmeliorer actionAmeliorer)
             throw new AppException("Action not found", 404);
@@ -235,8 +236,10 @@ public class AmeliorerActionService : IActionService
 
     private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
+        // TODO CHANGE THIS AAAAAAH
+        return DateTime.Now.AddMinutes(1);
         var hours = 12 * level - extraLevels;
-        return DateTime.Now.AddHours(hours);
+        //return DateTime.Now.AddHours(hours);
     }
     
     private static int GetLevelOfUserBat(UserBatimentData batimentData, ActionRequest model)
