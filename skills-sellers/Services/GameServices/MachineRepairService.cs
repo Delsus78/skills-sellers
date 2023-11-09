@@ -10,15 +10,15 @@ namespace skills_sellers.Services.GameServices;
 public class MachineRepairService : IGameService
 {
     private readonly DataContext _context;
-    private readonly IActionService<ActionReparer> _reparerActionService;
+    private readonly IActionTaskService _actionTaskService;
     private readonly IStatsService _statsService;
     
     public MachineRepairService(DataContext context, 
-        IActionService<ActionReparer> reparerActionService,
+        IActionTaskService actionTaskService,
         IStatsService statsService)
     {
         _context = context;
-        _reparerActionService = reparerActionService;
+        _actionTaskService = actionTaskService;
         _statsService = statsService;
     }
     
@@ -77,8 +77,8 @@ public class MachineRepairService : IGameService
             // set cards in action
             var totalIntel = cards.Sum(c => c.Competences.Intelligence);
             var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
-            
-            await _reparerActionService.StartAction(user, new ActionRequest
+
+            await _actionTaskService.CreateNewActionAsync(user, new ActionRequest
             {
                 CardsIds = model.CardsIds,
                 RepairChances = chances

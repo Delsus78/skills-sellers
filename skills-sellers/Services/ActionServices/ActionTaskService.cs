@@ -14,7 +14,10 @@ public interface IActionTaskService
 {
     Task<ActionResponse> CreateNewActionAsync(User user, ActionRequest model);
     Task StartNewTaskForAction(Action action);
-    Task DeleteActionAsync(int actionId);
+    Task RestartAllActionsAsync();
+    Task StopAllActionsAsync();
+    Task DeleteActionAsync(User user, int actionId);
+    ActionEstimationResponse EstimateAction(User user, ActionRequest model);
 }
 public class ActionTaskService : IActionTaskService
 {
@@ -42,6 +45,51 @@ public class ActionTaskService : IActionTaskService
         return responseAction.ToResponse();
     }
     
+    public async Task RestartAllActionsAsync()
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        var ongoingActions = await context.Actions
+            .Include(a => a.User)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.Card)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.Competences)
+            .ToListAsync();
+
+        foreach (var action in ongoingActions)
+        {
+            _ = RegisterNewTaskForActionAsync(action).ContinueWith(t =>
+            {
+                if (t is { IsFaulted: true, Exception: not null })
+                {
+                    Console.Error.WriteLine(t.Exception);
+                }
+            });
+        }
+    }
+    
+    public async Task StopAllActionsAsync()
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        var ongoingActions = await context.Actions
+            .Include(a => a.User)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.Card)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.Competences)
+            .ToListAsync();
+
+        foreach (var action in ongoingActions)
+        {
+            if (TaskCancellations.TryGetValue(action.Id, out var cts))
+                cts.Cancel();
+        }
+    }
+    
     public Task StartNewTaskForAction(Action action)
     {
         _ = RegisterNewTaskForActionAsync(action).ContinueWith(t =>
@@ -54,11 +102,17 @@ public class ActionTaskService : IActionTaskService
         
         return Task.CompletedTask;
     }
+
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
+    {
+        var service = _actionServiceResolver.Resolve(model.ActionName);
+        return service.EstimateAction(user, model);
+    }
     
-    public async Task DeleteActionAsync(int actionId)
+    public async Task DeleteActionAsync(User user, int actionId)
     {
         await DispatchToCorrectDeleteActionService(actionId);
-        
+
         // cancel task
         if (TaskCancellations.TryGetValue(actionId, out var cts))
             cts.Cancel();
@@ -123,10 +177,7 @@ public class ActionTaskService : IActionTaskService
             .FirstOrDefaultAsync();
 
         if (actionEntity == null)
-        {
-            // Vous pourriez envisager de retourner false ou un résultat personnalisé ici pour indiquer une erreur
             throw new AppException("Action non trouvée", 404);
-        }
 
         var service = _actionServiceResolver.Resolve(actionEntity);
         await actionFunc(service, actionEntity, context, _serviceProvider);

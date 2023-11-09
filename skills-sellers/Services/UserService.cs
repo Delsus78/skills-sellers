@@ -56,11 +56,7 @@ public class UserService : IUserService
     private readonly IRegistrationLinkCreatorService _registrationLinkCreatorService;
     
     // actions services
-    private readonly IActionService<ActionCuisiner> _cuisinerActionService;
-    private readonly IActionService<ActionExplorer> _explorerActionService;
-    private readonly IActionService<ActionMuscler> _musclerActionService;
-    private readonly IActionService<ActionAmeliorer> _ameliorerActionService;
-    private readonly IActionService<ActionReparer> _reparerActionService;
+    private readonly IActionTaskService _actionTaskService;
 
     public UserService(
         DataContext context,
@@ -68,26 +64,17 @@ public class UserService : IUserService
         IAuthService authService,
         IStatsService statsService, 
         IUserBatimentsService userBatimentsService,
-        IActionService<ActionCuisiner> cuisinerActionService,
-        IActionService<ActionExplorer> explorerActionService,
-        IActionService<ActionMuscler> musclerActionService,
-        IActionService<ActionAmeliorer> ameliorerActionService, 
-        IActionService<ActionReparer> reparerActionService,
         INotificationService notificationService,
-        IRegistrationLinkCreatorService registrationLinkCreatorService)
+        IRegistrationLinkCreatorService registrationLinkCreatorService, IActionTaskService actionTaskService)
     {
         _context = context;
         _cardService = cardService;
         _authService = authService;
         _statsService = statsService;
         _userBatimentsService = userBatimentsService;
-        _cuisinerActionService = cuisinerActionService;
-        _explorerActionService = explorerActionService;
-        _musclerActionService = musclerActionService;
-        _ameliorerActionService = ameliorerActionService;
         _notificationService = notificationService;
         _registrationLinkCreatorService = registrationLinkCreatorService;
-        _reparerActionService = reparerActionService;
+        _actionTaskService = actionTaskService;
     }
 
     #region USER
@@ -400,59 +387,16 @@ public class UserService : IUserService
 
     #region ACTIONS
 
-    public async Task<ActionResponse> CreateAction(User user, ActionRequest model)
-    {
-        return model.ActionName switch
-        {
-            "cuisiner" => await _cuisinerActionService.StartAction(user, model),
-            "explorer" => await _explorerActionService.StartAction(user, model),
-            "muscler" => await _musclerActionService.StartAction(user, model),
-            "ameliorer" => await _ameliorerActionService.StartAction(user, model),
-            _ => throw new AppException("Action not found", 404)
-        };
-    }
-    
+    public async Task<ActionResponse> CreateAction(User user, ActionRequest model) 
+        => await _actionTaskService.CreateNewActionAsync(user, model);
+
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
-        return model.ActionName switch
-        {
-            "cuisiner" => _cuisinerActionService.EstimateAction(user, model),
-            "explorer" => _explorerActionService.EstimateAction(user, model),
-            "muscler" => _musclerActionService.EstimateAction(user, model),
-            "ameliorer" => _ameliorerActionService.EstimateAction(user, model),
-            _ => throw new AppException("Action not found", 404)
-        };
+        return _actionTaskService.EstimateAction(user, model);
     }
     
     public async Task DeleteAction(User user, int actionId)
-    {
-        var action = _context.Actions.FirstOrDefault(a => a.Id == actionId);
-        if (action == null)
-            throw new AppException("Action not found", 404);
-        
-        // delete action
-        switch (action)
-        {
-            case ActionAmeliorer:
-                await _ameliorerActionService.DeleteAction(user, action.Id);
-                break;
-            case ActionCuisiner:
-                await _cuisinerActionService.DeleteAction(user, action.Id);
-                break;
-            case ActionMuscler:
-                await _musclerActionService.DeleteAction(user, action.Id);
-                break;
-            case ActionExplorer:
-                await _explorerActionService.DeleteAction(user, action.Id);
-                break;
-            case ActionReparer:
-                await _reparerActionService.DeleteAction(user, action.Id);
-                break;
-            
-            default:
-                throw new ArgumentOutOfRangeException();
-        };
-    }
+        => await _actionTaskService.DeleteActionAsync(user, actionId);
 
     #endregion
     
@@ -466,9 +410,9 @@ public class UserService : IUserService
         
         var userBatimentData = _userBatimentsService.GetOrCreateUserBatimentData(user);
 
-        var nbLaboUsed = _ameliorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        var nbSalleMuscuUsed = _musclerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        var nbSalleExplorerUsed = _explorerActionService.GetActions().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbLaboUsed = _context.Actions.OfType<ActionAmeliorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleMuscuUsed = _context.Actions.OfType<ActionMuscler>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSalleExplorerUsed = _context.Actions.OfType<ActionExplorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         
         return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
     }

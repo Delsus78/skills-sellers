@@ -57,11 +57,11 @@ services.AddSingleton<IRegistrationLinkCreatorService, RegistrationLinkCreatorSe
 
 // add action services
 services.AddSingleton<IActionTaskService, ActionTaskService>();
-services.AddScoped<IActionService<ActionExplorer>, ExplorerActionService>();
-services.AddScoped<IActionService<ActionAmeliorer>, AmeliorerActionService>();
-services.AddScoped<IActionService<ActionCuisiner>, CuisinerActionService>();
-services.AddScoped<IActionService<ActionMuscler>, MusclerActionService>();
-services.AddScoped<IActionService<ActionReparer>, ReparerActionService>();
+services.AddScoped<ExplorerActionService>();
+services.AddScoped<AmeliorerActionService>();
+services.AddScoped<CuisinerActionService>();
+services.AddScoped<MusclerActionService>();
+services.AddScoped<ReparerActionService>();
 
 // add games services
 services.AddScoped<IGameService, GamesService>();

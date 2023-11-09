@@ -1,3 +1,5 @@
+using skills_sellers.Helpers.Bdd;
+
 namespace skills_sellers.Services;
 
 public class DailyTaskHostedService : IHostedService
@@ -25,11 +27,19 @@ public class DailyTaskHostedService : IHostedService
     private async void ExecuteTask(object? state)
     {
         Console.WriteLine("Starting Execution of daily tasks...");
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dailyTaskService = scope.ServiceProvider.GetRequiredService<IDailyTaskService>();
+            var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+            await dailyTaskService.ExecuteDailyTaskAsync(context);
+            Console.WriteLine("DailyTask done.");
+        } catch (Exception e)
+        {
+            Console.WriteLine($"Error while executing daily task : {e.Message}");
+        }
         
-        using var scope = _serviceProvider.CreateScope();
-        var dailyTaskService = scope.ServiceProvider.GetRequiredService<IDailyTaskService>();
-        await dailyTaskService.ExecuteDailyTaskAsync();
-        Console.WriteLine("DailyTask done.");
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
