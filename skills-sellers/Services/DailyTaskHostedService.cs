@@ -18,7 +18,7 @@ public class DailyTaskHostedService : IHostedService
         ExecuteTask(null);
         
         var now = DateTime.Now;
-        var midnight = now.Date.AddDays(1);
+        var midnight = now.Date.AddDays(1).AddSeconds(1);
         var initialDelay = (midnight - now).TotalMilliseconds;
         _timer = new Timer(ExecuteTask, null, (int)initialDelay, (int)TimeSpan.FromDays(1).TotalMilliseconds);
         return Task.CompletedTask;
