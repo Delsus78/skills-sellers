@@ -41,7 +41,8 @@ using skills_sellers.Helpers.Bdd;
              Each5SalleDeSport = 0,
              Each5Spatioport = 0,
              CardAtFull10 = 0,
-             CharismCasinoWin = 0
+             CharismCasinoWin = 0,
+             Got100RocketLaunched = 0
          };
          _context.Achievements.Add(achievement);
          await _context.SaveChangesAsync();
@@ -126,6 +127,11 @@ using skills_sellers.Helpers.Bdd;
         if (achievement.IsClaimable(
                 stats.TotalDoublonsEarned.Stat, new AchievementRequest("Doublon")))
             res.Add("Doublon");
+        
+        // Got100RocketLaunched
+        if (achievement.IsClaimable(
+                stats.TotalRocketLaunched.Stat, new AchievementRequest("Got100RocketLaunched"), 100))
+            res.Add("Got100RocketLaunched");
 
         return res;
      }

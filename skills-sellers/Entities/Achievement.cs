@@ -14,4 +14,5 @@ public class Achievement
     public int Each5Spatioport { get; set; }
     public int CardAtFull10 { get; set; }
     public int CharismCasinoWin { get; set; }
+    public int Got100RocketLaunched { get; set; }
 }
