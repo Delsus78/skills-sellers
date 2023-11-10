@@ -81,9 +81,6 @@ public class ExplorerActionService : IActionService
         // actualise bdd
         await context.Actions.AddAsync(action);
         
-        // stats
-        _statsService.OnRocketLaunched(user.Id);
-        
         // consume resources
         user.Nourriture -= 2;
         
@@ -152,6 +149,9 @@ public class ExplorerActionService : IActionService
 
             // remove action if returning
             context.Actions.Remove(action);
+            
+            // stats
+            _statsService.OnRocketLaunched(user.Id);
         } 
         else
         {
