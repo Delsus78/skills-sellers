@@ -15,4 +15,5 @@ public class Achievement
     public int CardAtFull10 { get; set; }
     public int CharismCasinoWin { get; set; }
     public int Got100RocketLaunched { get; set; }
+    public int Got100FailCharism { get; set; }
 }

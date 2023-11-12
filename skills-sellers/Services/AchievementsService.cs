@@ -42,7 +42,8 @@ using skills_sellers.Helpers.Bdd;
              Each5Spatioport = 0,
              CardAtFull10 = 0,
              CharismCasinoWin = 0,
-             Got100RocketLaunched = 0
+             Got100RocketLaunched = 0,
+             Got100FailCharism = 0
          };
          _context.Achievements.Add(achievement);
          await _context.SaveChangesAsync();
@@ -133,6 +134,11 @@ using skills_sellers.Helpers.Bdd;
                 stats.TotalRocketLaunched.Stat, new AchievementRequest("Got100RocketLaunched"), 100))
             res.Add("Got100RocketLaunched");
 
+        // Got100FailCharism
+        if (achievement.IsClaimable(
+                stats.TotalFailedCardsCauseOfCharisme.Stat, new AchievementRequest("Got100FailCharism"), 100))
+            res.Add("Got100FailCharism");
+        
         return res;
      }
  }

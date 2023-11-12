@@ -8,7 +8,8 @@ public record AchievementResponse(
     CustomAchievementTuple Each5Spatioport,
     CustomAchievementTuple CardAtFull10,
     CustomAchievementTuple CharismCasinoWin,
-    CustomAchievementTuple Got100RocketLaunched);
+    CustomAchievementTuple Got100RocketLaunched,
+    CustomAchievementTuple Got100FailCharism);
 
 public record AchievementRequest(
     string AchievementName);
