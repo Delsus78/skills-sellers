@@ -23,7 +23,10 @@ public static class AchievementsModelsExtensions
                 achievement.CardAtFull10, claimableAchievementsName.Contains("CardAtFull10")),
             new CustomAchievementTuple(
                 achievement.CharismCasinoWin, claimableAchievementsName.Contains("CharismCasinoWin")),
-                new CustomAchievementTuple(achievement.Got100RocketLaunched, claimableAchievementsName.Contains("Got100RocketLaunched"))
+            new CustomAchievementTuple(
+                achievement.Got100RocketLaunched, claimableAchievementsName.Contains("Got100RocketLaunched")),
+            new CustomAchievementTuple(
+                achievement.Got100FailCharism, claimableAchievementsName.Contains("Got100FailCharism"))
         );
     }
 
