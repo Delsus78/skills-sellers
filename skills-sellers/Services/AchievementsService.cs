@@ -17,6 +17,10 @@ using skills_sellers.Helpers.Bdd;
      private readonly DataContext _context;
      private readonly INotificationService _notificationService;
      private readonly IUserService _userService;
+     private readonly List<string> _legendaryAchievements = new()
+     {
+         "CardAtFull10"
+     };
      
      public AchievementsService(DataContext context, IUserService userService, INotificationService notificationService)
      {
@@ -69,10 +73,12 @@ using skills_sellers.Helpers.Bdd;
         // update achievement
         achievementDb.ClaimAchievement(achievement);
         
-        // add 1 pack to user
-        user.NbCardOpeningAvailable++;
+        // add pack(s) to user
+        if (_legendaryAchievements.Contains(achievement.AchievementName))
+            user.NbCardOpeningAvailable=+ 5;
+        else
+            user.NbCardOpeningAvailable++;
         
-        // notif
         // notify user
         await _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
@@ -102,7 +108,7 @@ using skills_sellers.Helpers.Bdd;
         // CardAtFullStat10
         if (achievement.IsClaimable(
                 stats.TotalCardsFull10.Stat, new AchievementRequest("CardAtFull10")))
-            res.Add("CardAtFullStat10");
+            res.Add("CardAtFull10");
 
         // Each5Cuisine
         if (achievement.IsClaimable(
@@ -131,12 +137,12 @@ using skills_sellers.Helpers.Bdd;
         
         // Got100RocketLaunched
         if (achievement.IsClaimable(
-                stats.TotalRocketLaunched.Stat, new AchievementRequest("Got100RocketLaunched"), 100))
+                stats.TotalRocketLaunched.Stat, new AchievementRequest("Got100RocketLaunched"), 100, -1))
             res.Add("Got100RocketLaunched");
 
         // Got100FailCharism
         if (achievement.IsClaimable(
-                stats.TotalFailedCardsCauseOfCharisme.Stat, new AchievementRequest("Got100FailCharism"), 100))
+                stats.TotalFailedCardsCauseOfCharisme.Stat, new AchievementRequest("Got100FailCharism"), 100, -1))
             res.Add("Got100FailCharism");
         
         return res;
