@@ -297,6 +297,11 @@ public class UserService : IUserService
     {
         // get user card
         var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == userCardId);
+        
+        // check if its the last doublon sorted by doublon id
+        var lastDoublon = user.UserCardsDoubled.MaxBy(ucd => ucd.Id);
+        if (lastDoublon?.CardId != userCardId)
+            throw new AppException("You can't upgrade this card !", 400);
 
         if (userCard == null)
             throw new AppException("User card not found", 404);
