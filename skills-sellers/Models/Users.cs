@@ -23,4 +23,5 @@ public record UserRegisterRequest([Required] string Pseudo, [Required] [MinLengt
     public string ConfirmPassword { get; init; }
 }
 
-public record UserResponse(int Id, string Pseudo, int NbCards, int Creatium, int Or, int Nourriture, int NbCardOpeningAvailable, List<int> CardsDoubledIds, int StatRepairedObjectMachine);
+public record UserResponse(int Id, string Pseudo, int NbCards, int Creatium, int Or, int Nourriture, int NbCardOpeningAvailable, List<CustomTupleDoublon> CardsDoublons, int StatRepairedObjectMachine);
+public record CustomTupleDoublon(int DoublonId, int CardId);

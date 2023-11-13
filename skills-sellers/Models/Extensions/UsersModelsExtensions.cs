@@ -28,8 +28,7 @@ public static class UsersModelsExtensions
             user.Or,
             user.Nourriture,
             user.NbCardOpeningAvailable,
-            user.UserCardsDoubled.Select(x => x.CardId)
-                .ToList(),
+            user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
             user.StatRepairedObjectMachine);
     }
 }

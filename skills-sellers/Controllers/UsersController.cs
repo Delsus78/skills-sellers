@@ -1,8 +1,5 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using skills_sellers.Entities;
-using skills_sellers.Helpers;
 using skills_sellers.Models;
 using skills_sellers.Models.Cards;
 using skills_sellers.Models.Users;
