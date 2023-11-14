@@ -10,6 +10,10 @@ namespace skills_sellers.Hubs;
 public class GlobalChatHub : Hub
 {
     private readonly IServiceProvider _serviceProvider;
+    
+    // nombre de personnes connectées
+    public static int UserConnected { get; set; } = 0;
+    
     public GlobalChatHub(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
@@ -24,5 +28,22 @@ public class GlobalChatHub : Hub
             int.Parse(
                 Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier) 
                 ?? throw new AppException("User authenticated not found", 400)));
+    }
+    
+    // gestion du nombre de personnes connectées
+    public override async Task OnConnectedAsync()
+    {
+        UserConnected++;
+        await Clients.All.SendAsync("UserConnected", UserConnected);
+
+        await base.OnConnectedAsync();
+    }
+    
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        UserConnected--;
+        await Clients.All.SendAsync("UserConnected", UserConnected);
+
+        await base.OnDisconnectedAsync(exception);
     }
 }
