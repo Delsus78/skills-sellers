@@ -88,18 +88,10 @@ public class CasinoService : IGameService
         var card = user.UserCards.FirstOrDefault(c => c.Card.Id == model.CardsIds[0]);
         var validPlay = CanPlayGameOfTheDay(user, model, card);
 
-        if (card == null)
-            throw new AppException("Carte introuvable", 404);
+        if (!validPlay.valid)
+            throw new AppException(validPlay.error, 400);
                 
         var chances = Math.Min(CalculateWinChance(model.Bet, card.Competences.Charisme), 100);
-        
-        if (!validPlay.valid)
-            return new GamesPlayResponse
-            {
-                Name = "CASINO",
-                Chances = chances,
-                Error = validPlay.error
-            };
 
         // calculer le pourcentage de chance de gagner
         // Gain = pourcentage
