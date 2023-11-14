@@ -32,6 +32,7 @@ public class GamesPlayResponse
     public double Results { get; set; }
     public bool? Win { get; set; }
     public List<List<ReplaceTuple>> Words { get; set; }
+    public string Error { get; set; }
 }
 
 public class GamesRequest

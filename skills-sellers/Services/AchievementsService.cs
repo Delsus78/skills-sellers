@@ -74,8 +74,8 @@ using skills_sellers.Helpers.Bdd;
         achievementDb.ClaimAchievement(achievement);
         
         // add pack(s) to user
-        if (_legendaryAchievements.Contains(achievement.AchievementName))
-            user.NbCardOpeningAvailable=+ 5;
+        if (_legendaryAchievements.Contains(achievement.AchievementName, StringComparer.OrdinalIgnoreCase))
+            user.NbCardOpeningAvailable=+5;
         else
             user.NbCardOpeningAvailable++;
         
