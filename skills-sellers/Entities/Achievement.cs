@@ -7,13 +7,21 @@ public class Achievement
 {
     public int UserId { get; set; }
     public User User { get; set; }
-    public int CardAtStat10 { get; set; }
-    public int Doublon { get; set; }
-    public int Each5Cuisine { get; set; }
-    public int Each5SalleDeSport { get; set; }
-    public int Each5Spatioport { get; set; }
-    public int CardAtFull10 { get; set; }
-    public int CharismCasinoWin { get; set; }
-    public int Got100RocketLaunched { get; set; }
-    public int Got100FailCharism { get; set; }
+    
+    // Achievements
+
+    public int Each5CuisineLevels { get; set; }
+    public int Each5SalleDeSportLevels { set; get; }
+    public int Each5SpatioportLevels { get; set; }
+    public int Each100RocketLaunched { get; set; }
+    public int Each100Doublon { get; set; }
+    public int Each10Cards { get; set; }
+    public int Each25CasinoWin { set; get; }
+    public int Each100MealCooked { get; set; }
+    public int Each25kCreatium { get; set; }
+    public int Each20kGold { get; set; }
+    public int Each50FailCharism { get; set; }
+    public int Each5CardsWithStat10 { get; set; }
+    public int EachCardsFullStat { get; set; }
+    public int EachCollectionsCompleted { get; set; }
 }

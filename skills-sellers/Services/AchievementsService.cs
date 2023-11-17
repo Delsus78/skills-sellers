@@ -4,8 +4,9 @@ using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
  using skills_sellers.Models;
  using skills_sellers.Models.Extensions;
- 
- namespace skills_sellers.Services;
+using skills_sellers.Services.Achievements;
+
+namespace skills_sellers.Services;
  
  public interface IAchievementsService
  {
@@ -31,120 +32,68 @@ using skills_sellers.Helpers.Bdd;
      
      public async Task<AchievementResponse> GetAll(int userId)
      {
-         var achievement = await _context.Achievements.FirstOrDefaultAsync(a => a.UserId == userId);
+         // Validation de l'entrée
+         if (userId <= 0)
+             throw new ArgumentException("Invalid user ID.");
 
-         if (achievement != null)
-             return achievement.ToResponse(GenerateListOfClaimableAchievements(achievement, userId));
-
-         achievement = new Achievement
-         {
-             UserId = userId,
-             CardAtStat10 = 0,
-             Doublon = 0,
-             Each5Cuisine = 0,
-             Each5SalleDeSport = 0,
-             Each5Spatioport = 0,
-             CardAtFull10 = 0,
-             CharismCasinoWin = 0,
-             Got100RocketLaunched = 0,
-             Got100FailCharism = 0
-         };
-         _context.Achievements.Add(achievement);
-         await _context.SaveChangesAsync();
+         var achievement = await _context.Achievements.SingleOrDefaultAsync(a => a.UserId == userId) 
+                           ?? await CreateAndSaveNewAchievement(userId);
 
          return achievement.ToResponse(GenerateListOfClaimableAchievements(achievement, userId));
      }
-     
-     public async Task<AchievementResponse?> ClaimAchievement(User user, AchievementRequest achievement)
-     {
-         // check for different values
-         var achievementDb = await _context.Achievements.FirstOrDefaultAsync(a => a.UserId == user.Id);
-         
-         if (achievementDb == null) return null;
-         
-         // retrouver l'achievement qui correspond au nom donné dans la requête
-        
-        // check if achievement is claimable
-        var claimablesAchievements = GenerateListOfClaimableAchievements(achievementDb, user.Id);
-        var achievements = claimablesAchievements.ToList();
-        if (!achievements.Contains(achievement.AchievementName, StringComparer.OrdinalIgnoreCase))
-            throw new AppException($"Achievement {achievement.AchievementName} is not claimable", 400);
-        
-        // update achievement
-        achievementDb.ClaimAchievement(achievement);
-        
-        // add pack(s) to user
-        if (_legendaryAchievements.Contains(achievement.AchievementName, StringComparer.OrdinalIgnoreCase))
-            user.NbCardOpeningAvailable=+5;
-        else
-            user.NbCardOpeningAvailable++;
-        
-        // notify user
-        await _notificationService.SendNotificationToUser(user, new NotificationRequest
-        (
-            "Achievements !",
-            $"Votre récompense est arrivée !"
-        ), _context);
 
-        await _context.SaveChangesAsync();
-        return achievementDb.ToResponse(achievements.ToList());
+     private async Task<Achievement> CreateAndSaveNewAchievement(int userId)
+     {
+         var newAchievement = new Achievement { UserId = userId };
+         _context.Achievements.Add(newAchievement);
+         await _context.SaveChangesAsync();
+         return newAchievement;
+     }
+
+     public async Task<AchievementResponse?> ClaimAchievement(User user, AchievementRequest achievementRequest)
+     {
+         var achievementDb = await _context.Achievements.FirstOrDefaultAsync(a => a.UserId == user.Id);
+         if (achievementDb == null) return null;
+
+         var stats = _userService.GetUserStats(user.Id);
+         var userBatiment = _userService.GetUserBatiments(user.Id);
+         var achievementContext = new AchievementContext();
+
+         foreach (var strategy in AchievementContext.GetAllStrategies(stats, achievementDb, userBatiment))
+         {
+             achievementContext.SetStrategy(strategy);
+             if (!strategy.Name.Equals(achievementRequest.AchievementName, StringComparison.OrdinalIgnoreCase) ||
+                 !achievementContext.IsClaimable()) continue;
+             
+             // notify user
+             await _notificationService.SendNotificationToUser(user, new NotificationRequest
+             (
+                 "Achievements !",
+                 $"Votre récompense est arrivée !"
+             ), _context);
+             
+             achievementContext.Claim(user);
+             break;
+         }
+
+         await _context.SaveChangesAsync();
+         return achievementDb.ToResponse(GenerateListOfClaimableAchievements(achievementDb, user.Id));
      }
 
      private List<string> GenerateListOfClaimableAchievements(Achievement achievement, int userId)
      {
-        var res = new List<string>();
-        var stats = _userService.GetUserStats(userId);
+         var stats = _userService.GetUserStats(userId);
+         var userBatiment = _userService.GetUserBatiments(userId);
+         var claimableAchievements = new List<string>();
+         var achievementContext = new AchievementContext();
+             
+         foreach (var strategy in AchievementContext.GetAllStrategies(stats, achievement, userBatiment))
+         {
+             achievementContext.SetStrategy(strategy);
+             if (achievementContext.IsClaimable()) 
+                 claimableAchievements.Add(strategy.Name);
+         }
 
-        var userBatiments = _userService.GetUserBatiments(userId);
-        var cuisineLevel = userBatiments.CuisineLevel;
-        var salleDeSportLevel = userBatiments.SalleSportLevel;
-        var spatioportLevel = userBatiments.SpatioPortLevel;
-
-        // Casino
-        if (achievement.IsClaimable(
-                stats.TotalWinAtCharismeCasino.Stat, new AchievementRequest("CharismCasinoWin")))
-            res.Add("CharismCasinoWin");
-
-        // CardAtFullStat10
-        if (achievement.IsClaimable(
-                stats.TotalCardsFull10.Stat, new AchievementRequest("CardAtFull10")))
-            res.Add("CardAtFull10");
-
-        // Each5Cuisine
-        if (achievement.IsClaimable(
-                cuisineLevel, new AchievementRequest("Each5Cuisine"), 5, -1))
-            res.Add("Each5Cuisine");
-            
-        // Each5SalleDeSport
-        if (achievement.IsClaimable(
-                salleDeSportLevel, new AchievementRequest("Each5SalleDeSport"), 5, -1))
-            res.Add("Each5SalleDeSport");
-        
-        // Each5Spatioport
-        if (achievement.IsClaimable(
-                spatioportLevel, new AchievementRequest("Each5Spatioport"), 5, -1))
-            res.Add("Each5Spatioport");
-        
-        // CardAtStat10
-        if (achievement.IsClaimable(
-                stats.TotalCardWithAStatMaxed.Stat, new AchievementRequest("CardAtStat10")))
-            res.Add("CardAtStat10");
-        
-        // Doublon
-        if (achievement.IsClaimable(
-                stats.TotalDoublonsEarned.Stat, new AchievementRequest("Doublon")))
-            res.Add("Doublon");
-        
-        // Got100RocketLaunched
-        if (achievement.IsClaimable(
-                stats.TotalRocketLaunched.Stat, new AchievementRequest("Got100RocketLaunched"), 100, -1))
-            res.Add("Got100RocketLaunched");
-
-        // Got100FailCharism
-        if (achievement.IsClaimable(
-                stats.TotalFailedCardsCauseOfCharisme.Stat, new AchievementRequest("Got100FailCharism"), 100, -1))
-            res.Add("Got100FailCharism");
-        
-        return res;
+         return claimableAchievements;
      }
  }
