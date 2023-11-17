@@ -167,6 +167,7 @@ public class StatsService : IStatsService
             u => u.UserCards.Count,
             u => u.UserCards.Count(c => c.Competences.GotOneMaxed()),
             u => u.UserCards.Count(c => c.Competences.GotAllMaxed()),
+            u => u.UserCards.GroupBy(c => c.Card.GetCollectionName()).Count(g => g.Count() == g.First().Card.GetCollectionNumber()),
             u => u.UserCards.Count(c => c.Card.Rarity == "commune"),
             u => u.UserCards.Count(c => c.Card.Rarity == "epic"),
             u => u.UserCards.Count(c => c.Card.Rarity == "legendaire")
@@ -191,6 +192,7 @@ public class StatsService : IStatsService
             "TotalCards",
             "TotalCardWithAStatMaxed",
             "TotalCardsAtFull10",
+            "TotalCollectionsCompleted",
             "TotalCardsCommune",
             "TotalCardsEpic",
             "TotalCardsLegendaire"

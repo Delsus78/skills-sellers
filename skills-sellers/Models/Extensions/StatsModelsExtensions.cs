@@ -19,6 +19,8 @@ public static class StatsModelsExtensions
 
         var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
         var totalCardsAtFull10 = userCards.Count(c => c.Competences.GotAllMaxed());
+        var totalCollectionsCompleted = userCards.GroupBy(c => c.Card.GetCollectionName()).Count(g => g.Count() == g.First().Card.GetCollectionNumber());
+        
         
         // add rank to stats
         CustomTuple totalCardsTuple = new(nbCards, ranks["TotalCards"]);
@@ -36,7 +38,8 @@ public static class StatsModelsExtensions
         CustomTuple totalWordleWonTuple = new(stats.TotalWordleWon, ranks["TotalWordleWon"]);
         CustomTuple totalLooseAtCharismeCasinoTuple = new(stats.TotalLooseAtCharismeCasino, ranks["TotalLooseAtCharismeCasino"]);
         CustomTuple totalWinAtCharismeCasinoTuple = new(stats.TotalWinAtCharismeCasino, ranks["TotalWinAtCharismeCasino"]);
-
+        CustomTuple totalCollectionsCompletedTuple = new(totalCollectionsCompleted, ranks["TotalCollectionsCompleted"]);
+        
         var totalResourcesMinedTuples = new Dictionary<string, CustomTuple>
         {
             { "Creatium", totalCreatiumMinedTuple },
@@ -66,6 +69,7 @@ public static class StatsModelsExtensions
             totalLooseAtCharismeCasinoTuple,
             totalWinAtCharismeCasinoTuple,
             totalCardsAtFull10Tuple,
+            totalCollectionsCompletedTuple,
             nbCardsInBDD);
     }
 
