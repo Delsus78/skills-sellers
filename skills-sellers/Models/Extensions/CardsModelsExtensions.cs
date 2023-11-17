@@ -16,4 +16,15 @@ public static class CardsModelsExtensions
 
     public static CardResponse ToResponse(this Card card) 
         => new(card.Id, card.Name, card.Collection, card.Description, card.Rarity);
+
+    public static string GetCollectionName(this Card card)
+        => card.Collection.Split(" ")[0];
+
+    public static int GetCollectionNumber(this Card card)
+    {
+        // format = "number/max"
+        var collectionStat = card.Collection.Split(" ")[1];
+        
+        return int.Parse(collectionStat.Split("/")[1]);
+    }
 }
