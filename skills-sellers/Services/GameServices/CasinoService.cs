@@ -35,6 +35,7 @@ public class CasinoService : IGameService
     public Task<GamesPlayResponse> PlayGameOfTheDay(User user, GamesRequest model)
     {
         var gamePlay = EstimateGameOfTheDay(user, model);
+        var card = user.UserCards.FirstOrDefault(c => c.Card.Id == model.CardsIds[0]);
         
         // remove gold
         user.Or -= model.Bet;
@@ -44,6 +45,9 @@ public class CasinoService : IGameService
         var result = rand.NextDouble() * 100;
         if ( result > gamePlay.Chances)
         {
+            // logs
+            Console.WriteLine($"[CASINO] {user.Pseudo} a perdu {model.Bet} pièces d'or (charisme: {card.Competences.Charisme}, chances : {result} / {gamePlay.Chances})");
+
             // lose
             _context.SaveChanges();
             
@@ -60,7 +64,9 @@ public class CasinoService : IGameService
         }
         
         // win
-        var card = user.UserCards.FirstOrDefault(c => c.Card.Id == model.CardsIds[0]);
+        
+        // logs
+        Console.WriteLine($"[CASINO] {user.Pseudo} a gagné passant de {card.Competences.Charisme} à {card.Competences.Charisme + 1} avec {model.Bet} pièces d'or (chances : {result} / {gamePlay.Chances})");
         
         card.Competences.Charisme += 1;
 

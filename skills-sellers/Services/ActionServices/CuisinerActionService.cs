@@ -1,3 +1,4 @@
+using System.Text;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -42,64 +43,77 @@ public class CuisinerActionService : IActionService
         return (true, "");
     }
 
-    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
+    public async Task<List<Action>> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
-        // validate action
-        var validation = CanExecuteAction(user, userCards, null);
-        if (!validation.valid)
-            throw new AppException("Impossible de cuisiner : " + validation.why, 400);
+        // allow users to start multiple actions at the same time
+        var actions = new List<Action>();
         
-        // calculate action end time
-        var endTime = CalculateActionEndTime();
-        
-        // Random plat
-        var randomPlat = Randomizer.RandomPlat();
-        
-        var action = new ActionCuisiner
+        foreach (var userCard in userCards)
         {
-            UserCards = userCards,
-            DueDate = endTime,
-            Plat = randomPlat,
-            User = user
-        };
-        
-        // actualise bdd and nb cuisine used today
-        user.UserBatimentData.NbCuisineUsedToday += 1;
-        
-        await context.Actions.AddAsync(action);
-        await context.SaveChangesAsync();
+            // validation
+            var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
+            
+            if (!validation.valid)
+                throw new AppException("Impossible de cuisiner : " + validation.why, 400);
+            
+            // calculate action end time
+            var endTime = CalculateActionEndTime();
 
+            // Random plat
+            var randomPlat = Randomizer.RandomPlat();
+        
+            var action = new ActionCuisiner
+            {
+                UserCards = new List<UserCard> { userCard },
+                DueDate = endTime,
+                Plat = randomPlat,
+                User = user
+            };
+        
+            // actualise bdd and nb cuisine used today
+            user.UserBatimentData.NbCuisineUsedToday += 1;
+        
+            await context.Actions.AddAsync(action);
+            
+            actions.Add(action);
+        }
+
+        await context.SaveChangesAsync();
+        
         // return response
-        return action;
+        return actions;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
-
-        // validate action
-        var validation = CanExecuteAction(user, userCards, null);
         
-        // calculate action end time
+        var errorMessages = new StringBuilder();
         var endTime = CalculateActionEndTime();
 
-        var action = new ActionEstimationResponse
+        foreach (var userCard in userCards)
         {
-            EndTime = endTime,
+            var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
+            if (!validation.valid)
+            {
+                errorMessages.AppendLine($"{userCard.Card.Name} : {validation.why}");
+            }
+        }
+
+        return new ActionEstimationResponse
+        {
+            EndDates = new List<DateTime> { endTime },
             ActionName = "cuisiner",
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
             {
-                { "nourriture", (userCards.First().Competences.Cuisine).ToString() },
-                { "Up cuisine", "20%" }
+                { "nourriture(s)", userCards.Sum(uc => uc.Competences.Cuisine).ToString() }, 
+                { "up cuisine", "20%" }
             },
-            Error = !validation.valid ? "Impossible de cuisiner : " + validation.why : null
+            Error = errorMessages.ToString() // Retourne tous les messages d'erreur collectés
         };
-        
-        // return response
-        return action;
     }
 
     public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)

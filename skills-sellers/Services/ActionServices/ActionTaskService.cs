@@ -12,7 +12,7 @@ namespace skills_sellers.Services.ActionServices;
 
 public interface IActionTaskService
 {
-    Task<ActionResponse> CreateNewActionAsync(int userId, ActionRequest model);
+    Task<List<ActionResponse>> CreateNewActionAsync(int userId, ActionRequest model);
     Task StartNewTaskForAction(Action action);
     Task RestartAllActionsAsync();
     Task StopAllActionsAsync();
@@ -29,7 +29,7 @@ public class ActionTaskService : IActionTaskService
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<ActionResponse> CreateNewActionAsync(int userId, ActionRequest model)
+    public async Task<List<ActionResponse>> CreateNewActionAsync(int userId, ActionRequest model)
     {
         using var scope = _serviceProvider.CreateScope();
         
@@ -38,12 +38,13 @@ public class ActionTaskService : IActionTaskService
         var user = GetUser(userId, context);
 
         // start action
-        var responseAction = await service.StartAction(user, model, context, _serviceProvider);
+        var responseActions = await service.StartAction(user, model, context, _serviceProvider);
         
         // start timer
-        _ = StartNewTaskForAction(responseAction);
+        foreach (var responseAction in responseActions)
+            _ = StartNewTaskForAction(responseAction);
 
-        return responseAction.ToResponse();
+        return responseActions.Select(a => a.ToResponse()).ToList();
     }
     
     public async Task RestartAllActionsAsync()
@@ -140,6 +141,8 @@ public class ActionTaskService : IActionTaskService
         var now = DateTime.Now;
         var delay = action.DueDate - now;
         
+        Console.WriteLine($"Task {action.Id} started at {now} with delay {delay.TotalMilliseconds}ms");
+        
         if (delay.TotalMilliseconds > 0)
         {
             try
@@ -154,14 +157,25 @@ public class ActionTaskService : IActionTaskService
             {
                 Console.WriteLine($"Task {action.Id} cancelled");
             }
+            catch (AppException e)
+            {
+                Console.WriteLine($"Task {action.Id} errored with : " + $"[{e.ErrorCode}] - {e.Message}" + action);
+            }
         }
         else
         {
-            // La date d'échéance est déjà passée
-            await DispatchToCorrectEndActionService(action.Id);
+            try
+            {
+                // La date d'échéance est déjà passée
+                await DispatchToCorrectEndActionService(action.Id);
+            }
+            catch (AppException e)
+            {
+                Console.WriteLine($"Task {action.Id} errored with : " + $"[{e.ErrorCode}] - {e.Message}" + "\n" + action);
+            }
         }
-        
-        TaskCancellations.TryRemove(action.Id, out _);
+
+        Console.Out.WriteLine("Action " + action.Id + " is removed : " + TaskCancellations.TryRemove(action.Id, out _));
     }
 
     private async Task DispatchToCorrectService(int actionId, Func<IActionService, Action, DataContext, IServiceProvider, Task> actionFunc)

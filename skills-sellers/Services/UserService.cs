@@ -24,7 +24,7 @@ public interface IUserService
     IEnumerable<UserCardResponse> GetUserCards(int id);
     StatsResponse GetUserStats(int id);
     UserBatimentResponse GetUserBatiments(int id);
-    Task<ActionResponse> CreateAction(User user, ActionRequest model);
+    Task<List<ActionResponse>> CreateAction(User user, ActionRequest model);
     ActionEstimationResponse EstimateAction(User user, ActionRequest model);
     Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
     Task<UserCardResponse?> OpenCard(User user);
@@ -234,7 +234,7 @@ public class UserService : IUserService
     public async Task<UserCardResponse?> OpenCard(User user)
     {
         // 0 card ?
-        if (user.NbCardOpeningAvailable == 0)
+        if (user.NbCardOpeningAvailable <= 0)
             throw new AppException("Vous n'avez plus d'ouverture de carte disponible !", 400);
         
         // remove card opening
@@ -296,21 +296,16 @@ public class UserService : IUserService
     public async Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest)
     {
         // get user card
+        var doubledEntity = user.UserCardsDoubled.MaxBy(ucd => ucd.Id);
         var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == userCardId);
         
         // check if its the last doublon sorted by doublon id
-        var lastDoublon = user.UserCardsDoubled.MaxBy(ucd => ucd.Id);
-        if (lastDoublon?.CardId != userCardId)
+        if (doubledEntity?.CardId != userCardId)
             throw new AppException("You can't upgrade this card !", 400);
 
         if (userCard == null)
             throw new AppException("User card not found", 404);
 
-        var doubledEntity = user.UserCardsDoubled.FirstOrDefault(ucd => ucd.CardId == userCard.CardId);
-        
-        if (doubledEntity == null)
-            throw new AppException("User card doubled not found => unauthorized", 404);
-        
         // verifier si pour la carte en question, la rareté correspond au nombre de points de compétence envoyé
         var nbPoints = competencesRequest.Force +
                        competencesRequest.Intelligence +
@@ -318,17 +313,30 @@ public class UserService : IUserService
                        competencesRequest.Charisme +
                        competencesRequest.Exploration;
 
-        var tooMuchPts = userCard.Card.Rarity.ToLower() switch
+        var maxPointsAccepted = userCard.Card.Rarity.ToLower() switch
         {
-            "legendaire" => nbPoints > 15,
-            "epic" => nbPoints > 10,
-            "commune" => nbPoints > 5,
+            "legendaire" => 3,
+            "epic" => 2,
+            "commune" => 1,
             _ => throw new AppException("Rarity not found", 404)
         };
         
-        if (tooMuchPts)
+        if (nbPoints > maxPointsAccepted)
             throw new AppException("Too much points for this rarity", 400);
 
+        // special case : card is already at 10 10 10 10 10 (A CHANGER QUAND LES CARTES POURRONT MONTER A 11)
+        if (userCard.Competences is { Intelligence: 10, Force: 10, Cuisine: 10, Charisme: 10, Exploration: 10 })
+        {
+            // refund
+            user.Or += 1000 * maxPointsAccepted;
+            
+            // notify user
+            await _notificationService.SendNotificationToUser(user, new NotificationRequest(
+                   "Doublon remboursé !", 
+                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !"), 
+                _context);
+        }
+        
         // update user card
         userCard.Competences.Intelligence += competencesRequest.Intelligence + userCard.Competences.Intelligence > 10 ? 0 : competencesRequest.Intelligence;
         userCard.Competences.Force += competencesRequest.Force + userCard.Competences.Force > 10 ? 0 : competencesRequest.Force;
@@ -395,7 +403,7 @@ public class UserService : IUserService
 
     #region ACTIONS
 
-    public async Task<ActionResponse> CreateAction(User user, ActionRequest model) 
+    public async Task<List<ActionResponse>> CreateAction(User user, ActionRequest model) 
         => await _actionTaskService.CreateNewActionAsync(user.Id, model);
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
