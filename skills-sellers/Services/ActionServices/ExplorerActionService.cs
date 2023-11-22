@@ -62,8 +62,9 @@ public class ExplorerActionService : IActionService
         // allow users to start multiple actions at the same time
         var actions = new List<Action>();
 
-        foreach (var userCard in userCards)
+        for (var index = 0; index < userCards.Count; index++)
         {
+            var userCard = userCards[index];
             // validate action
             var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
             
@@ -71,7 +72,7 @@ public class ExplorerActionService : IActionService
                 throw new AppException("Impossible de partir en exploration : " + validation.why, 400);
 
             // calculate action end time
-            var endTime = CalculateActionEndTime(userCard.Competences.Exploration);
+            var endTime = CalculateActionEndTime(userCard.Competences.Exploration).AddSeconds(-index);
 
             // Random planet
             var randomPlanet = Randomizer.RandomPlanet();
