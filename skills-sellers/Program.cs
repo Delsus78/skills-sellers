@@ -42,6 +42,7 @@ services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 services.AddSignalR();
 services.AddMemoryCache();
+services.AddResponseCaching();
 
 // add services
 services.AddScoped<IUserService, UserService>();
@@ -64,7 +65,7 @@ services.AddScoped<MusclerActionService>();
 services.AddScoped<ReparerActionService>();
 
 // add games services
-services.AddScoped<IGameService, GamesService>();
+services.AddScoped<GamesService>();
 services.AddScoped<CasinoService>();
 services.AddScoped<MachineRepairService>();
 services.AddScoped<WordleGameService>();

@@ -9,6 +9,7 @@ public static class Randomizer
     private static readonly string[] AllFoods;
     private static readonly string[] Gutenberg;
     private static readonly string[] AllMuscles;
+    private static readonly object SyncLock = new (); 
     private static List<string> AllCardWords { get; set; } = new();
 
     static Randomizer()
@@ -148,7 +149,7 @@ public static class Randomizer
 
         while (ptsLeft > 0)
         {
-            var index = new Random().Next(0, 4);
+            var index = RandomInt(0, 4);
             var key = stillAvailable[index];
             if (valuesDicto[key] < 10)
             {
@@ -164,7 +165,7 @@ public static class Randomizer
         var cuisine = valuesDicto["cuisine"];
         var charisme = valuesDicto["charisme"];
 
-        var explo = new Random().Next(0, 100) switch
+        var explo = RandomInt(0, 100) switch
         {
             < 40 => 0,
             < 65 => 1,
@@ -186,11 +187,14 @@ public static class Randomizer
     }
     
     public static int RandomInt(int min, int max)
-        => RandomNumberGenerator.GetInt32(min, max);
+    {
+        lock (SyncLock)
+            return RandomNumberGenerator.GetInt32(min, max);
+    }
 
     public static string RandomPlanet()
     {
-        var randomLine = new Random().Next(0, Gutenberg.Length);
+        var randomLine = RandomInt(0, Gutenberg.Length);
         return Gutenberg[randomLine];
     }
 }
