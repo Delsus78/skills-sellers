@@ -79,6 +79,7 @@ public class ActionMusclerResponse : ActionResponse
 
 public class ActionEstimationResponse : ActionResponse
 {
+    public List<DateTime> EndDates { get; set; } = new();
     public Dictionary<string, string> Gains { get; set; } = new();
     
     public Dictionary<string, string> Couts { get; set; } = new();

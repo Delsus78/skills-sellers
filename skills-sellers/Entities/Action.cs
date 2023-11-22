@@ -12,4 +12,9 @@ public abstract class Action
     public List<UserCard> UserCards { get; set; } = new();
     public int UserId { get; set; }
     public User User { get; set; }
+
+    public override string ToString()
+    {
+        return $"Action {Id} - DDate : {DueDate} - [{UserId}]: \n {UserCards.Aggregate("", (current, userCard) => current + $"Card {userCard.CardId} - {userCard.Card.Name} \n")}";
+    }
 }

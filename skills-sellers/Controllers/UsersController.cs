@@ -49,8 +49,14 @@ public class UsersController : ControllerBase
 
     [HttpPost("authenticate")]
     public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
-        => await _userService.Authenticate(model);
-    
+    {
+        var res = await _userService.Authenticate(model);
+        // set cookies
+        Response.Headers.Add("Set-Cookie", $"user_token=${res.Token}; Path=/; SameSite=None;");
+        
+        return res;
+    }
+
     [HttpPost("resetpassword")]
     public async Task<AuthenticateResponse> ResetPassword(ResetPasswordRequest model)
         => await _userService.ResetPassword(model);

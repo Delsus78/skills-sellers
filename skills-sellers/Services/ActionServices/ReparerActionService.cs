@@ -33,7 +33,7 @@ public class ReparerActionService : IActionService
         return (true, "");
     }
 
-    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
+    public async Task<List<Action>> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -57,7 +57,7 @@ public class ReparerActionService : IActionService
         await context.SaveChangesAsync();
 
         // return response
-        return action;
+        return new List<Action> { action };
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -74,7 +74,7 @@ public class ReparerActionService : IActionService
         
         return new ActionEstimationResponse
         {
-            EndTime = endTime,
+            EndDates = new List<DateTime> { endTime },
             ActionName = "ameliorer",
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
@@ -102,6 +102,9 @@ public class ReparerActionService : IActionService
         {
             user.StatRepairedObjectMachine = 0;
             await context.SaveChangesAsync();
+            
+            // logs
+            Console.Out.WriteLine($"[REPARER] {user.Pseudo} a réparé la machine avec {actionReparer.RepairChances} de chances");
             
             // notify user
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(

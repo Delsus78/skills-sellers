@@ -63,7 +63,7 @@ public class AmeliorerActionService : IActionService
         return (true, "");
     }
 
-    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
+    public async Task<List<Action>> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
@@ -100,7 +100,7 @@ public class AmeliorerActionService : IActionService
         await context.SaveChangesAsync();
 
         // return response
-        return action;
+        return new List<Action> { action };
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
@@ -121,7 +121,7 @@ public class AmeliorerActionService : IActionService
         
         var action = new ActionEstimationResponse
         {
-            EndTime = endTime,
+            EndDates = new List<DateTime> { endTime },
             ActionName = "ameliorer",
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
