@@ -49,21 +49,22 @@ public class CuisinerActionService : IActionService
 
         // allow users to start multiple actions at the same time
         var actions = new List<Action>();
-        
-        foreach (var userCard in userCards)
+
+        for (var index = 0; index < userCards.Count; index++)
         {
+            var userCard = userCards[index];
             // validation
             var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
-            
+
             if (!validation.valid)
                 throw new AppException("Impossible de cuisiner : " + validation.why, 400);
-            
+
             // calculate action end time
-            var endTime = CalculateActionEndTime();
+            var endTime = CalculateActionEndTime().AddSeconds(-index);
 
             // Random plat
             var randomPlat = Randomizer.RandomPlat();
-        
+
             var action = new ActionCuisiner
             {
                 UserCards = new List<UserCard> { userCard },
@@ -71,12 +72,12 @@ public class CuisinerActionService : IActionService
                 Plat = randomPlat,
                 User = user
             };
-        
+
             // actualise bdd and nb cuisine used today
             user.UserBatimentData.NbCuisineUsedToday += 1;
-        
+
             await context.Actions.AddAsync(action);
-            
+
             actions.Add(action);
         }
 
