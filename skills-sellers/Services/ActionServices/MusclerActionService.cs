@@ -1,3 +1,4 @@
+using System.Text;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -46,54 +47,74 @@ public class MusclerActionService : IActionService
         return (true, "");
     }
 
-    public async Task<Action> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
+    public async Task<List<Action>> StartAction(User user, ActionRequest model, DataContext context, IServiceProvider serviceProvider)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
 
+        // allow users to start multiple actions at the same time
+        var actions = new List<Action>();
+        
         // validate action
-        var validation = CanExecuteAction(user, userCards, null);
-        if (!validation.valid)
-            throw new AppException("Impossible de se muscler : " + validation.why, 400);
-        
-        // calculate action end time
-        var endTime = CalculateActionEndTime(userCards.First().Competences.Force  + 1);
-        
-        // random muscle
-        var muscle = Randomizer.RandomMuscle();
-        
-        var action = new ActionMuscler
+        foreach (var userCard in userCards)
         {
-            UserCards = userCards,
-            DueDate = endTime,
-            User = user,
-            Muscle = muscle
-        };
-        
-        // actualise bdd
-        await context.Actions.AddAsync(action);
-        
-        // consume resources
-        user.Nourriture -= 1;
-        
-        await context.SaveChangesAsync();
+            // validation
+            var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
+            
+            if (!validation.valid)
+                throw new AppException("Impossible de se muscler : " + validation.why, 400);
 
+            // calculate action end time
+            var endTime = CalculateActionEndTime(userCard.Competences.Force + 1);
+
+            // random muscle
+            var muscle = Randomizer.RandomMuscle();
+
+            var action = new ActionMuscler
+            {
+                UserCards = new List<UserCard> { userCard },
+                DueDate = endTime,
+                User = user,
+                Muscle = muscle
+            };
+
+            // actualise bdd
+            await context.Actions.AddAsync(action);
+
+            // consume resources
+            user.Nourriture -= 1;
+
+            actions.Add(action);
+        }
+
+        await context.SaveChangesAsync();
+        
         // return response
-        return action;
+        return actions;
     }
 
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
+        var errorMessages = new StringBuilder();
+        var totalEndTime = new List<DateTime>();
+        
 
-        // validate action
-        var validation = CanExecuteAction(user, userCards, null);
-
-        // calculate action end time
-        var endTime = CalculateActionEndTime(userCards.First().Competences.Force  + 1);
-
-        var action = new ActionEstimationResponse
+        foreach (var userCard in userCards)
         {
-            EndTime = endTime,
+            var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
+            if (!validation.valid)
+            {
+                errorMessages.AppendLine($"{userCard.Card.Name} : {validation.why}");
+            }
+            
+            totalEndTime.Add(CalculateActionEndTime(userCard.Competences.Force + 1));
+        }
+            
+            
+        // allow users to start multiple actions at the same time
+        return new ActionEstimationResponse
+        {
+            EndDates = totalEndTime,
             ActionName = "muscler",
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
@@ -102,13 +123,10 @@ public class MusclerActionService : IActionService
             },
             Couts = new Dictionary<string, string>
             {
-                { "nourriture", "1" }
+                { "nourriture", userCards.Count.ToString() }
             },
-            Error = !validation.valid ? "Impossible d'aller pousser à la salle : " + validation.why : null
+            Error = errorMessages.ToString()
         };
-        
-        // return response
-        return action;
     }
 
     public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
@@ -117,8 +135,20 @@ public class MusclerActionService : IActionService
         var userCard = action.UserCards.First();
 
         // up force competence
-        
-        userCard.Competences.Force += 1;
+        if (userCard.Competences.Force < 10)
+            userCard.Competences.Force += 1;
+        else
+        {
+            // notify user
+            _notificationService.SendNotificationToUser(userCard.User, new NotificationRequest
+            (
+                "Salle de sport",
+                $"Votre carte {userCard.Card.Name} était déjà au max de force ! Votre nourriture a été remboursée."
+            ), context);
+            
+            // refund resources
+            userCard.User.Nourriture += 1;
+        }
 
         context.UserCards.Update(userCard);
 

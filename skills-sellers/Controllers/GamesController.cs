@@ -15,11 +15,11 @@ namespace skills_sellers.Controllers;
 public class GamesController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IGameService _gamesService;
+    private readonly GamesService _gamesService;
 
     public GamesController(
         IUserService userService,
-        IGameService gamesService)
+        GamesService gamesService)
     {
         _userService = userService;
         _gamesService = gamesService;
@@ -48,4 +48,12 @@ public class GamesController : ControllerBase
     [HttpPost("gameOfTheDay/play")]
     public async Task<GamesPlayResponse> PlayGameOfTheDay(int id, GamesRequest model)
         => await _gamesService.PlayGameOfTheDay(GetUserAuthenticated(id), model);
+
+    [HttpGet("wordle")]
+    public GamesResponse GetWordle(int id)
+        => _gamesService.GetWordle(id);
+    
+    [HttpPost("wordle")]
+    public async Task<GamesPlayResponse> PlayWordle(int id, GamesRequest model)
+        => await _gamesService.PlayWordle(GetUserAuthenticated(id), model);
 }
