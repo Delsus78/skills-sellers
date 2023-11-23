@@ -50,7 +50,7 @@ public class UserActionController : ControllerBase
 
     [Authorize]
     [HttpPost("actions")]
-    public async Task<ActionResponse> CreateAction(int id, ActionRequest model)
+    public async Task<List<ActionResponse>> CreateAction(int id, ActionRequest model)
         => await _userService.CreateAction(GetUserAuthenticated(id), model);
     
     

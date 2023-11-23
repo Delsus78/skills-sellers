@@ -32,8 +32,11 @@ public class ImagesController : ControllerBase
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) // cache for 1 hour
             });
         } else return NotFound();
+        
+        
+        Response.Headers["Cache-Control"] = "public,max-age=604800"; // cache for 1 week
 
-        return File(imageBytes, "image/jpeg"); // Assume all images are JPEGs
+        return File(imageBytes, "image/jpeg");
     }
 
 }

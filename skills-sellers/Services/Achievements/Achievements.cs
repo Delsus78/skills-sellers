@@ -356,7 +356,7 @@ public class AchievementEachCardsFullStat : AchievementStrategy
         Achievement.EachCardsFullStat++;
         
         // user val update
-        user.NbCardOpeningAvailable++;
+        user.NbCardOpeningAvailable += 5;
     }
 }
 
@@ -382,6 +382,6 @@ public class AchievementEachCollectionsCompleted : AchievementStrategy
         Achievement.EachCollectionsCompleted++;
         
         // user val update
-        user.NbCardOpeningAvailable++;
+        user.NbCardOpeningAvailable += 5;
     }
 }

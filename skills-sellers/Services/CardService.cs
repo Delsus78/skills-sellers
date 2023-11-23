@@ -52,13 +52,13 @@ public class CardService : ICardService
     
     public Card GetRandomCard()
     {
-        // Legendaire 3% , Epic 10%, Commune 87%
         var cardType = Randomizer.RandomCardType();
-        var cards = _context.Cards.Where(c => c.Rarity == cardType).ToList();
-        
-        var randomIndex = Randomizer.RandomInt(0, cards.Count);
-        
-        return cards[randomIndex];
+        var cardCount = _context.Cards.Count(c => c.Rarity == cardType);
+        var randomIndex = Randomizer.RandomInt(0, cardCount);
+        Console.Out.WriteLine($"Random card index : {randomIndex}");
+    
+        // Récupérez seulement la carte sélectionnée
+        return _context.Cards.Where(c => c.Rarity == cardType).Skip(randomIndex).First();
     }
     
     // helper methods
