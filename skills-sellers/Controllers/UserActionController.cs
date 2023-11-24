@@ -55,7 +55,7 @@ public class UserActionController : ControllerBase
         var user = GetUserAuthenticated(id);
         
         var referer = Request.Headers["Referer"].ToString();
-        if (!referer.Contains("localhost:5173") || !referer.Contains("skills-sellers.fr"))
+        if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
             return await _userService.ResponseToBottedAgent(user);
 
         return await _userService.CreateAction(user, model);

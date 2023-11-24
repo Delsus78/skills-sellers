@@ -504,6 +504,8 @@ public class UserService : IUserService
         if (user.Or >= 100)
             user.Or -= 100;
 
+        Console.WriteLine("Bot detected ! " + user.Pseudo);
+        
         await _context.SaveChangesAsync();
         
         throw new AppException("Bien tenté :)", 400);
