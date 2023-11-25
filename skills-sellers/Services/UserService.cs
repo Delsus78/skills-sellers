@@ -42,6 +42,7 @@ public interface IUserService
     Task DeleteAction(User user, int actionId);
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
+    Task<List<ActionResponse>> ResponseToBottedAgent(User user);
 }
 
 public class UserService : IUserService
@@ -499,7 +500,19 @@ public class UserService : IUserService
     #endregion
     
     #region helper methods
+    
+    public async Task<List<ActionResponse>> ResponseToBottedAgent(User user)
+    {
+        if (user.Or >= 100)
+            user.Or -= 100;
 
+        Console.WriteLine("Bot detected ! " + user.Pseudo);
+        
+        await _context.SaveChangesAsync();
+        
+        throw new AppException("Bien tenté :)", 400);
+    }
+    
     public User GetUserEntity(Expression<Func<User, bool>> predicate)
     {
         // Utilisez une méthode spécifique pour charger seulement les données nécessaires.

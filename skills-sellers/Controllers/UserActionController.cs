@@ -51,9 +51,17 @@ public class UserActionController : ControllerBase
     [Authorize]
     [HttpPost("actions")]
     public async Task<List<ActionResponse>> CreateAction(int id, ActionRequest model)
-        => await _userService.CreateAction(GetUserAuthenticated(id), model);
-    
-    
+    {
+        var user = GetUserAuthenticated(id);
+        
+        var referer = Request.Headers["Referer"].ToString();
+        if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
+            return await _userService.ResponseToBottedAgent(user);
+
+        return await _userService.CreateAction(user, model);
+    }
+
+
     [Authorize]
     [HttpPost("estimate/actions")]
     public ActionEstimationResponse EstimateAction(int id, ActionRequest model)
