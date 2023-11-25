@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using skills_sellers.Entities.Speciales;
 
 namespace skills_sellers.Entities;
 
@@ -25,4 +26,7 @@ public class User
     public Achievement Achievement { get; set; }
     public UserBatimentData UserBatimentData { get; set; }
     public WordleGame WordleGame { get; set; }
+    
+    // specials
+    public Christmas Christmas { get; set; }
 }
