@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Models;
+using skills_sellers.Models.Extensions;
 using skills_sellers.Services;
 using skills_sellers.Services.GameServices;
 
@@ -16,13 +17,16 @@ public class GamesController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly GamesService _gamesService;
+    private readonly IChristmasService _christmasService;
 
     public GamesController(
         IUserService userService,
-        GamesService gamesService)
+        GamesService gamesService,
+        IChristmasService christmasService)
     {
         _userService = userService;
         _gamesService = gamesService;
+        _christmasService = christmasService;
     }
 
     // helper methods
@@ -56,4 +60,12 @@ public class GamesController : ControllerBase
     [HttpPost("wordle")]
     public async Task<GamesPlayResponse> PlayWordle(int id, GamesRequest model)
         => await _gamesService.PlayWordle(GetUserAuthenticated(id), model);
+
+    [HttpGet("christmas")]
+    public async Task<ChristmasResponse> GetChristmas(int id)
+        => (await _christmasService.GetDaysGiftOpened(GetUserAuthenticated(id))).ToResponse();
+    
+    [HttpPost("christmas")]
+    public async Task<ChristmasResponse> OpenChristmas(int id) 
+        => (await _christmasService.OpenDayGift(GetUserAuthenticated(id))).ToResponse();
 }
