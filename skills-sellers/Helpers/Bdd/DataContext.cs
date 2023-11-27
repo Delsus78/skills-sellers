@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Speciales;
 using Action = skills_sellers.Entities.Action;
 
 namespace skills_sellers.Helpers.Bdd;
@@ -46,6 +47,13 @@ public class DataContext : DbContext
     public DbSet<Achievement> Achievements { get; set; }
     #endregion
 
+    #region SPECIALS DBSETS
+
+    // Christmas special
+    public DbSet<Christmas> Christmas { get; set; }
+
+    #endregion
+
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -79,5 +87,10 @@ public class DataContext : DbContext
         modelBuilder.Entity<WordleGame>().HasOne(w => w.User)
             .WithOne(u => u.WordleGame)
             .HasForeignKey<WordleGame>(w => w.UserId);
+        
+        // christmas special
+        modelBuilder.Entity<Christmas>().HasOne(c => c.User)
+            .WithOne(u => u.Christmas)
+            .HasForeignKey<Christmas>(c => c.UserId);
     }
 }
