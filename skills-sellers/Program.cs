@@ -70,6 +70,8 @@ services.AddScoped<CasinoService>();
 services.AddScoped<MachineRepairService>();
 services.AddScoped<WordleGameService>();
 
+// special services
+services.AddScoped<IChristmasService, ChristmasService>();
 
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
