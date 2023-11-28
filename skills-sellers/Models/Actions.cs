@@ -32,6 +32,7 @@ public class ActionRequest
 [JsonDerivedType(typeof(ActionAmeliorerResponse))]
 [JsonDerivedType(typeof(ActionMusclerResponse))]
 [JsonDerivedType(typeof(ActionReparerResponse))]
+[JsonDerivedType(typeof(ActionSatelliteResponse))]
 public abstract class ActionResponse
 {
     public int Id { get; set; }
@@ -75,6 +76,10 @@ public class ActionAmeliorerResponse : ActionResponse
 public class ActionMusclerResponse : ActionResponse
 {
     public string Muscle { get; set; }
+}
+
+public class ActionSatelliteResponse : ActionResponse
+{
 }
 
 public class ActionEstimationResponse : ActionResponse

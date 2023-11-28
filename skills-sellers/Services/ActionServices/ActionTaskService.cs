@@ -245,6 +245,7 @@ public class ActionServiceResolver
             ActionReparer _ => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
             ActionAmeliorer _ => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             ActionExplorer _ => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
+            ActionSatellite _ => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }
@@ -258,7 +259,8 @@ public class ActionServiceResolver
             "reparer" => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
             "ameliorer" => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             "explorer" => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
-            _ => throw new AppException("Action non trouvée", 404),
+            "satellite" => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
+                _ => throw new AppException("Action non trouvée", 404),
         };
     }
 }

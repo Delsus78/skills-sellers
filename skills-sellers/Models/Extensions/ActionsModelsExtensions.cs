@@ -54,6 +54,14 @@ public static class ActionsModelsExtensions
                 Cards = actionReparer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 RepairChances = actionReparer.RepairChances
             },
+            ActionSatellite actionSatellite => new ActionSatelliteResponse
+            {
+                ActionName = "satellite",
+                Id = actionSatellite.Id,
+                EndTime = actionSatellite.DueDate,
+                CreatedAt = actionSatellite.CreatedAt ?? DateTime.Now,
+                Cards = actionSatellite.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
+            },
             _ => throw new ArgumentException("Action inconnue")
         };
 }

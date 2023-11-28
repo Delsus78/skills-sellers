@@ -194,6 +194,9 @@ public class AmeliorerActionService : IActionService
             case "spatioport":
                 userBatimentData.SpatioPortLevel++;
                 break;
+            case "satellite":
+                userBatimentData.SatelliteLevel++;
+                break;
             default:
                 throw new AppException("Bâtiment non reconnu", 400);
         }
@@ -236,7 +239,11 @@ public class AmeliorerActionService : IActionService
 
     private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
+        if (level <= 0) level = 1;
+        
         var hours = 12 * level - extraLevels;
+        if (hours < 1) hours = 0;
+        
         return DateTime.Now.AddHours(hours);
     }
     

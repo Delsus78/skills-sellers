@@ -430,8 +430,7 @@ public class UserService : IUserService
         var nbLaboUsed = _context.Actions.OfType<ActionAmeliorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleMuscuUsed = _context.Actions.OfType<ActionMuscler>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleExplorerUsed = _context.Actions.OfType<ActionExplorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
-        // TODO 
-        var nbSatelliteUsed = 0;
+        var nbSatelliteUsed = _context.Actions.OfType<ActionSatellite>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         
         return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed, nbSatelliteUsed);
     }

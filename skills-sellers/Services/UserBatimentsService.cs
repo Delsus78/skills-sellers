@@ -77,6 +77,7 @@ public class UserBatimentsService : IUserBatimentsService
             "salledesport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
+            "satellite" => (actionCounts.GetValueOrDefault(typeof(ActionSatellite), 0), userBatimentData.SatelliteLevel),
             _ => throw new AppException("Batiment name not found", 404)
         };
 
@@ -94,7 +95,9 @@ public class UserBatimentsService : IUserBatimentsService
         
         // speciales cases
         if (batimentName.ToLower() == "satellite")
-            price *= 100;
+            if (currentLevel == 0)
+                price *= 10;
+            else price *= 50;
         
         return price;
     }
