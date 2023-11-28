@@ -430,8 +430,9 @@ public class UserService : IUserService
         var nbLaboUsed = _context.Actions.OfType<ActionAmeliorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleMuscuUsed = _context.Actions.OfType<ActionMuscler>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleExplorerUsed = _context.Actions.OfType<ActionExplorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSatelliteUsed = _context.Actions.OfType<ActionSatellite>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         
-        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
+        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed, nbSatelliteUsed);
     }
     
     public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
@@ -444,7 +445,7 @@ public class UserService : IUserService
         _context.UserBatiments.Update(userBatimentData);
         await _context.SaveChangesAsync();
 
-        return userBatimentData.ToResponse(-1, -1, -1);
+        return userBatimentData.ToResponse();
     }
     
     #endregion

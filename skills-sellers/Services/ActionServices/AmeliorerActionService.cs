@@ -47,7 +47,7 @@ public class AmeliorerActionService : IActionService
         
         var level = GetLevelOfUserBat(user.UserBatimentData, model);
 
-        (int creatiumPrice, int intelPrice, int forcePrice) = _userBatimentsService.GetBatimentPrices(level);
+        (int creatiumPrice, int intelPrice, int forcePrice) = _userBatimentsService.GetBatimentPrices(level, model.BatimentToUpgrade);
         
         if (user.Creatium < creatiumPrice)
             return (false, "Pas assez de créatium => " + user.Creatium + " < " + creatiumPrice);
@@ -77,7 +77,8 @@ public class AmeliorerActionService : IActionService
         
         // calculate action end time with extra levels
         var intelTotal = userCards.Sum(uc => uc.Competences.Intelligence);
-        var extraLevels = intelTotal - _userBatimentsService.GetBatimentPrices(level).intelPrice;
+        var (creatiumPrice, intelPrice, _) = _userBatimentsService.GetBatimentPrices(level, model.BatimentToUpgrade);
+        var extraLevels = intelTotal - intelPrice;
         var endTime = CalculateActionEndTime(level, extraLevels);
 
         var action = new ActionAmeliorer
@@ -92,7 +93,6 @@ public class AmeliorerActionService : IActionService
         await context.Actions.AddAsync(action);
         
         // consume resources
-        var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level);
         
         user.Nourriture -= userCards.Count;
         user.Creatium -= creatiumPrice;
@@ -114,7 +114,7 @@ public class AmeliorerActionService : IActionService
         var level = GetLevelOfUserBat(user.UserBatimentData, model);
         
         // calculate action end time and resources
-        var (creatiumPrice, intelPrice, _) = _userBatimentsService.GetBatimentPrices(level);
+        var (creatiumPrice, intelPrice, _) = _userBatimentsService.GetBatimentPrices(level, model.BatimentToUpgrade);
         var extraLevels = userCards.Sum(uc => uc.Competences.Intelligence) - intelPrice;
         var finalExtraLevels = extraLevels < 0 ? 0 : extraLevels;
         var endTime = CalculateActionEndTime(level, finalExtraLevels);
@@ -194,6 +194,9 @@ public class AmeliorerActionService : IActionService
             case "spatioport":
                 userBatimentData.SpatioPortLevel++;
                 break;
+            case "satellite":
+                userBatimentData.SatelliteLevel++;
+                break;
             default:
                 throw new AppException("Bâtiment non reconnu", 400);
         }
@@ -223,7 +226,7 @@ public class AmeliorerActionService : IActionService
 
         // refund resources
         var level = GetLevelOfUserBat(user.UserBatimentData, new ActionRequest { BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade });
-        var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level);
+        var (creatiumPrice, _, _) = _userBatimentsService.GetBatimentPrices(level, actionAmeliorer.BatimentToUpgrade);
         user.Nourriture += actionAmeliorer.UserCards.Count;
         user.Creatium += creatiumPrice;
 
@@ -236,7 +239,11 @@ public class AmeliorerActionService : IActionService
 
     private DateTime CalculateActionEndTime(int level, int extraLevels)
     {
+        if (level <= 0) level = 1;
+        
         var hours = 12 * level - extraLevels;
+        if (hours < 1) hours = 0;
+        
         return DateTime.Now.AddHours(hours);
     }
     
@@ -248,6 +255,7 @@ public class AmeliorerActionService : IActionService
             "cuisine" => batimentData.CuisineLevel,
             "salledesport" => batimentData.SalleSportLevel,
             "spatioport" => batimentData.SpatioPortLevel,
+            "satellite" => batimentData.SatelliteLevel,
             _ => throw new AppException("Bâtiment non reconnu", 400)
         };
         return level;

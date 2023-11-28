@@ -10,6 +10,8 @@ public record UserBatimentResponse(
     int SpatioPortLevel,
     int ActualSpatioPortUsed,
     int NbBuyMarchandToday,
+    int SatelliteLevel,
+    int ActualSatelliteUsed,
     int NbBuyMarchandMaxPerDay);
     
 public record UserBatimentRequest(
@@ -18,4 +20,5 @@ public record UserBatimentRequest(
     int SalleSportLevel,
     int LaboLevel,
     int SpatioPortLevel,
+    int SatelliteLevel,
     int NbBuyMarchandToday);

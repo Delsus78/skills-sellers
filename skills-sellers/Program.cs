@@ -63,6 +63,7 @@ services.AddScoped<AmeliorerActionService>();
 services.AddScoped<CuisinerActionService>();
 services.AddScoped<MusclerActionService>();
 services.AddScoped<ReparerActionService>();
+services.AddScoped<SatelliteActionService>();
 
 // add games services
 services.AddScoped<GamesService>();

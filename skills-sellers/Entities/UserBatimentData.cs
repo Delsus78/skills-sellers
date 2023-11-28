@@ -15,8 +15,11 @@ public class UserBatimentData
     public int LaboLevel { get; set; }
     
     public int SpatioPortLevel { get; set; }
-    
+
     public int NbBuyMarchandToday { get; set; }
+    
+    // V2.0
+    public int SatelliteLevel { get; set; } = 1;
     
     // One to one
     public User User { get; set; }
