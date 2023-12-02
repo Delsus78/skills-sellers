@@ -16,6 +16,8 @@ public class GamesResponse
 public class GamesMachineResponse : GamesResponse
 {
     public bool IsRepairing { get; set; }
+    public int CreatiumPrice { get; set; }
+    public int OrPrice { get; set; }
 }
 
 public class GamesWordleResponse : GamesResponse

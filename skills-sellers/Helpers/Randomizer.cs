@@ -56,6 +56,14 @@ public static class Randomizer
         
         return type;
     }
+    
+    public static WeaponAffinity RandomWeaponAffinity() 
+        => RandomInt(0, 3) switch
+        {
+            0 => WeaponAffinity.Pierre,
+            1 => WeaponAffinity.Ciseaux,
+            _ => WeaponAffinity.Feuille
+        };
 
     public static List<string> GetAllCardNameWord(this DbSet<Card> cardsDb)
     {
@@ -196,5 +204,16 @@ public static class Randomizer
     {
         var randomLine = RandomInt(0, Gutenberg.Length);
         return Gutenberg[randomLine];
+    }
+
+    public static double RandomDouble(int i, int i1)
+    {
+        lock (SyncLock)
+        {
+            var bytes = new byte[8];
+            RandomNumberGenerator.Fill(bytes);
+            var d = BitConverter.ToDouble(bytes, 0);
+            return i + d * (i1 - i);
+        }
     }
 }

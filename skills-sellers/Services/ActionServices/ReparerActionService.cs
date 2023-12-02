@@ -11,25 +11,44 @@ namespace skills_sellers.Services.ActionServices;
 public class ReparerActionService : IActionService
 {
     private readonly INotificationService _notificationService;
+    private readonly IWeaponService _weaponService;
+    private readonly IUserBatimentsService _userBatimentsService;
 
     public ReparerActionService(
-        INotificationService notificationService)
+        INotificationService notificationService, 
+        IWeaponService weaponService, 
+        IUserBatimentsService userBatimentsService)
     {
         _notificationService = notificationService;
+        _weaponService = weaponService;
+        _userBatimentsService = userBatimentsService;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        if (user.StatRepairedObjectMachine != -1)
-            throw new AppException("Vous avez déjà réparé la machine !", 400);
+        // is Zeiss Machine Day TODO CHANGE IT TO FRIDAY
+        if (DateTime.Now.DayOfWeek != DayOfWeek.Saturday)
+            return (false, "Ce n'est pas le jour de la machine de Zeiss !");
+        
+        if (_userBatimentsService.IsUserBatimentFull(user, "machineZeiss"))
+            return (false, "Vous avez déjà une machine de Zeiss en action !");
         
         if (userCards.Count < 1)
-            throw new AppException("Vous devez jouer une carte minimum !", 400);
+            return (false, "Vous devez déposer au moins une carte !");
         
         // cards already in action ?
         if (userCards.Any(c => c.Action != null))
-            throw new AppException("Une de vos cartes est déjà en action !", 400);
+            return (false, "Une de vos cartes est déjà en action !");
         
+        // check if user has enough resources
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count);
+        
+        if (user.Creatium < creatiumPrice)
+            return (false, $"Vous n'avez pas assez de créatium ! Il vous en manque {creatiumPrice - user.Creatium}");
+
+        if (user.Or < orPrice)
+            return (false, $"Vous n'avez pas assez d'or ! Il vous en manque {orPrice - user.Or}");
+
         return (true, "");
     }
 
@@ -43,16 +62,24 @@ public class ReparerActionService : IActionService
             throw new AppException("Impossible ! " + validation.why, 400);
         
         // set cards in action
+        var totalIntel = userCards.Sum(c => c.Competences.Intelligence);
+        var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
+        
         var action = new ActionReparer
         {
             UserCards = userCards,
             DueDate = CalculateActionEndTime(),
-            RepairChances = model.RepairChances,
+            RepairChances = chances,
             User = user
         };
         
         // actualise bdd
         await context.Actions.AddAsync(action);
+        
+        // consume resources
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count);
+        user.Creatium -= creatiumPrice;
+        user.Or -= orPrice;
         
         await context.SaveChangesAsync();
 
@@ -63,28 +90,32 @@ public class ReparerActionService : IActionService
     public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
     {
         var userCards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
+        var totalUserCards = user.UserCards.Count;
 
         // validate action
         var validation = CanExecuteAction(user, userCards, model);
-        if (!validation.valid)
-            throw new AppException("Impossible ! " + validation.why, 400);
         
-        // calculate action end time and resources
+        // calculate action end time and resources needed
         var endTime = CalculateActionEndTime();
+        var totalIntel = userCards.Sum(c => c.Competences.Intelligence);
+        var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(totalUserCards);
         
         return new ActionEstimationResponse
         {
             EndDates = new List<DateTime> { endTime },
-            ActionName = "ameliorer",
+            ActionName = "reparer",
             Cards = userCards.Select(uc => uc.ToResponse()).ToList(),
             Gains = new Dictionary<string, string>
             {
-                { "Machine accessible", "" }
+                { "chances", chances.ToString("F2") + "%" }
             },
             Couts = new Dictionary<string, string>
             {
+                { "de créatium", creatiumPrice.ToString() },
+                { "d'or", orPrice.ToString() }
             },
-            Error = !validation.valid ? "Impossible de réparer la machine : " + validation.why : null
+            Error = !validation.valid ? "Impossible d'utiliser la machine : " + validation.why : null
         };
     }
 
@@ -95,27 +126,35 @@ public class ReparerActionService : IActionService
         if (action is not ActionReparer actionReparer)
             throw new AppException("Action is not a reparer action", 400);
         
-        // set repaired depending on the chances
-        var random = new Random();
-        var chances = random.Next(0, 100);
+        // calculate chances (random double between 0 and 100)
+        var chances = Randomizer.RandomDouble(0, 100);
+        
         if (chances < actionReparer.RepairChances)
         {
-            user.StatRepairedObjectMachine = 0;
             await context.SaveChangesAsync();
             
             // logs
-            Console.Out.WriteLine($"[REPARER] {user.Pseudo} a réparé la machine avec {actionReparer.RepairChances} de chances");
+            Console.Out.WriteLine($"[ZEISS] {user.Pseudo} a construit une arme avec {actionReparer.RepairChances} de chances");
             
             // notify user
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
-                    "Réparation terminée", 
-                    $"La réparation de la machine est terminée ! Vous pouvez maintenant l'utiliser !"), 
+                    "Construction d'arme terminée", 
+                    $"La machine de Zeiss a terminée la construction d'une nouvelle arme! Vous pouvez maintenant l'utiliser !"), 
                 context);
+            
+            // TODO: add weapon to user
         }
-        else await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
-                    "Réparation échouée",
-                    $"La réparation de la machine a échouée ! Vous pouvez retenter votre chance !"),
+        else 
+        {
+            await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
+                    "Construction d'arme échouée",
+                    $"Malheureusement, la machine n'a pas réussi à construire une arme... Vous pouvez retenter votre chance !"),
                 context);
+            
+            // refund user half
+            user.Creatium += _weaponService.GetWeaponConstructionPrice(action.UserCards.Count).creatiumPrice / 2;
+            user.Or += _weaponService.GetWeaponConstructionPrice(action.UserCards.Count).orPrice / 2;
+        }
         
         // remove action
         context.Actions.Remove(action);
@@ -130,7 +169,9 @@ public class ReparerActionService : IActionService
         context.Actions.Remove(action);
         
         // refund
-        user.StatRepairedObjectMachine = -1;
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(action.UserCards.Count);
+        user.Creatium += creatiumPrice;
+        user.Or += orPrice;
 
         return context.SaveChangesAsync();
     }
@@ -139,5 +180,10 @@ public class ReparerActionService : IActionService
     private DateTime CalculateActionEndTime()
     {
         return DateTime.Now.AddHours(1);
+    }
+    
+    private double CalculateRepairChances(int totalIntel, int totalCards)
+    {
+        return totalIntel / ((double)totalCards * 6) * 100;
     }
 }

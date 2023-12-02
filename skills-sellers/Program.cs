@@ -47,6 +47,7 @@ services.AddResponseCaching();
 // add services
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<ICardService, CardService>();
+services.AddScoped<IWeaponService, WeaponService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddSingleton<IStatsService, StatsService>();
 services.AddScoped<IAchievementsService, AchievementsService>();

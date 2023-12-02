@@ -12,18 +12,23 @@ public class MachineRepairService : IGameService
     private readonly DataContext _context;
     private readonly IActionTaskService _actionTaskService;
     private readonly IStatsService _statsService;
+    private readonly IWeaponService _weaponService;
     
     public MachineRepairService(DataContext context, 
         IActionTaskService actionTaskService,
-        IStatsService statsService)
+        IStatsService statsService, 
+        IWeaponService weaponService)
     {
         _context = context;
         _actionTaskService = actionTaskService;
         _statsService = statsService;
+        _weaponService = weaponService;
     }
     
     public GamesResponse GetGameOfTheDay(int userId)
     {
+        var nbCards = _context.UserCards.Count(uc => uc.UserId == userId);
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(nbCards);
         return new GamesMachineResponse
         {
             Name = "MACHINE",
@@ -46,45 +51,20 @@ public class MachineRepairService : IGameService
                     "Somme INTEL des cartes déposées / Nombre TOTAL des cartes de votre collection * 4"
                 }
             },
-            IsRepairing = _context.Actions.Any(a => a is ActionReparer && userId == a.UserId)
+            IsRepairing = _context.Actions.Any(a => a is ActionReparer && userId == a.UserId),
+            CreatiumPrice = creatiumPrice,
+            OrPrice = orPrice
         };
     }
 
     public async Task<GamesPlayResponse> PlayGameOfTheDay(User user, GamesRequest model)
     {
-        if (model.CardsIds.Count == 0 && model.Bet > 0) // play action
+        // start action
+        _ = await _actionTaskService.CreateNewActionAsync(user.Id, new ActionRequest
         {
-            var (valid, error) = CanPlayGameOfTheDay(user, model);
-            if (!valid)
-                throw new AppException(error, 400);
-            
-            // stats
-            _statsService.OnMachineUsed(user.Id);
-            
-            user.Or -= model.Bet;
-            user.NbCardOpeningAvailable++;
-            user.StatRepairedObjectMachine++;
-            
-            await _context.SaveChangesAsync();
-        } 
-        else if (model.CardsIds.Count > 0 && model.Bet == 0) // repair action
-        {
-            var cards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
-            var (valid, error) = CanRepair(cards, user.Id);
-            if (!valid)
-                throw new AppException(error, 400);
-            
-            // set cards in action
-            var totalIntel = cards.Sum(c => c.Competences.Intelligence);
-            var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
-
-            await _actionTaskService.CreateNewActionAsync(user.Id, new ActionRequest
-            {
-                ActionName = "REPARER",
-                CardsIds = model.CardsIds,
-                RepairChances = chances
-            });
-        }
+            ActionName = "reparer",
+            CardsIds = model.CardsIds
+        });
         
         return new GamesPlayResponse
         {
@@ -94,83 +74,10 @@ public class MachineRepairService : IGameService
 
     public GamesPlayResponse EstimateGameOfTheDay(User user, GamesRequest model)
     {
-        // Une estimation est effectué pour savoir si le joueur peut réparer la machine, et quelle est sa probabilité de réussite
-        // Une estimation est aussi effectué pour savoir si le joueur peut payer pour utiliser la machine
-
-        switch (model.CardsIds.Count)
+        return new GamesPlayResponse
         {
-            // play action
-            case 0 when model.Bet > 0:
-            {
-                var (valid, error) = CanPlayGameOfTheDay(user, model);
-            
-                if (!valid)
-                    throw new AppException(error, 400);
-            
-                return new GamesPlayResponse
-                {
-                    Name = "MACHINE"
-                };
-            }
-            // repair action
-            case > 0 when model.Bet == 0:
-            {
-                var cards = user.UserCards.Where(uc => model.CardsIds.Contains(uc.CardId)).ToList();
-                var (valid, error) = CanRepair(cards, user.Id);
-                if (!valid)
-                    throw new AppException(error, 400);
-            
-                // set cards in action
-                var totalIntel = cards.Sum(c => c.Competences.Intelligence);
-                var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
-            
-                return new GamesPlayResponse
-                {
-                    Name = "MACHINE",
-                    Chances = chances
-                };
-            }
-            default:
-                throw new AppException("Vous devez jouer une carte minimum.", 400);
-        }
-    }
-
-    #region HELPERS METHODS
-    private (bool valid, string error) CanPlayGameOfTheDay(User user, GamesRequest model)
-    {
-        if (user.Or < model.Bet)
-            return (false, "Vous n'avez pas assez d'or !");
-
-        return user.StatRepairedObjectMachine switch
-        {
-            -1 => (false, "Vous devez réparer la machine pour pouvoir l'utiliser !"),
-            0 when model.Bet != 500 => (false, "Vous devez payer 500 d'or pour utiliser la machine la première fois !"),
-            > 0 when model.Bet != 1000 => (false, "Vous devez payer 1000 d'or pour utiliser la machine !"),
-            _ => (true, "")
+            Name = "MACHINE",
+            Error = "L'estimation est obselète depuis la 2.0, veuillez utiliser l'endpoint Estimation d'Action"
         };
     }
-
-    private (bool valid, string error) CanRepair(List<UserCard> cards, int userId)
-    {
-        // 1 card minimum
-        if (cards.Count < 1)
-            return (false, "Vous devez jouer une carte minimum !");
-        
-        // cards already in action ?
-        if (cards.Any(c => c.Action != null))
-            return (false, "Une de vos cartes est déjà en action !");
-        
-        // user already repairing ?
-        if (_context.Actions.Any(a => a is ActionReparer && a.UserId == userId))
-            return (false, "Vous êtes déjà en train de réparer la machine !");
-        
-        return (true, "");
-    }
-
-    private double CalculateRepairChances(int totalIntel, int totalCards)
-    {
-        return totalIntel / ((double)totalCards * 4) * 100;
-    }
-
-    #endregion
 }

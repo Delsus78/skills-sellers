@@ -13,8 +13,7 @@ public static class UsersModelsExtensions
             Creatium = 600,
             Or = 0,
             Nourriture = 10,
-            NbCardOpeningAvailable = 1,
-            StatRepairedObjectMachine = -1
+            NbCardOpeningAvailable = 1
         };
     }
     
@@ -28,7 +27,6 @@ public static class UsersModelsExtensions
             user.Or,
             user.Nourriture,
             user.NbCardOpeningAvailable,
-            user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
-            user.StatRepairedObjectMachine);
+            user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList());
     }
 }

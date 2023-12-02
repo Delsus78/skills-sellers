@@ -78,6 +78,7 @@ public class UserBatimentsService : IUserBatimentsService
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
             "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
             "satellite" => (actionCounts.GetValueOrDefault(typeof(ActionSatellite), 0), userBatimentData.SatelliteLevel),
+            "machinezeiss" => (actionCounts.GetValueOrDefault(typeof(ActionReparer), 0), 1),
             _ => throw new AppException("Batiment name not found", 404)
         };
 

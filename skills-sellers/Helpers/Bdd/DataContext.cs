@@ -45,6 +45,12 @@ public class DataContext : DbContext
     
     // Achievements
     public DbSet<Achievement> Achievements { get; set; }
+    
+    // Weapons
+    public DbSet<Weapon> Weapons { get; set; }
+    public DbSet<UserWeapon> UserWeapons { get; set; }
+
+
     #endregion
 
     #region SPECIALS DBSETS
@@ -88,7 +94,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<WordleGame>().HasOne(w => w.User)
             .WithOne(u => u.WordleGame)
             .HasForeignKey<WordleGame>(w => w.UserId);
-        
+
         // christmas special
         modelBuilder.Entity<Christmas>().HasOne(c => c.User)
             .WithOne(u => u.Christmas)

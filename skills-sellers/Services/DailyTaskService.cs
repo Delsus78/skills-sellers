@@ -30,7 +30,6 @@ public class DailyTaskService : IDailyTaskService
             // Execute the task
             await DailyResetBatimentDataAsync(context);
             await DailyCheckAndDeleteNotifications(context);
-            await DailyResetUserRepairedMachine(context);
 
             // Log the execution
             context.DailyTaskLog.Add(new DailyTaskLog { ExecutionDate = today.Date, IsExecuted = true });
@@ -58,21 +57,7 @@ public class DailyTaskService : IDailyTaskService
 
         await context.SaveChangesAsync();
     }
-    
-    private async Task DailyResetUserRepairedMachine(DataContext context)
-    {
-        var usersWithRepairedMachine = await context.Users.Where(u => u.StatRepairedObjectMachine != -1).ToListAsync();
 
-        var count = 0;
-        foreach (var user in usersWithRepairedMachine)
-        {
-            user.StatRepairedObjectMachine = -1;
-            count++;
-        }
-        Console.WriteLine($"DailyTask : {count} users StatRepairedObjectMachine reset");
-        await context.SaveChangesAsync();
-    }
-    
     private async Task DailyCheckAndDeleteNotifications(DataContext context)
     {
         var notifications = await context.Notifications
