@@ -10,7 +10,7 @@ namespace skills_sellers.Controllers;
 [Route("[controller]")]
 public class WeaponsController : ControllerBase
 {
-    private IWeaponService _weaponService;
+    private readonly IWeaponService _weaponService;
 
     public WeaponsController(
         IWeaponService weaponService) 

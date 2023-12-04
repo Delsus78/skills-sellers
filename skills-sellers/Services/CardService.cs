@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
-using skills_sellers.Models.Cards;
+using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
 
 namespace skills_sellers.Services;

@@ -18,7 +18,7 @@ public static class CompetencesModelsExtensions
 
     public static CompetencesResponse ToResponse(this Competences competences) 
         => new(competences.Cuisine, competences.Force, competences.Intelligence, competences.Charisme,
-        competences.Exploration, competences.GetPower());
+        competences.Exploration);
     
     
     // helpers
@@ -33,6 +33,6 @@ public static class CompetencesModelsExtensions
     public static bool GotAllMaxed(this Competences competences)
         => competences is { Cuisine: 10, Force: 10, Intelligence: 10, Charisme: 10, Exploration: 10 };
     
-    public static int GetPower(this Competences competences)
+    public static int GetPowerWithoutWeapon(this Competences competences)
         => competences.Charisme + competences.Exploration + competences.Force + competences.Intelligence;
 }

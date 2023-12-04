@@ -5,7 +5,6 @@ using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
-using skills_sellers.Models.Cards;
 using skills_sellers.Models.Extensions;
 using skills_sellers.Models.Users;
 using skills_sellers.Services.ActionServices;
@@ -43,6 +42,7 @@ public interface IUserService
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
     Task<List<ActionResponse>> ResponseToBottedAgent(User user);
+    IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
 }
 
 public class UserService : IUserService
@@ -359,6 +359,16 @@ public class UserService : IUserService
     
     #endregion
 
+    #region USERWEAPONS
+
+    public IEnumerable<UserWeaponResponse> GetUserWeapons(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserWeapons.Select(uc => uc.ToResponse());
+    }
+
+    #endregion
+    
     #region Stats and notifications
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
         => await _notificationService.GetNotifications(user);
@@ -543,7 +553,8 @@ public static class UserIncludeExtension
             .ThenInclude(uc => uc.Competences)
             .Include(u => u.UserBatimentData)
             .Include(u => u.UserCardsDoubled)
-            // ... Autres includes si nécessaire
+            .Include(u => u.UserWeapons)
+            .ThenInclude(uw => uw.Weapon)
             .AsSplitQuery();
     }
 }

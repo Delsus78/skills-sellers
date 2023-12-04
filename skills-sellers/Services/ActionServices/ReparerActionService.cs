@@ -131,7 +131,6 @@ public class ReparerActionService : IActionService
         
         if (chances < actionReparer.RepairChances)
         {
-            await context.SaveChangesAsync();
             
             // logs
             Console.Out.WriteLine($"[ZEISS] {user.Pseudo} a construit une arme avec {actionReparer.RepairChances} de chances");
@@ -142,7 +141,8 @@ public class ReparerActionService : IActionService
                     $"La machine de Zeiss a terminée la construction d'une nouvelle arme! Vous pouvez maintenant l'utiliser !"), 
                 context);
             
-            // TODO: add weapon to user
+            // add weapon to user
+            user.NbWeaponOpeningAvailable++;
         }
         else 
         {
@@ -179,7 +179,7 @@ public class ReparerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime()
     {
-        return DateTime.Now.AddHours(1);
+        return DateTime.Now.AddSeconds(5);
     }
     
     private double CalculateRepairChances(int totalIntel, int totalCards)

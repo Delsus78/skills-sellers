@@ -173,14 +173,7 @@ public static class Randomizer
         var cuisine = valuesDicto["cuisine"];
         var charisme = valuesDicto["charisme"];
 
-        var explo = RandomInt(0, 100) switch
-        {
-            < 40 => 0,
-            < 65 => 1,
-            < 90 => 2,
-            < 99 => 3,
-            _ => 4
-        };
+        var explo = GetRandomExploRarityNumber();
 
         if (explo == 4) Console.Out.WriteLine("4 explo !");
         
@@ -193,7 +186,21 @@ public static class Randomizer
             Exploration = explo
         };
     }
-    
+
+    public static int GetRandomExploRarityNumber()
+    {
+        var explo = RandomInt(0, 100) switch
+        {
+            < 40 => 0,
+            < 65 => 1,
+            < 90 => 2,
+            < 99 => 3,
+            _ => 4
+        };
+        return explo;
+    }
+
+
     public static int RandomInt(int min, int max)
     {
         lock (SyncLock)
