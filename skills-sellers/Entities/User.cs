@@ -20,6 +20,7 @@ public class User
     public int Nourriture { get; set; }
     public int NbCardOpeningAvailable { get; set; }
     public int NbWeaponOpeningAvailable { get; set; }
+    public int NbWeaponUpgradeAvailable { get; set; }
 
     // One to one
     public Stats Stats { get; set; }

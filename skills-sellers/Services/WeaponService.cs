@@ -108,15 +108,8 @@ public class WeaponService : IWeaponService
         if (userCard == null)
             throw new AppException("Carte non trouvée", 404);
         
-        // get user weapon
+        // get user weapon, if not found, desequipe weapon
         var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == userWeaponId);
-        
-        if (userWeapon == null)
-            throw new AppException("Arme non trouvée", 404);
-        
-        // check if user card already has a weapon
-        if (userCard.UserWeapon != null)
-            throw new AppException("Cette carte possède déjà une arme", 400);
         
         userCard.UserWeapon = userWeapon;
         

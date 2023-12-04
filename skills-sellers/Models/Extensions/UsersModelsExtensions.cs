@@ -11,9 +11,11 @@ public static class UsersModelsExtensions
         {
             Pseudo = model.Pseudo,
             Creatium = 600,
-            Or = 0,
+            Or = 20,
             Nourriture = 10,
-            NbCardOpeningAvailable = 1
+            NbCardOpeningAvailable = 1,
+            NbWeaponOpeningAvailable = 0,
+            NbWeaponUpgradeAvailable = 0
         };
     }
     
@@ -27,6 +29,8 @@ public static class UsersModelsExtensions
             user.Or,
             user.Nourriture,
             user.NbCardOpeningAvailable,
-            user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList());
+            user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
+            user.NbWeaponOpeningAvailable,
+            user.NbWeaponUpgradeAvailable);
     }
 }

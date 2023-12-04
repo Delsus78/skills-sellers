@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -222,7 +223,7 @@ public class ExplorerActionService : IActionService
             else // stats
                 _statsService.OnCardFailedCauseOfCharisme(user.Id);
 
-            // // chance to up cuisine competence
+            // // chance to up exploration competence
             // - 20% de chance de up
             if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
             {
@@ -234,6 +235,9 @@ public class ExplorerActionService : IActionService
                     $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
                 ), context);
             }
+            
+            // Weapons Update
+            WeaponUpdateExplorationPart(context, userCard, user);
 
             #endregion
             
@@ -246,6 +250,81 @@ public class ExplorerActionService : IActionService
         }
 
         return context.SaveChangesAsync();
+    }
+
+    private void WeaponUpdateExplorationPart(DataContext context, UserCard userCard, User user)
+    {
+        if (!TryToEncounterAnOtherCardOnExploration(userCard, context, out var opponentCard, out var result)) return;
+        var notificationMessage = "";
+        var opponentNotificationMessage = "";
+
+        switch (result)
+        {
+            case 1: // user win
+                
+                var stringReward = WarHelpers.GetRandomWarLoot(user);
+
+                notificationMessage =
+                    $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a gagné !\n" +
+                    $"Elle s'est battue contre {opponentCard?.Card.Name} de {opponentCard?.User.Pseudo} ! \n" +
+                    $"Elle a gagné {stringReward} ! \n";
+                
+                opponentNotificationMessage =
+                    $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a perdu !\n" +
+                    $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n";
+                break;
+            case -1: // opponent win
+                var opponent = opponentCard!.User;
+                var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, true);
+                
+                notificationMessage =
+                    $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a perdu !\n" +
+                    $"Elle s'est battue contre {opponentCard?.Card.Name} de {opponentCard?.User.Pseudo} ! \n";
+
+                opponentNotificationMessage =
+                    $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a gagné !\n" +
+                    $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n" +
+                    $"Elle a gagné {stringRewardOpponent} ! \n";
+                
+                break;
+            default:
+                notificationMessage =
+                    $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a fait match nul !\n" +
+                    $"Elle s'est battue contre {opponentCard?.Card.Name} de {opponentCard?.User.Pseudo} ! \n";
+
+                opponentNotificationMessage =
+                    $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a fait match nul !\n" +
+                    $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n";
+
+                break;
+        }
+
+        notificationMessage +=
+            $"COMPTE RENDU DU COMBAT : \n" +
+            $"Votre carte a {userCard.ToResponse().Power} de puissance\n" +
+            $"La carte adverse a {opponentCard?.ToResponse().Power} de puissance.\n";
+
+        if (userCard.UserWeapon != null)
+            notificationMessage +=
+                $"Votre carte utilise son arme {userCard.UserWeapon.Weapon.Name} avec {userCard.UserWeapon.Power} avec l'affinité {userCard.UserWeapon.Affinity}!\n";
+
+        if (opponentCard?.UserWeapon != null)
+            notificationMessage +=
+                $"La carte adverse utilise son arme {opponentCard.UserWeapon.Weapon.Name} avec {opponentCard.UserWeapon.Power} avec l'affinité {opponentCard.UserWeapon.Affinity}!\n";
+
+        // notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Explorer - Combat",
+            notificationMessage
+        ), context);
+        
+        // notify opponent
+        _notificationService.SendNotificationToUser(opponentCard!.User, new NotificationRequest
+        (
+            "Explorer - Combat",
+            opponentNotificationMessage
+        ), context);
     }
 
     public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
@@ -273,5 +352,38 @@ public class ExplorerActionService : IActionService
         // l’exploration prendra 5h30 - le niveau x 30 minutes 
         //return DateTime.Now.AddSeconds(10);
         return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
+    }
+    
+    // Weapons Update
+    private bool TryToEncounterAnOtherCardOnExploration(UserCard userCard, DataContext context, out UserCard? randomCard, out int result)
+    {
+        randomCard = null;
+        result = 0;
+        
+        // 10% de chance de rencontrer une autre carte
+        if (!Randomizer.RandomPourcentageUp(10))
+            return false;
+        
+        // get all cards in exploration (except the current one and all user's cards)
+        var cardsInExploration = context.UserCards
+            .Where(uc => uc.Action is ActionExplorer)
+            .Where(uc => uc.UserId != userCard.UserId)
+            .Include(uc => uc.Competences)
+            .Include(uc => uc.UserWeapon)
+            .ThenInclude(uw => uw.Weapon)
+            .Include(uc => uc.Card)
+            .Include(uc => uc.User)
+            .ToList();
+        
+        // get random card
+        randomCard = cardsInExploration[Randomizer.RandomInt(0, cardsInExploration.Count - 1)];
+        
+        // fight
+        var fightResult = WarHelpers.Fight(userCard, randomCard);
+        
+        // if draw, no one win
+        result = fightResult.result;
+
+        return true;
     }
 }
