@@ -12,15 +12,16 @@ public class User
     // Many to many
     public List<UserCard> UserCards { get; } = new();
     public List<UserCardDoubled> UserCardsDoubled { get; } = new();
+    public List<UserWeapon> UserWeapons { get; } = new();
     public List<Notification> Notifications { get; } = new();
     
     public int Creatium { get; set; }
     public int Or { get; set; }
     public int Nourriture { get; set; }
     public int NbCardOpeningAvailable { get; set; }
+    public int NbWeaponOpeningAvailable { get; set; }
+    public int NbWeaponUpgradeAvailable { get; set; }
 
-    public int StatRepairedObjectMachine { get; set; } = -1;
-    
     // One to one
     public Stats Stats { get; set; }
     public Achievement Achievement { get; set; }

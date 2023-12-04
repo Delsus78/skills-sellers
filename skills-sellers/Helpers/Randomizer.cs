@@ -56,6 +56,14 @@ public static class Randomizer
         
         return type;
     }
+    
+    public static WeaponAffinity RandomWeaponAffinity() 
+        => RandomInt(0, 3) switch
+        {
+            0 => WeaponAffinity.Pierre,
+            1 => WeaponAffinity.Ciseaux,
+            _ => WeaponAffinity.Feuille
+        };
 
     public static List<string> GetAllCardNameWord(this DbSet<Card> cardsDb)
     {
@@ -165,14 +173,7 @@ public static class Randomizer
         var cuisine = valuesDicto["cuisine"];
         var charisme = valuesDicto["charisme"];
 
-        var explo = RandomInt(0, 100) switch
-        {
-            < 40 => 0,
-            < 65 => 1,
-            < 90 => 2,
-            < 99 => 3,
-            _ => 4
-        };
+        var explo = GetRandomExploRarityNumber();
 
         if (explo == 4) Console.Out.WriteLine("4 explo !");
         
@@ -185,7 +186,21 @@ public static class Randomizer
             Exploration = explo
         };
     }
-    
+
+    public static int GetRandomExploRarityNumber()
+    {
+        var explo = RandomInt(0, 100) switch
+        {
+            < 40 => 0,
+            < 65 => 1,
+            < 90 => 2,
+            < 99 => 3,
+            _ => 4
+        };
+        return explo;
+    }
+
+
     public static int RandomInt(int min, int max)
     {
         lock (SyncLock)
@@ -196,5 +211,16 @@ public static class Randomizer
     {
         var randomLine = RandomInt(0, Gutenberg.Length);
         return Gutenberg[randomLine];
+    }
+
+    public static double RandomDouble(int i, int i1)
+    {
+        lock (SyncLock)
+        {
+            var bytes = new byte[8];
+            RandomNumberGenerator.Fill(bytes);
+            var d = BitConverter.ToDouble(bytes, 0);
+            return i + d * (i1 - i);
+        }
     }
 }

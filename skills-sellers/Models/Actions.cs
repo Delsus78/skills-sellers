@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using skills_sellers.Models.Cards;
 
 namespace skills_sellers.Models;
 

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Models;
-using skills_sellers.Models.Cards;
 using skills_sellers.Services;
 
 namespace skills_sellers.Controllers;
@@ -17,13 +16,15 @@ public class UserActionController : ControllerBase
     private readonly IUserService _userService;
     private readonly IMarchandService _marchandService;
     private readonly IAchievementsService _achievementsService;
+    private readonly IWeaponService _weaponService;
 
     public UserActionController(
-        IUserService userService, IMarchandService marchandService, IAchievementsService achievementsService)
+        IUserService userService, IMarchandService marchandService, IAchievementsService achievementsService, IWeaponService weaponService)
     {
         _userService = userService;
         _marchandService = marchandService;
         _achievementsService = achievementsService;
+        _weaponService = weaponService;
     }
 
     // helper methods
@@ -42,6 +43,16 @@ public class UserActionController : ControllerBase
     [HttpPost("actions/opencard")]
     public async Task<UserCardResponse?> OpenCard(int id)
         => await _userService.OpenCard(GetUserAuthenticated(id));
+    
+    [Authorize]
+    [HttpPost("actions/openweapon")]
+    public async Task<UserWeaponResponse?> OpenWeapon(int id)
+        => await _weaponService.OpenWeapon(GetUserAuthenticated(id));
+    
+    [Authorize]
+    [HttpPost("cards/{cardId}/applyweapon/{userWeaponId}")]
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int userWeaponId)
+        => await _weaponService.ApplyWeaponToUserCard(GetUserAuthenticated(id), cardId, userWeaponId);
     
     [Authorize]
     [HttpPost("cards/{cardId}/ameliorer")]

@@ -13,4 +13,8 @@ public class UserCard
     
     // Action associée à cette combinaison User-Card
     public Action? Action { get; set; }
+    
+    // Weapon
+    public int? UserWeaponId { get; set; }
+    public UserWeapon? UserWeapon { get; set; }
 }

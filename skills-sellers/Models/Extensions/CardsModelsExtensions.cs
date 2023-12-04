@@ -1,5 +1,4 @@
 using skills_sellers.Entities;
-using skills_sellers.Models.Cards;
 
 namespace skills_sellers.Models.Extensions;
 
