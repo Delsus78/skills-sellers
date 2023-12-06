@@ -9,6 +9,7 @@ public static class Randomizer
     private static readonly string[] AllFoods;
     private static readonly string[] Gutenberg;
     private static readonly string[] AllMuscles;
+    private static readonly string[] AllQuotes;
     private static readonly object SyncLock = new (); 
     private static List<string> AllCardWords { get; set; } = new();
 
@@ -17,6 +18,7 @@ public static class Randomizer
         AllFoods = File.ReadAllLines("all_foods.txt");
         Gutenberg = File.ReadAllLines("gutenberg.txt");
         AllMuscles = File.ReadAllLines("all_muscles.txt");
+        AllQuotes = File.ReadAllLines("all_citations.txt");
     }
 
     public static string RandomPlat(int? seed = null)
@@ -40,6 +42,15 @@ public static class Randomizer
         var res = RandomInt(0, 100);
         var boolRes = res < pourcentage;
         Console.Out.WriteLine($"Random pourcentage up {res}/{pourcentage} = {boolRes}");
+        return boolRes;
+    }
+
+    public static bool RandomPourcentageSeeded(string seed, int pourcentage = 20)
+    {
+        var random = new Random(seed.GetHashCode());
+        var res = random.Next(0, 100);
+        var boolRes = res < pourcentage;
+        Console.Out.WriteLine($"Random pourcentage seeded {seed} : {res}/{pourcentage} = {boolRes}");
         return boolRes;
     }
 
@@ -199,8 +210,7 @@ public static class Randomizer
         };
         return explo;
     }
-
-
+    
     public static int RandomInt(int min, int max)
     {
         lock (SyncLock)
@@ -222,5 +232,12 @@ public static class Randomizer
             var d = BitConverter.ToDouble(bytes, 0);
             return i + d * (i1 - i);
         }
+    }
+    
+    public static string RandomQuote(string seed)
+    {
+        var random = new Random(seed.GetHashCode());
+        var randomLine = random.Next(0, AllQuotes.Length);
+        return AllQuotes[randomLine];
     }
 }
