@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using skills_sellers.Entities.Actions;
 
 namespace skills_sellers.Models;
 
@@ -56,6 +57,9 @@ public class ActionExplorerResponse : ActionResponse
 {
     public bool IsReturningToHome { get; set; }
     public string PlanetName { get; set; }
+    
+    public ExplorationDecision? Decision { get; set; }
+    public bool needDecision { get; set; }
 }
 
 public class ActionReparerResponse : ActionResponse
@@ -89,3 +93,5 @@ public class ActionEstimationResponse : ActionResponse
     public Dictionary<string, string> Couts { get; set; } = new();
     public string? Error { get; set; }
 }
+
+public record ActionDecisionRequest(int ActionId, ExplorationDecision Decision);

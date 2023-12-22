@@ -25,7 +25,9 @@ public static class ActionsModelsExtensions
                 CreatedAt = actionExplorer.CreatedAt ?? DateTime.Now,
                 Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 IsReturningToHome = actionExplorer.IsReturningToHome,
-                PlanetName = actionExplorer.PlanetName
+                PlanetName = actionExplorer.PlanetName,
+                Decision = actionExplorer.Decision,
+                needDecision = actionExplorer.needDecision
             },
             ActionAmeliorer actionAmeliorer => new ActionAmeliorerResponse
             {

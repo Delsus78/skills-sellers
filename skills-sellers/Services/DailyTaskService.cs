@@ -30,6 +30,7 @@ public class DailyTaskService : IDailyTaskService
             // Execute the task
             await DailyResetBatimentDataAsync(context);
             await DailyCheckAndDeleteNotifications(context);
+            await DailyCheckAndDeleteFightReports(context);
 
             // Log the execution
             context.DailyTaskLog.Add(new DailyTaskLog { ExecutionDate = today.Date, IsExecuted = true });
@@ -52,8 +53,7 @@ public class DailyTaskService : IDailyTaskService
         Console.WriteLine($"DailyTask : {count} users batiments data reset");
         
         // notify all users
-        await _notificationService.SendNotificationToAll(new NotificationRequest("Cuisine", "Les cuisines ont été réinitialisées !"), context);
-        await _notificationService.SendNotificationToAll(new NotificationRequest("Marchand BonnBouff", "Le marchand a été réinitialisé !"), context);
+        await _notificationService.SendNotificationToAll(new NotificationRequest("Daily reset", "Les cuisines ont été réinitialisées !\r\nLe marchand a été réinitialisé !"), context);
 
         await context.SaveChangesAsync();
     }
@@ -70,6 +70,21 @@ public class DailyTaskService : IDailyTaskService
             count++;
         }
         Console.Out.WriteLine($"DailyTask : Deleted {count} notifications");
+        await context.SaveChangesAsync();
+    }
+    
+    private async Task DailyCheckAndDeleteFightReports(DataContext context)
+    {
+        var fightReports = await context.FightReports
+            .Where(fightReport => fightReport.FightDate.AddDays(3).Date <= DateTime.Now.Date)
+            .ToListAsync();
+        var count = 0;
+        foreach (var fightReport in fightReports)
+        {
+            context.FightReports.Remove(fightReport);
+            count++;
+        }
+        Console.Out.WriteLine($"DailyTask : Deleted {count} fight reports");
         await context.SaveChangesAsync();
     }
 }

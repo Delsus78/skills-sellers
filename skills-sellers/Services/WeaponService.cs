@@ -16,7 +16,7 @@ public interface IWeaponService
     Weapon GetWeaponEntity(Expression<Func<Weapon, bool>> predicate);
     Weapon GetRandomWeapon();
     Task<UserWeaponResponse?> OpenWeapon(User user);
-    Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int userWeaponId);
+    Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId);
     
     (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards);
 }
@@ -100,13 +100,16 @@ public class WeaponService : IWeaponService
         return userWeapon.ToResponse();
     }
 
-    public async Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int userWeaponId)
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId)
     {
         // get user card
         var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
         
         if (userCard == null)
             throw new AppException("Carte non trouvée", 404);
+        
+        if (userCard.Action != null)
+            throw new AppException("Vous ne pouvez pas équiper une carte en action", 400);
         
         // get user weapon, if not found, desequipe weapon
         var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == userWeaponId);

@@ -10,8 +10,10 @@ public static class Randomizer
     private static readonly string[] Gutenberg;
     private static readonly string[] AllMuscles;
     private static readonly string[] AllQuotes;
+    private static readonly string[] AllDeathQuotes;
     private static readonly object SyncLock = new (); 
     private static List<string> AllCardWords { get; set; } = new();
+    private static List<string> AllCardDescriptions { get; set; } = new();
 
     static Randomizer()
     {
@@ -19,6 +21,7 @@ public static class Randomizer
         Gutenberg = File.ReadAllLines("gutenberg.txt");
         AllMuscles = File.ReadAllLines("all_muscles.txt");
         AllQuotes = File.ReadAllLines("all_citations.txt");
+        AllDeathQuotes = File.ReadAllLines("death_citations.txt");
     }
 
     public static string RandomPlat(int? seed = null)
@@ -127,6 +130,26 @@ public static class Randomizer
         return AllCardWords;
     }
 
+    public static List<string> GetAllCardDescriptions(this DbSet<Card> cardsDb)
+    {
+        if (AllCardDescriptions.Count != 0) return AllCardDescriptions;
+        
+        AllCardDescriptions = cardsDb
+            .Select(c => c.Description)
+            .ToList();
+
+        return AllCardDescriptions;
+    }
+    
+    public static string GetRandomCardDescription(this DbSet<Card> cardsDb, string? seed = null)
+    {
+        var allDesc = GetAllCardDescriptions(cardsDb);
+        var random = seed != null ? new Random(seed.GetHashCode()) : new Random();
+        var randomLine = random.Next(0, allDesc.Count);
+        return allDesc[randomLine];
+    }
+    
+    
     /// <summary>
     /// legendaire = 15 pts
     /// epic = 10 pts
@@ -239,5 +262,12 @@ public static class Randomizer
         var random = new Random(seed.GetHashCode());
         var randomLine = random.Next(0, AllQuotes.Length);
         return AllQuotes[randomLine];
+    }
+    
+    public static string RandomDeathQuote(string seed)
+    {
+        var random = new Random(seed.GetHashCode());
+        var randomLine = random.Next(0, AllDeathQuotes.Length);
+        return AllDeathQuotes[randomLine];
     }
 }

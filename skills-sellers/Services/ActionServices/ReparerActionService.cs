@@ -26,8 +26,8 @@ public class ReparerActionService : IActionService
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        // is Zeiss Machine Day TODO CHANGE IT TO FRIDAY
-        if (DateTime.Now.DayOfWeek != DayOfWeek.Saturday)
+        // is Zeiss Machine Day
+        if (DateTime.Now.DayOfWeek != DayOfWeek.Friday)
             return (false, "Ce n'est pas le jour de la machine de Zeiss !");
         
         if (_userBatimentsService.IsUserBatimentFull(user, "machineZeiss"))

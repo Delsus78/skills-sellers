@@ -28,6 +28,7 @@ public static class UsersModelsExtensions
             user.Creatium,
             user.Or,
             user.Nourriture,
+            user.Score,
             user.NbCardOpeningAvailable,
             user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
             user.NbWeaponOpeningAvailable,

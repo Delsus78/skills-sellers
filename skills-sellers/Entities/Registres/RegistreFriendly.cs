@@ -6,4 +6,5 @@ public class RegistreFriendly : Registre
     public string ResourceDemand { get; set; }
     public int ResourceOfferAmount { get; set; }
     public int ResourceDemandAmount { get; set; }
+    public override RegistreType Type => RegistreType.Friendly;
 }

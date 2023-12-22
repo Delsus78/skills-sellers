@@ -51,13 +51,18 @@ public class UserActionController : ControllerBase
     
     [Authorize]
     [HttpPost("cards/{cardId}/applyweapon/{userWeaponId}")]
-    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int userWeaponId)
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int? userWeaponId)
         => await _weaponService.ApplyWeaponToUserCard(GetUserAuthenticated(id), cardId, userWeaponId);
     
     [Authorize]
     [HttpPost("cards/{cardId}/ameliorer")]
     public async Task<UserCardResponse> AmeliorerCard(int id, int cardId, CompetencesRequest competencesPointsToGive)
         => await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+
+    [Authorize]
+    [HttpPost("actions/decision")]
+    public async Task<ActionResponse> PostDecisionForAction(int id, ActionDecisionRequest model) 
+        => await _userService.DecideForAction(GetUserAuthenticated(id), model);
 
     [Authorize]
     [HttpPost("actions")]

@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
@@ -43,6 +44,8 @@ public interface IUserService
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
     Task<List<ActionResponse>> ResponseToBottedAgent(User user);
     IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
+    Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
+    UserRegistreInfoResponse GetRegistreInfo(int id);
 }
 
 public class UserService : IUserService
@@ -417,14 +420,75 @@ public class UserService : IUserService
     public async Task<List<ActionResponse>> CreateAction(User user, ActionRequest model) 
         => await _actionTaskService.CreateNewActionAsync(user.Id, model);
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
-    {
-        return _actionTaskService.EstimateAction(user.Id, model);
-    }
-    
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model) 
+        => _actionTaskService.EstimateAction(user.Id, model);
+
     public async Task DeleteAction(User user, int actionId)
         => await _actionTaskService.DeleteActionAsync(user.Id, actionId);
 
+    
+    public Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model)
+    {
+        var action = _context.Actions.FirstOrDefault(a => a.Id == model.ActionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+
+        if (action is not ActionExplorer actionExplorer)
+            throw new AppException("Action is not an explorer action", 400);
+        
+        if (action.UserId != user.Id)
+            throw new AppException("Action is not yours", 400);
+
+        if (actionExplorer.Decision != null)
+            throw new AppException("Action already decided", 400);
+
+        // update action
+        actionExplorer.Decision = model.Decision;
+        _context.Actions.Update(actionExplorer);
+
+        // save changes
+        _context.SaveChanges();
+        
+
+        // end action if already finished
+        if (!_actionTaskService.IsActionRunning(actionExplorer.Id))
+            _actionTaskService.StartNewTaskForAction(actionExplorer);
+        
+        return Task.FromResult(actionExplorer.ToResponse());
+    }
+
+    public UserRegistreInfoResponse GetRegistreInfo(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userRegistreInfo = _context.UserRegistreInfos.FirstOrDefault(ri => ri.UserId == user.Id);
+        if (userRegistreInfo == null) // create registre info if not exist
+        {
+            userRegistreInfo = new UserRegistreInfo
+            {
+                User = user,
+                HostileAttackWon = 0,
+                HostileAttackLost = 0
+            };
+            _context.UserRegistreInfos.Add(userRegistreInfo);
+            _context.SaveChanges();
+        }
+        
+        // get registres of user
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Load();
+        
+        // load relatedPlayers of registrePlayer
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Query()
+            .OfType<RegistrePlayer>()
+            .Include(rp => rp.RelatedPlayer)
+            .Load();
+        
+        return userRegistreInfo.ToResponse(user.Registres);
+    }
+    
     #endregion
     
     #region BATIMENTS

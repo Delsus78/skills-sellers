@@ -51,9 +51,12 @@ public class DataContext : DbContext
     public DbSet<Weapon> Weapons { get; set; }
     public DbSet<UserWeapon> UserWeapons { get; set; }
 
-    // Regitres
+    // Registres
     public DbSet<Registre> Registres { get; set; }
+    public DbSet<UserRegistreInfo> UserRegistreInfos { get; set; }
 
+    // Fights
+    public DbSet<FightReport> FightReports { get; set; }
     #endregion
 
     #region SPECIALS DBSETS
