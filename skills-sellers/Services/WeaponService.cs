@@ -18,7 +18,7 @@ public interface IWeaponService
     Task<UserWeaponResponse?> OpenWeapon(User user);
     Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId);
     
-    (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards);
+    (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons);
 }
 public class WeaponService : IWeaponService
 {
@@ -132,10 +132,10 @@ public class WeaponService : IWeaponService
         return _context.Weapons.Skip(randomIndex).First();
     }
 
-    public (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards)
+    public (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons)
     {
-        var creatiumPrice = (int)(5000 * Math.Pow(10, numberOfCards / 100.0));
-        var orPrice = (int)(1000 * Math.Pow(10, numberOfCards / 100.0));
+        var creatiumPrice = (int)(5000 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 4));
+        var orPrice = (int)(1000 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 2));
         
         return (creatiumPrice, orPrice);
     }
