@@ -30,6 +30,7 @@ public interface IUserService
     Task<UserCardResponse?> OpenCard(User user);
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
+    Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true);
     UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotifications(User user, List<int> notificationIds);
@@ -42,8 +43,9 @@ public interface IUserService
     Task DeleteAction(User user, int actionId);
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
-    Task<List<ActionResponse>> ResponseToBottedAgent(User user);
+    Task ResponseToBottedAgent(User user);
     IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
+    UserWeaponResponse GetUserWeapon(int id, int weaponId);
     Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
     UserRegistreInfoResponse GetRegistreInfo(int id);
 }
@@ -370,6 +372,43 @@ public class UserService : IUserService
         return user.UserWeapons.Select(uc => uc.ToResponse());
     }
 
+    public UserWeaponResponse GetUserWeapon(int id, int weaponId)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserWeapons.FirstOrDefault(uc => uc.Id == weaponId)?.ToResponse() ?? throw new AppException("User weapon not found", 404);
+    }
+
+    public async Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true)
+    {
+        if (fromUpgradePoint && user.NbWeaponUpgradeAvailable <= 0)
+            throw new AppException("Vous n'avez plus d'amélioration d'arme disponible !", 400);
+        
+        // get user weapon
+        var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == weaponId);
+        if (userWeapon == null)
+            throw new AppException("User weapon not found", 404);
+        
+        // impossible if equiped or in upgrade
+        // weapon in labo ?
+        if (user.UserCards.Any(card => card.Action is ActionAmeliorer ameliorer && ameliorer.WeaponToUpgradeId == weaponId))
+            throw new AppException("Cette arme est en amélioration", 400);
+        
+        if (userWeapon.UserCard != null)
+            throw new AppException("Cette arme est équipée, déséquipez la avant !", 400);
+        
+        // up power of weapon
+        userWeapon.Power++;
+        
+        // remove upgrade point
+        if (fromUpgradePoint)
+            user.NbWeaponUpgradeAvailable--;
+        
+        // save user weapon
+        await _context.SaveChangesAsync();
+        
+        return userWeapon.ToResponse();
+    }
+
     #endregion
     
     #region Stats and notifications
@@ -574,7 +613,7 @@ public class UserService : IUserService
     
     #region helper methods
     
-    public async Task<List<ActionResponse>> ResponseToBottedAgent(User user)
+    public async Task ResponseToBottedAgent(User user)
     {
         if (user.Or >= 100)
             user.Or -= 100;

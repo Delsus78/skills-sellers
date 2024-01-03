@@ -38,6 +38,11 @@ public class UsersController : ControllerBase
     [HttpGet("{id}/weapons")]
     public IEnumerable<UserWeaponResponse> GetUserWeapons(int id)
         => _userService.GetUserWeapons(id);
+
+    [Authorize]
+    [HttpGet("{id}/weapons/{weaponId}")]
+    public UserWeaponResponse GetUserWeapons(int id, int weaponId)
+        => _userService.GetUserWeapon(id, weaponId);
     
     [Authorize]
     [HttpGet("{id}/stats")]

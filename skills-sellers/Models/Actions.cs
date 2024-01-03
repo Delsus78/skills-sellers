@@ -24,6 +24,7 @@ public class ActionRequest
     public IEnumerable<int> CardsIds { get; set; }
     
     public string? BatimentToUpgrade { get; set; }
+    public int? WeaponToUpgradeId { get; set; }
     public double? RepairChances { get; set; }
 }
 
@@ -69,11 +70,8 @@ public class ActionReparerResponse : ActionResponse
 
 public class ActionAmeliorerResponse : ActionResponse
 {
-    /// <summary>
-    /// The name of the batiment to upgrade
-    /// </summary>
-    [Required]
-    public string BatimentToUpgrade { get; set; }
+    public string? BatimentToUpgrade { get; set; }
+    public int? WeaponToUpgradeId { get; set; }
 }
 
 public class ActionMusclerResponse : ActionResponse

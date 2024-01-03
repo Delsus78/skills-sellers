@@ -36,6 +36,7 @@ public static class ActionsModelsExtensions
                 EndTime = actionAmeliorer.DueDate,
                 CreatedAt = actionAmeliorer.CreatedAt ?? DateTime.Now,
                 BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
+                WeaponToUpgradeId = actionAmeliorer.WeaponToUpgradeId,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
             ActionMuscler actionMuscler => new ActionMusclerResponse

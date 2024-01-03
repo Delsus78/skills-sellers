@@ -57,7 +57,20 @@ public class UserActionController : ControllerBase
     [Authorize]
     [HttpPost("cards/{cardId}/ameliorer")]
     public async Task<UserCardResponse> AmeliorerCard(int id, int cardId, CompetencesRequest competencesPointsToGive)
-        => await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+    {
+        var user = GetUserAuthenticated(id);
+        
+        var referer = Request.Headers["Referer"].ToString();
+        if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
+            await _userService.ResponseToBottedAgent(user);
+        
+        return await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+    }
+
+    [Authorize]
+    [HttpPost("weapons/{weaponId}/ameliorer")]
+    public async Task<UserWeaponResponse> AmeliorerWeapon(int id, int weaponId)
+        => await _userService.AmeliorerWeapon(GetUserAuthenticated(id), weaponId);
 
     [Authorize]
     [HttpPost("actions/decision")]
@@ -72,7 +85,7 @@ public class UserActionController : ControllerBase
         
         var referer = Request.Headers["Referer"].ToString();
         if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
-            return await _userService.ResponseToBottedAgent(user);
+            await _userService.ResponseToBottedAgent(user);
 
         return await _userService.CreateAction(user, model);
     }

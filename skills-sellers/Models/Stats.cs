@@ -8,6 +8,7 @@ public record StatsResponse(
     IDictionary<string, CustomTuple> TotalResourcesMined,
     CustomTuple TotalCardWithAStatMaxed,
     CustomTuple TotalBuildingsUpgraded,
+    CustomTuple TotalWeaponsUpgraded,
     CustomTuple TotalRocketLaunched,
     CustomTuple TotalMealCooked,
     CustomTuple TotalDoublonsEarned,
@@ -20,4 +21,4 @@ public record StatsResponse(
     int TotalCardsInBDD
 );
 
-public record CustomTuple(int Stat, int Rank);
+public record CustomTuple(string Title, int Stat, int Rank);

@@ -11,6 +11,7 @@ public class Stats
     public int TotalCreatiumMined { get; set; }
     public int TotalOrMined { get; set; }
     public int TotalBuildingsUpgraded { get; set; }
+    public int TotalWeaponsUpgraded { get; set; }
     public int TotalRocketLaunched { get; set; }
     public int TotalMealCooked { get; set; }
     public int TotalDoublonsEarned { get; set; }

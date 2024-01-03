@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using skills_sellers.Entities;
+using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
@@ -19,6 +20,7 @@ public interface IWeaponService
     Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId);
     
     (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons);
+    (int creatiumPrice, int intelPrice, int forcePrice) GetWeaponPrices(int actualPower, int numberOfWeapons, int numberOfCards);
 }
 public class WeaponService : IWeaponService
 {
@@ -111,6 +113,10 @@ public class WeaponService : IWeaponService
         if (userCard.Action != null)
             throw new AppException("Vous ne pouvez pas équiper une carte en action", 400);
         
+        // weapon in labo ?
+        if (userWeaponId != null && user.UserCards.Any(card => card.Action is ActionAmeliorer ameliorer && ameliorer.WeaponToUpgradeId == userWeaponId))
+            throw new AppException("Cette arme est en amélioration", 400);
+
         // get user weapon, if not found, desequipe weapon
         var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == userWeaponId);
         
@@ -138,5 +144,14 @@ public class WeaponService : IWeaponService
         var orPrice = (int)(1000 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 2));
         
         return (creatiumPrice, orPrice);
+    }
+
+    public (int creatiumPrice, int intelPrice, int forcePrice) GetWeaponPrices(int actualPower, int numberOfWeapons, int numberOfCards)
+    {
+        var creatiumPrice = (int)(150 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 4) * Math.Pow(1.3,actualPower));
+        var intelPrice = actualPower * 25;
+        var forcePrice = actualPower * 50;
+        
+        return (creatiumPrice, intelPrice, forcePrice);
     }
 }

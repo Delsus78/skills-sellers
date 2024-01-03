@@ -13,4 +13,5 @@ public record UserWeaponResponse(
     string Description, 
     int Power, 
     int? UserCardId,
+    string? UserCardName,
     WeaponAffinity Affinity);

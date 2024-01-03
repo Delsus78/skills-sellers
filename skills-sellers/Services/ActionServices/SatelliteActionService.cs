@@ -123,7 +123,7 @@ public class SatelliteActionService : IActionService
     {
         // get user linked to action
         var user = action.User;
-        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
+        context.Entry(user).Reference(u => u.UserBatimentData).Load();
         
         // actualise bdd and nb cuisine used today
         context.Actions.Remove(action);
