@@ -245,6 +245,7 @@ public class ExplorerActionService : IActionService
             // stats
             user.Creatium += creatiumWin;
             user.Or += orWin;
+            user.Score += 5;
             
             _statsService.OnCreatiumMined(user.Id, creatiumWin);
             _statsService.OnOrMined(user.Id, orWin);
@@ -395,8 +396,8 @@ public class ExplorerActionService : IActionService
 
     private void WeaponUpdateInhabitedPart(DataContext context, User user, ActionExplorer action)
     {
-        // 20% de chance que la planete soit habitée
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 20))
+        // 15% de chance que la planete soit habitée
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 100))
         { // non habitée
             // adding to registre as neutral
             var registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
@@ -481,7 +482,7 @@ public class ExplorerActionService : IActionService
                 action.PlanetName, 
                 userCard.ToResponse().Power);
             user.Registres.Add(registre);
-            user.Score += 50;
+            user.Score += 10;
             
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest

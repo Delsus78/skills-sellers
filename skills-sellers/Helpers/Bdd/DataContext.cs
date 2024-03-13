@@ -50,6 +50,10 @@ public class DataContext : DbContext
     // Weapons
     public DbSet<Weapon> Weapons { get; set; }
     public DbSet<UserWeapon> UserWeapons { get; set; }
+    
+    // Cosmetics
+    public DbSet<Cosmetic> Cosmetics { get; set; }
+    public DbSet<UserCosmetic> UserCosmetics { get; set; }
 
     // Registres
     public DbSet<Registre> Registres { get; set; }
@@ -64,6 +68,9 @@ public class DataContext : DbContext
     // Christmas special
     public DbSet<Christmas> Christmas { get; set; }
 
+    // Seasons
+    public DbSet<Season> Seasons { get; set; }
+    
     #endregion
 
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }

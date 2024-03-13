@@ -244,6 +244,9 @@ public class AmeliorerActionService : IActionService
         else 
             _statsService.OnWeaponsUpgraded(actionAmeliorer.User.Id);
         
+        // augment score
+        actionAmeliorer.User.Score += 100;
+        
         // remove action
         context.Actions.Remove(actionAmeliorer);
 
@@ -376,6 +379,7 @@ public class AmeliorerActionService : IActionService
         var hours = isBatUpgrade ? 12 * level - extraLevels : 16 * level;
         if (hours < 1) hours = 0;
         
+        //return DateTime.Now.AddHours(hours);
         return DateTime.Now.AddSeconds(hours);
     }
     

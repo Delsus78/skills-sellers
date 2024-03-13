@@ -48,7 +48,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id}/stats")]
     public StatsResponse GetUserStats(int id)
         => _userService.GetUserStats(id);
-    
+
     [Authorize]
     [HttpGet("{id}/batiments")]
     public UserBatimentResponse GetUserBatiments(int id)

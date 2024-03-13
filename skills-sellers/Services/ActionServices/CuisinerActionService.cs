@@ -121,7 +121,7 @@ public class CuisinerActionService : IActionService
     {
         // get user linked to action
         var user = action.User;
-        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
+        context.Entry(user).Reference(u => u.UserBatimentData).Load();
         
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday -= 1;
@@ -145,6 +145,7 @@ public class CuisinerActionService : IActionService
         // give nourriture
         var amount = userCard.Competences.Cuisine;
         user.Nourriture += amount;
+        user.Score += amount;
         
         // stats
         _statsService.OnMealCooked(user.Id);

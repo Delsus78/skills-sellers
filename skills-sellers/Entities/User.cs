@@ -16,6 +16,7 @@ public class User
     public List<UserWeapon> UserWeapons { get; } = new();
     public List<Notification> Notifications { get; } = new();
     public List<Registre> Registres { get; set; } = new();
+    public List<UserCosmetic> UserCosmetics { get; } = new();
     public int Score { get; set; }
     public int Creatium { get; set; }
     public int Or { get; set; }

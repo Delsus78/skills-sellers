@@ -27,7 +27,7 @@ public class ReparerActionService : IActionService
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
         // is Zeiss Machine Day
-        if (DateTime.Now.DayOfWeek != DayOfWeek.Friday)
+        if (DateTime.Now.DayOfWeek != DayOfWeek.Monday)
             return (false, "Ce n'est pas le jour de la machine de Zeiss !");
         
         if (_userBatimentsService.IsUserBatimentFull(user, "machineZeiss"))
@@ -180,7 +180,8 @@ public class ReparerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime()
     {
-        return DateTime.Now.AddHours(5);
+         //return DateTime.Now.AddHours(5);
+         return DateTime.Now.AddSeconds(10);
     }
     
     private double CalculateRepairChances(int totalIntel, int totalCards)

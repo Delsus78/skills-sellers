@@ -64,7 +64,7 @@ public class UserActionController : ControllerBase
         if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
             await _userService.ResponseToBottedAgent(user);
         
-        return await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+        return await _userService.AmeliorerCard(user, cardId, competencesPointsToGive);
     }
 
     [Authorize]
