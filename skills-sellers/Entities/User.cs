@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Entities.Speciales;
 
 namespace skills_sellers.Entities;
@@ -14,7 +15,9 @@ public class User
     public List<UserCardDoubled> UserCardsDoubled { get; } = new();
     public List<UserWeapon> UserWeapons { get; } = new();
     public List<Notification> Notifications { get; } = new();
-    
+    public List<Registre> Registres { get; set; } = new();
+    public List<UserCosmetic> UserCosmetics { get; } = new();
+    public int Score { get; set; }
     public int Creatium { get; set; }
     public int Or { get; set; }
     public int Nourriture { get; set; }
@@ -27,6 +30,7 @@ public class User
     public Achievement Achievement { get; set; }
     public UserBatimentData UserBatimentData { get; set; }
     public WordleGame WordleGame { get; set; }
+    public UserRegistreInfo UserRegistreInfo { get; set; }
     
     // specials
     public Christmas Christmas { get; set; }

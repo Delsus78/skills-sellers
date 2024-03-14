@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using skills_sellers.Entities.Actions;
 
 namespace skills_sellers.Models;
 
@@ -23,6 +24,7 @@ public class ActionRequest
     public IEnumerable<int> CardsIds { get; set; }
     
     public string? BatimentToUpgrade { get; set; }
+    public int? WeaponToUpgradeId { get; set; }
     public double? RepairChances { get; set; }
 }
 
@@ -56,6 +58,9 @@ public class ActionExplorerResponse : ActionResponse
 {
     public bool IsReturningToHome { get; set; }
     public string PlanetName { get; set; }
+    
+    public ExplorationDecision? Decision { get; set; }
+    public bool needDecision { get; set; }
 }
 
 public class ActionReparerResponse : ActionResponse
@@ -65,11 +70,8 @@ public class ActionReparerResponse : ActionResponse
 
 public class ActionAmeliorerResponse : ActionResponse
 {
-    /// <summary>
-    /// The name of the batiment to upgrade
-    /// </summary>
-    [Required]
-    public string BatimentToUpgrade { get; set; }
+    public string? BatimentToUpgrade { get; set; }
+    public int? WeaponToUpgradeId { get; set; }
 }
 
 public class ActionMusclerResponse : ActionResponse
@@ -89,3 +91,5 @@ public class ActionEstimationResponse : ActionResponse
     public Dictionary<string, string> Couts { get; set; } = new();
     public string? Error { get; set; }
 }
+
+public record ActionDecisionRequest(int ActionId, ExplorationDecision Decision);

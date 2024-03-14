@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
@@ -29,6 +30,7 @@ public interface IUserService
     Task<UserCardResponse?> OpenCard(User user);
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
+    Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true);
     UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotifications(User user, List<int> notificationIds);
@@ -41,8 +43,11 @@ public interface IUserService
     Task DeleteAction(User user, int actionId);
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
-    Task<List<ActionResponse>> ResponseToBottedAgent(User user);
+    Task ResponseToBottedAgent(User user);
     IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
+    UserWeaponResponse GetUserWeapon(int id, int weaponId);
+    Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
+    UserRegistreInfoResponse GetRegistreInfo(int id);
 }
 
 public class UserService : IUserService
@@ -367,6 +372,43 @@ public class UserService : IUserService
         return user.UserWeapons.Select(uc => uc.ToResponse());
     }
 
+    public UserWeaponResponse GetUserWeapon(int id, int weaponId)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserWeapons.FirstOrDefault(uc => uc.Id == weaponId)?.ToResponse() ?? throw new AppException("User weapon not found", 404);
+    }
+
+    public async Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true)
+    {
+        if (fromUpgradePoint && user.NbWeaponUpgradeAvailable <= 0)
+            throw new AppException("Vous n'avez plus d'amélioration d'arme disponible !", 400);
+        
+        // get user weapon
+        var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == weaponId);
+        if (userWeapon == null)
+            throw new AppException("User weapon not found", 404);
+        
+        // impossible if equiped or in upgrade
+        // weapon in labo ?
+        if (user.UserCards.Any(card => card.Action is ActionAmeliorer ameliorer && ameliorer.WeaponToUpgradeId == weaponId))
+            throw new AppException("Cette arme est en amélioration", 400);
+        
+        if (userWeapon.UserCard != null)
+            throw new AppException("Cette arme est équipée, déséquipez la avant !", 400);
+        
+        // up power of weapon
+        userWeapon.Power++;
+        
+        // remove upgrade point
+        if (fromUpgradePoint)
+            user.NbWeaponUpgradeAvailable--;
+        
+        // save user weapon
+        await _context.SaveChangesAsync();
+        
+        return userWeapon.ToResponse();
+    }
+
     #endregion
     
     #region Stats and notifications
@@ -417,14 +459,75 @@ public class UserService : IUserService
     public async Task<List<ActionResponse>> CreateAction(User user, ActionRequest model) 
         => await _actionTaskService.CreateNewActionAsync(user.Id, model);
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
-    {
-        return _actionTaskService.EstimateAction(user.Id, model);
-    }
-    
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model) 
+        => _actionTaskService.EstimateAction(user.Id, model);
+
     public async Task DeleteAction(User user, int actionId)
         => await _actionTaskService.DeleteActionAsync(user.Id, actionId);
 
+    
+    public Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model)
+    {
+        var action = _context.Actions.FirstOrDefault(a => a.Id == model.ActionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+
+        if (action is not ActionExplorer actionExplorer)
+            throw new AppException("Action is not an explorer action", 400);
+        
+        if (action.UserId != user.Id)
+            throw new AppException("Action is not yours", 400);
+
+        if (actionExplorer.Decision != null)
+            throw new AppException("Action already decided", 400);
+
+        // update action
+        actionExplorer.Decision = model.Decision;
+        _context.Actions.Update(actionExplorer);
+
+        // save changes
+        _context.SaveChanges();
+        
+
+        // end action if already finished
+        if (!_actionTaskService.IsActionRunning(actionExplorer.Id))
+            _actionTaskService.StartNewTaskForAction(actionExplorer);
+        
+        return Task.FromResult(actionExplorer.ToResponse());
+    }
+
+    public UserRegistreInfoResponse GetRegistreInfo(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userRegistreInfo = _context.UserRegistreInfos.FirstOrDefault(ri => ri.UserId == user.Id);
+        if (userRegistreInfo == null) // create registre info if not exist
+        {
+            userRegistreInfo = new UserRegistreInfo
+            {
+                User = user,
+                HostileAttackWon = 0,
+                HostileAttackLost = 0
+            };
+            _context.UserRegistreInfos.Add(userRegistreInfo);
+            _context.SaveChanges();
+        }
+        
+        // get registres of user
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Load();
+        
+        // load relatedPlayers of registrePlayer
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Query()
+            .OfType<RegistrePlayer>()
+            .Include(rp => rp.RelatedPlayer)
+            .Load();
+        
+        return userRegistreInfo.ToResponse(user.Registres);
+    }
+    
     #endregion
     
     #region BATIMENTS
@@ -510,7 +613,7 @@ public class UserService : IUserService
     
     #region helper methods
     
-    public async Task<List<ActionResponse>> ResponseToBottedAgent(User user)
+    public async Task ResponseToBottedAgent(User user)
     {
         if (user.Or >= 100)
             user.Or -= 100;

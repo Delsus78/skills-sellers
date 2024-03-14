@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Entities.Speciales;
 using Action = skills_sellers.Entities.Action;
 
@@ -49,8 +50,17 @@ public class DataContext : DbContext
     // Weapons
     public DbSet<Weapon> Weapons { get; set; }
     public DbSet<UserWeapon> UserWeapons { get; set; }
+    
+    // Cosmetics
+    public DbSet<Cosmetic> Cosmetics { get; set; }
+    public DbSet<UserCosmetic> UserCosmetics { get; set; }
 
+    // Registres
+    public DbSet<Registre> Registres { get; set; }
+    public DbSet<UserRegistreInfo> UserRegistreInfos { get; set; }
 
+    // Fights
+    public DbSet<FightReport> FightReports { get; set; }
     #endregion
 
     #region SPECIALS DBSETS
@@ -58,6 +68,9 @@ public class DataContext : DbContext
     // Christmas special
     public DbSet<Christmas> Christmas { get; set; }
 
+    // Seasons
+    public DbSet<Season> Seasons { get; set; }
+    
     #endregion
 
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
@@ -72,10 +85,20 @@ public class DataContext : DbContext
          .HasValue<ActionMuscler>("Muscler")
          .HasValue<ActionReparer>("Reparer")
          .HasValue<ActionSatellite>("Satellite");
+
+        modelBuilder.Entity<Registre>()
+            .HasDiscriminator<RegistreType>("Type")
+            .HasValue<RegistrePlayer>(RegistreType.Player)
+            .HasValue<RegistreHostile>(RegistreType.Hostile)
+            .HasValue<RegistreNeutral>(RegistreType.Neutral)
+            .HasValue<RegistreFriendly>(RegistreType.Friendly);
         
         // adding user id to action
         modelBuilder.Entity<Action>()
             .HasOne(a => a.User);
+        
+        modelBuilder.Entity<Registre>()
+            .HasOne(r => r.User);
 
         modelBuilder.Entity<UserCard>()
          .HasKey(uc => new { uc.UserId, uc.CardId });

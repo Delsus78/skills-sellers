@@ -30,6 +30,7 @@ public record UserResponse(
     int Creatium, 
     int Or, 
     int Nourriture, 
+    int Score,
     int NbCardOpeningAvailable, 
     List<CustomTupleDoublon> CardsDoublons,
     int NbWeaponOpeningAvailable,

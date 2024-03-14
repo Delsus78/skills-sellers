@@ -25,7 +25,9 @@ public static class ActionsModelsExtensions
                 CreatedAt = actionExplorer.CreatedAt ?? DateTime.Now,
                 Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 IsReturningToHome = actionExplorer.IsReturningToHome,
-                PlanetName = actionExplorer.PlanetName
+                PlanetName = actionExplorer.PlanetName,
+                Decision = actionExplorer.Decision,
+                needDecision = actionExplorer.needDecision
             },
             ActionAmeliorer actionAmeliorer => new ActionAmeliorerResponse
             {
@@ -34,6 +36,7 @@ public static class ActionsModelsExtensions
                 EndTime = actionAmeliorer.DueDate,
                 CreatedAt = actionAmeliorer.CreatedAt ?? DateTime.Now,
                 BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
+                WeaponToUpgradeId = actionAmeliorer.WeaponToUpgradeId,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
             ActionMuscler actionMuscler => new ActionMusclerResponse

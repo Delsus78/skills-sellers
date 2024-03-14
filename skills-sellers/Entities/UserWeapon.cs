@@ -8,7 +8,7 @@ public class UserWeapon
     public Weapon Weapon { get; set; }
     public int WeaponId { get; set; }
     
-    public UserCard UserCard { get; set; }
+    public UserCard? UserCard { get; set; }
     
     public int Power { get; set; }
     public WeaponAffinity Affinity { get; set; }

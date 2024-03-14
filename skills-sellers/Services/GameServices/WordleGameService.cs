@@ -144,6 +144,7 @@ public class WordleGameService : IGameService
         {
             wordleData.Win = true;
             user.NbCardOpeningAvailable++;
+            user.Score += 20;
             
             // stats
             _statsService.OnWordleWin(user.Id);

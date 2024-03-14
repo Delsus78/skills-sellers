@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using skills_sellers.Entities;
+using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
@@ -16,9 +17,10 @@ public interface IWeaponService
     Weapon GetWeaponEntity(Expression<Func<Weapon, bool>> predicate);
     Weapon GetRandomWeapon();
     Task<UserWeaponResponse?> OpenWeapon(User user);
-    Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int userWeaponId);
+    Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId);
     
-    (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards);
+    (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons);
+    (int creatiumPrice, int intelPrice, int forcePrice) GetWeaponPrices(int actualPower, int numberOfWeapons, int numberOfCards);
 }
 public class WeaponService : IWeaponService
 {
@@ -100,7 +102,7 @@ public class WeaponService : IWeaponService
         return userWeapon.ToResponse();
     }
 
-    public async Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int userWeaponId)
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(User user, int cardId, int? userWeaponId)
     {
         // get user card
         var userCard = user.UserCards.FirstOrDefault(uc => uc.CardId == cardId);
@@ -108,6 +110,13 @@ public class WeaponService : IWeaponService
         if (userCard == null)
             throw new AppException("Carte non trouvée", 404);
         
+        if (userCard.Action != null)
+            throw new AppException("Vous ne pouvez pas équiper une carte en action", 400);
+        
+        // weapon in labo ?
+        if (userWeaponId != null && user.UserCards.Any(card => card.Action is ActionAmeliorer ameliorer && ameliorer.WeaponToUpgradeId == userWeaponId))
+            throw new AppException("Cette arme est en amélioration", 400);
+
         // get user weapon, if not found, desequipe weapon
         var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == userWeaponId);
         
@@ -129,11 +138,20 @@ public class WeaponService : IWeaponService
         return _context.Weapons.Skip(randomIndex).First();
     }
 
-    public (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards)
+    public (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons)
     {
-        var creatiumPrice = (int)(5000 * Math.Pow(10, numberOfCards / 100.0));
-        var orPrice = (int)(1000 * Math.Pow(10, numberOfCards / 100.0));
+        var creatiumPrice = (int)(5000 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 4));
+        var orPrice = (int)(1000 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 2));
         
         return (creatiumPrice, orPrice);
+    }
+
+    public (int creatiumPrice, int intelPrice, int forcePrice) GetWeaponPrices(int actualPower, int numberOfWeapons, int numberOfCards)
+    {
+        var creatiumPrice = (int)(150 * (Math.Pow(10, numberOfCards / 100.0) + numberOfWeapons * 4) * Math.Pow(1.3,actualPower));
+        var intelPrice = actualPower * 25;
+        var forcePrice = actualPower * 50;
+        
+        return (creatiumPrice, intelPrice, forcePrice);
     }
 }

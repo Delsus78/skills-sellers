@@ -28,7 +28,8 @@ public class MachineRepairService : IGameService
     public GamesResponse GetGameOfTheDay(int userId)
     {
         var nbCards = _context.UserCards.Count(uc => uc.UserId == userId);
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(nbCards);
+        var nbWeapons = _context.UserWeapons.Count(uw => uw.UserId == userId);
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(nbCards, nbWeapons);
         return new GamesMachineResponse
         {
             Name = "MACHINE",

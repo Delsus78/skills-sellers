@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
@@ -155,7 +156,6 @@ public class ExplorerActionService : IActionService
         };
     }
 
-
     public Task EndAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
         if (action is not ActionExplorer actionExplorer)
@@ -169,77 +169,32 @@ public class ExplorerActionService : IActionService
         }
         
         var user = action.User;
-        
+        string notificationMessage;
         var userCard = action.UserCards.First();
 
-        if (actionExplorer.IsReturningToHome)
+        if (actionExplorer is { needDecision: true, Decision: null })
         {
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
-                "Explorer",
-                $"Votre carte {userCard.Card.Name} est revenue de l'exploration !"
+                "Exploration bloquée",
+                "Voila un moment que votre carte est bloquée sur une planète habitée ! \n" +
+                "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir !"
             ), context);
+            return Task.CompletedTask;
+        }
 
-            // remove action if returning
-            context.Actions.Remove(action);
-            
-            // stats
-            _statsService.OnRocketLaunched(user.Id);
-        } 
-        else
+        if (!actionExplorer.IsReturningToHome)
         {
-            #region REWARDS
-            
-            // give resources and turn on the cardOpeningAvailable flag
-            var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
-            var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
-            user.Creatium += creatiumWin;
-            user.Or += orWin;
-
-            // stats
-            _statsService.OnCreatiumMined(user.Id, creatiumWin);
-            _statsService.OnOrMined(user.Id, orWin);
-            
             // notify user
-            _notificationService.SendNotificationToUser(user, new NotificationRequest
-            (
-                "Explorer",
-                $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !"
-            ), context);
-
-            // chance to get a card based on charisme
-            if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
-            {
-                // notify user
-                _notificationService.SendNotificationToUser(user, new NotificationRequest
-                (
-                    "Explorer",
-                    $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !"
-                ), context);
-
-                user.NbCardOpeningAvailable++;
-            }
-            else // stats
-                _statsService.OnCardFailedCauseOfCharisme(user.Id);
-
-            // // chance to up exploration competence
-            // - 20% de chance de up
-            if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
-            {
-                userCard.Competences.Exploration += 1;
-                // notify user
-                _notificationService.SendNotificationToUser(user, new NotificationRequest
-                (
-                    "Compétence exploration",
-                    $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en exploration !"
-                ), context);
-            }
+            notificationMessage = $"Votre carte {userCard.Card.Name} est arrivée sur la planète {actionExplorer.PlanetName} !";
             
+            // spacio registre update : define if action gonna need a decision or not
+            WeaponUpdateInhabitedPart(context, user, actionExplorer);
+            if (!actionExplorer.needDecision) notificationMessage += "\r\n" + "Cette planète n'est pas habitée !";
+
             // Weapons Update
             WeaponUpdateExplorationPart(context, userCard, user);
-
-            #endregion
             
             // update action to returning
             actionExplorer.IsReturningToHome = true;
@@ -248,21 +203,110 @@ public class ExplorerActionService : IActionService
             // start timer for returning
             _ = _actionTaskService.StartNewTaskForAction(action);
         }
+        else
+        {
+            // notify user
+            notificationMessage = $"Votre carte {userCard.Card.Name} est revenue de l'exploration !\r\n";
 
+            #region REWARDS
+            
+            // calculate loot possible
+            var creatiumWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "creatium");
+            var orWin = _resourcesService.GetRandomValueForForceStat(userCard.Competences.Force, "or");
+
+            // if planet is inhabited, user can choose to pillage or ally
+            switch (actionExplorer.Decision)
+            {
+                case ExplorationDecision.Pillage:
+                    // ressources x4 and +1 card
+                    creatiumWin *= 4;
+                    orWin *= 4;
+                    WeaponUpdatePillagePart(context, user, actionExplorer);
+                    notificationMessage += $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !\r\n";
+                    break;
+                case ExplorationDecision.Ally:
+                    
+                    var commerceDone = WeaponUpdateAllyPart(context, user, actionExplorer, userCard);
+                    if (commerceDone) // ressources x0
+                    {
+                        creatiumWin = 0; orWin = 0;
+                    }
+                    else // ressources x0.5
+                    {
+                        creatiumWin /= 2; orWin /= 2;
+                    }
+                    break;
+                case null:
+                    break;
+                default:
+                    throw new AppException("Error when applying decision", 500);
+            }
+
+            // stats
+            user.Creatium += creatiumWin;
+            user.Or += orWin;
+            user.Score += 5;
+            
+            _statsService.OnCreatiumMined(user.Id, creatiumWin);
+            _statsService.OnOrMined(user.Id, orWin);
+            
+            // notify user
+            notificationMessage += $"Votre carte {userCard.Card.Name} a gagné {creatiumWin} créatium et {orWin} or !\r\n";
+
+            // chance to get a card based on charisme
+            if (Randomizer.RandomPourcentageUp(userCard.Competences.Charisme * 10))
+            {
+                // notify user
+                notificationMessage += $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !\r\n";
+
+                user.NbCardOpeningAvailable++;
+            }
+            else // stats
+                _statsService.OnCardFailedCauseOfCharisme(user.Id);
+
+            // chance to up exploration competence
+            if (Randomizer.RandomPourcentageUp() && userCard.Competences.Exploration < 10)
+            {
+                userCard.Competences.Exploration += 1;
+                // notify user
+                notificationMessage += $"Votre carte {userCard.Card.Name} a gagné 1 point en exploration !\r\n";
+            }
+
+            #endregion
+            
+            // remove action if returning
+            context.Actions.Remove(action);
+            
+            // stats
+            _statsService.OnRocketLaunched(user.Id);
+        }
+
+        // notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Exploration",
+            notificationMessage
+        ), context);
+        
         return context.SaveChangesAsync();
     }
 
     private void WeaponUpdateExplorationPart(DataContext context, UserCard userCard, User user)
     {
-        if (!TryToEncounterAnOtherCardOnExploration(userCard, context, out var opponentCard, out var result)) return;
-        var notificationMessage = "";
-        var opponentNotificationMessage = "";
+        var (fightAppend, fightReport) = TryToEncounterAnOtherCardOnExploration(userCard, context, out var opponentCard, out var result);
+        
+        if (!fightAppend) return;
+        string notificationMessage;
+        string opponentNotificationMessage;
 
         switch (result)
         {
             case 1: // user win
                 
                 var stringReward = WarHelpers.GetRandomWarLoot(user);
+                
+                // score 
+                user.Score += 50;
 
                 notificationMessage =
                     $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a gagné !\n" +
@@ -276,6 +320,9 @@ public class ExplorerActionService : IActionService
             case -1: // opponent win
                 var opponent = opponentCard!.User;
                 var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, true);
+                
+                // score
+                opponent.Score += 10;
                 
                 notificationMessage =
                     $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a perdu !\n" +
@@ -306,12 +353,32 @@ public class ExplorerActionService : IActionService
 
         if (userCard.UserWeapon != null)
             notificationMessage +=
-                $"Votre carte utilise son arme {userCard.UserWeapon.Weapon.Name} avec {userCard.UserWeapon.Power} avec l'affinité {userCard.UserWeapon.Affinity}!\n";
+                $"Votre carte utilise son arme {userCard.UserWeapon.Weapon.Name} avec {userCard.UserWeapon.Power} de puissance et d'affinité {userCard.UserWeapon.Affinity}!\n";
 
         if (opponentCard?.UserWeapon != null)
             notificationMessage +=
-                $"La carte adverse utilise son arme {opponentCard.UserWeapon.Weapon.Name} avec {opponentCard.UserWeapon.Power} avec l'affinité {opponentCard.UserWeapon.Affinity}!\n";
+                $"La carte adverse utilise son arme {opponentCard.UserWeapon.Weapon.Name} avec {opponentCard.UserWeapon.Power} de puissance et d'affinité {opponentCard.UserWeapon.Affinity}!\n";
 
+        notificationMessage += "Plus d'informations dans le registre de combat!";
+        
+        // adding to registre if not already in
+        context.Entry(user).Collection(u => u.Registres).Load();
+        if (!user.Registres
+            .Any(r => 
+                r.Type == RegistreType.Player 
+                && ((RegistrePlayer) r).RelatedPlayerId == opponentCard!.UserId))
+        {
+            var registreOfUser = WarHelpers.GeneratePlayerRegistre(user, opponentCard!.User, context.Cards);
+            var registreOfOpponent = WarHelpers.GeneratePlayerRegistre(opponentCard.User, user, context.Cards);
+        
+            context.Registres.Add(registreOfUser);
+            context.Registres.Add(registreOfOpponent);
+        }
+       
+        
+        // adding fightReport
+        context.FightReports.Add(fightReport!);
+        
         // notify user
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
@@ -327,6 +394,109 @@ public class ExplorerActionService : IActionService
         ), context);
     }
 
+    private void WeaponUpdateInhabitedPart(DataContext context, User user, ActionExplorer action)
+    {
+        // 15% de chance que la planete soit habitée
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 100))
+        { // non habitée
+            // adding to registre as neutral
+            var registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
+            user.Registres.Add(registre);
+            return;
+        } 
+        
+        // habitée
+        action.needDecision = true;
+            
+        // notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Explorer - Diplomatie",
+            "Votre carte a rencontré une planète habitée ! Elle ne peut pas revenir pour le moment ! \n" +
+            "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir ! \n"
+        ), context);
+    }
+
+    private void WeaponUpdatePillagePart(DataContext context, User user, ActionExplorer action)
+    {
+        user.NbCardOpeningAvailable++;
+        Registre registre;
+        
+        // 50% de chance que la planète deviennent hostile
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 60))
+        {
+            // add registre as Neutral
+            registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
+            user.Registres.Add(registre);
+            user.Score += 150;
+
+            return; // non hostile
+        }
+        
+        // hostile
+        context.Entry(user).Collection(u => u.Registres).Load();
+        context.Entry(user).Reference(u => u.UserBatimentData).Load();
+        
+        registre = WarHelpers.GenerateHostileRegistre(user, action.PlanetName);
+        
+        user.Registres.Add(registre);
+        user.Score += 100;
+        
+        // notify user
+        _notificationService.SendNotificationToUser(user, new NotificationRequest
+        (
+            "Explorer - Combat",
+            "Votre carte a rencontré une planète hostile !\n" +
+            $"La planète {action.PlanetName} est désormais dans votre registre ! \n"
+        ), context);
+        
+    }
+
+    private bool WeaponUpdateAllyPart(DataContext context, User user, ActionExplorer action, UserCard userCard)
+    {
+        Registre registre;
+        
+        // 10 % de créer une route commerciale
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 10)) // non
+        {
+
+            // add registre as Neutral
+            registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
+            user.Registres.Add(registre);
+            
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Alliance - Echec",
+                "Votre carte a rencontré une planète amicale,\n" +
+                "mais vous n'avez pas réussi à créer une route commerciale !\n" +
+                $"La planète {action.PlanetName} est désormais dans votre registre !\n"
+            ), context);
+            return false;
+        }
+        else // oui
+        {
+            // add registre as Friendly
+            registre = WarHelpers.GenerateFriendlyRegistre(
+                user, 
+                action.PlanetName, 
+                userCard.ToResponse().Power);
+            user.Registres.Add(registre);
+            user.Score += 10;
+            
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Alliance - Succès",
+                "Votre carte a rencontré une planète amicale,\n" +
+                $"La planète {action.PlanetName} est désormais dans votre registre !\n" +
+                $"Vous avez désormais une route commerciale avec {action.PlanetName} !\n" +
+                "pour plus d'information, consultez votre registre !\n"
+            ), context);
+            return true;
+        }
+    }
+    
     public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
     {
         // get user linked to action
@@ -350,40 +520,55 @@ public class ExplorerActionService : IActionService
     private DateTime CalculateActionEndTime(int exploLevel, bool returning = false)
     {
         // l’exploration prendra 5h30 - le niveau x 30 minutes 
-        //return DateTime.Now.AddSeconds(10);
-        return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
+        return DateTime.Now.AddSeconds(10);
+        //return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
     }
     
     // Weapons Update
-    private bool TryToEncounterAnOtherCardOnExploration(UserCard userCard, DataContext context, out UserCard? randomCard, out int result)
+    private (bool result, FightReport? report) TryToEncounterAnOtherCardOnExploration(UserCard userCard, DataContext context, out UserCard? randomCard, out int result)
     {
-        randomCard = null;
-        result = 0;
-        
-        // 10% de chance de rencontrer une autre carte
-        if (!Randomizer.RandomPourcentageUp(10))
-            return false;
-        
-        // get all cards in exploration (except the current one and all user's cards)
-        var cardsInExploration = context.UserCards
-            .Where(uc => uc.Action is ActionExplorer)
-            .Where(uc => uc.UserId != userCard.UserId)
-            .Include(uc => uc.Competences)
-            .Include(uc => uc.UserWeapon)
-            .ThenInclude(uw => uw.Weapon)
-            .Include(uc => uc.Card)
-            .Include(uc => uc.User)
-            .ToList();
-        
-        // get random card
-        randomCard = cardsInExploration[Randomizer.RandomInt(0, cardsInExploration.Count - 1)];
-        
-        // fight
-        var fightResult = WarHelpers.Fight(userCard, randomCard);
-        
-        // if draw, no one win
-        result = fightResult.result;
+        try
+        {
+            randomCard = null;
+            result = 0;
+            
+            // 10% de chance de rencontrer une autre carte
+            if (!Randomizer.RandomPourcentageUp(100))
+                return (false, null);
+            
+            // get all cards in exploration (except the current one and all user's cards)
+            var cardsInExploration = context.UserCards
+                .Where(uc => uc.Action is ActionExplorer)
+                .Where(uc => uc.UserId != userCard.UserId)
+                .Where(uc => ((ActionExplorer)uc.Action!).IsReturningToHome == false)
+                .Include(uc => uc.Competences)
+                .Include(uc => uc.UserWeapon)
+                .ThenInclude(uw => uw.Weapon)
+                .Include(uc => uc.Card)
+                .Include(uc => uc.User)
+                .ToList();
 
-        return true;
+            if (cardsInExploration.Count == 0)
+                return (false, null);
+            
+            // get random card
+            randomCard = cardsInExploration[Randomizer.RandomInt(0, cardsInExploration.Count)];
+            
+            // fight
+            var fightResult = WarHelpers.Fight(userCard, randomCard);
+            
+            // get description
+            var fightReport = WarHelpers.GetFightDescription(userCard, randomCard);
+            
+            // if draw, no one win
+            result = fightResult.result;
+
+            return (true, fightReport);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

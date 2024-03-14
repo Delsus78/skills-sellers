@@ -51,13 +51,31 @@ public class UserActionController : ControllerBase
     
     [Authorize]
     [HttpPost("cards/{cardId}/applyweapon/{userWeaponId}")]
-    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int userWeaponId)
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int? userWeaponId)
         => await _weaponService.ApplyWeaponToUserCard(GetUserAuthenticated(id), cardId, userWeaponId);
     
     [Authorize]
     [HttpPost("cards/{cardId}/ameliorer")]
     public async Task<UserCardResponse> AmeliorerCard(int id, int cardId, CompetencesRequest competencesPointsToGive)
-        => await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+    {
+        var user = GetUserAuthenticated(id);
+        
+        var referer = Request.Headers["Referer"].ToString();
+        if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
+            await _userService.ResponseToBottedAgent(user);
+        
+        return await _userService.AmeliorerCard(user, cardId, competencesPointsToGive);
+    }
+
+    [Authorize]
+    [HttpPost("weapons/{weaponId}/ameliorer")]
+    public async Task<UserWeaponResponse> AmeliorerWeapon(int id, int weaponId)
+        => await _userService.AmeliorerWeapon(GetUserAuthenticated(id), weaponId);
+
+    [Authorize]
+    [HttpPost("actions/decision")]
+    public async Task<ActionResponse> PostDecisionForAction(int id, ActionDecisionRequest model) 
+        => await _userService.DecideForAction(GetUserAuthenticated(id), model);
 
     [Authorize]
     [HttpPost("actions")]
@@ -67,7 +85,7 @@ public class UserActionController : ControllerBase
         
         var referer = Request.Headers["Referer"].ToString();
         if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
-            return await _userService.ResponseToBottedAgent(user);
+            await _userService.ResponseToBottedAgent(user);
 
         return await _userService.CreateAction(user, model);
     }

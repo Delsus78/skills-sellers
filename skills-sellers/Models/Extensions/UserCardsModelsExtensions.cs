@@ -18,7 +18,7 @@ public static class UserCardsModelsExtensions
             userCard.Card.Description, 
             userCard.Card.Rarity, 
             userCard.Competences.ToResponse(), 
-            userCard.Competences.GetPowerWithoutWeapon() + userCard.UserWeapon?.Power ?? 0, 
+            userCard.Competences.GetPowerWithoutWeapon() + (userCard.UserWeapon?.Power ?? 0), 
             userCard.Action?.ToResponse(), 
             userCard.UserWeapon?.ToResponse());
 }

@@ -18,6 +18,7 @@ public interface IActionTaskService
     Task StopAllActionsAsync();
     Task DeleteActionAsync(int userId, int actionId);
     ActionEstimationResponse EstimateAction(int userId, ActionRequest model);
+    public bool IsActionRunning(int actionId);
 }
 public class ActionTaskService : IActionTaskService
 {
@@ -29,6 +30,8 @@ public class ActionTaskService : IActionTaskService
         _serviceProvider = serviceProvider;
     }
 
+    public bool IsActionRunning(int actionId) => TaskCancellations.ContainsKey(actionId);
+    
     public async Task<List<ActionResponse>> CreateNewActionAsync(int userId, ActionRequest model)
     {
         using var scope = _serviceProvider.CreateScope();
@@ -196,6 +199,9 @@ public class ActionTaskService : IActionTaskService
             .ThenInclude(uc => uc.Card)
             .Include(a => a.UserCards)
             .ThenInclude(uc => uc.Competences)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.UserWeapon)
+            .ThenInclude(uw => uw!.Weapon)
             .FirstOrDefaultAsync();
 
         if (actionEntity == null)
