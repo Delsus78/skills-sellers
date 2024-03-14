@@ -10,5 +10,5 @@ public class Season
     public TimeSpan Duration { get; set; }
     public DateTime? EndedDate { get; set; }
     public int? WinnerId { get; set; }
-    public string? RawJsonPlayerData { get; set; }
+    public string? Informations { get; set; }
 }

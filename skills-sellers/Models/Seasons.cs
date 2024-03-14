@@ -7,6 +7,6 @@ public record SeasonResponse(
     DateTime? EndedDate, 
     string? Winner, 
     int? WinnerId, 
-    string? RawJsonPlayerData);
+    string? Informations);
     
 public record SeasonRequest(TimeSpan Duration);

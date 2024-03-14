@@ -1,10 +1,14 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
 using skills_sellers.Models.Extensions;
+using Formatting = System.Xml.Formatting;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace skills_sellers.Services;
 
@@ -50,16 +54,15 @@ public class SeasonService : ISeasonService
         }
 
         season.EndedDate = DateTime.Now;
+        PrintAndSaveAllPlayersStatsIfSeasonIsOver(season);
         
-        season.RawJsonPlayerData = PrintAndSaveAllPlayersStatsIfSeasonIsOver(season);
-        
-        var winner = _context.Users.OrderBy(u => u.Score).First();
+        var winner = _context.Users.OrderByDescending(u => u.Score).First();
         
         season.WinnerId = winner.Id;
 
         _notificationService.SendNotificationToAll(
-            new NotificationRequest("FIN DE LA SAISON " + season.Id, 
-                "La saison est terminée, le gagnant est " + winner.Pseudo + "avec un score de "+ winner.Score +" !"), _context);
+            new NotificationRequest("[SPECIAL] FIN DE LA SAISON " + season.Id, 
+                "La saison est terminée, le gagnant est " + winner.Pseudo + " avec un score de "+ winner.Score +" !"), _context);
 
         _context.SaveChanges();
         
@@ -86,7 +89,7 @@ public class SeasonService : ISeasonService
         return season.ToResponse();
     }
 
-    private string PrintAndSaveAllPlayersStatsIfSeasonIsOver(Season season)
+    private void PrintAndSaveAllPlayersStatsIfSeasonIsOver(Season season)
     {
         // GET ALL DATA 
         var allPlayersData = _context.Users
@@ -95,6 +98,7 @@ public class SeasonService : ISeasonService
             .Include(u => u.Achievement)
             .Include(u => u.UserBatimentData)
             .Include(u => u.UserCards)
+            .ThenInclude(uc => uc.Competences)
             .Include(u => u.UserWeapons)
             .Include(u => u.UserCardsDoubled)
             .Include(u => u.UserCosmetics)
@@ -102,10 +106,11 @@ public class SeasonService : ISeasonService
             .ToList();
         
         // SAVE ALL DATA
-        var json = JsonSerializer.Serialize(allPlayersData);
+        var json = JsonConvert.SerializeObject(allPlayersData, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings 
+        { 
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        });
         
-        File.WriteAllText($"./seasons/season_{season.Id}.json", json);
-
-        return json;
+        File.WriteAllText($"./season_{season.Id}.json", json);
     }
 }

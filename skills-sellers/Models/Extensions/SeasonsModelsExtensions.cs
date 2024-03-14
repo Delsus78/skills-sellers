@@ -13,6 +13,6 @@ public static class SeasonsModelsExtensions
             season.EndedDate,
             winner?.Pseudo,
             winner?.Id,
-            season.RawJsonPlayerData);
+            season.Informations);
     }
 }
