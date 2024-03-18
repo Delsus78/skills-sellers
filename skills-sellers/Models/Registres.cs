@@ -1,3 +1,4 @@
+using skills_sellers.Entities;
 using skills_sellers.Entities.Registres;
 
 namespace skills_sellers.Models;
@@ -10,6 +11,7 @@ public record RegistreResponse(
     RegistreType Type,
     int? CardPower,
     int? CardWeaponPower,
+    WeaponAffinity? Affinity,
     string? ResourceOffer,
     string? ResourceDemand,
     int? ResourceOfferAmount,

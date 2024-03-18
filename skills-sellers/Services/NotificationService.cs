@@ -11,6 +11,7 @@ namespace skills_sellers.Services;
 public interface INotificationService
 {
     Task SendNotificationToUser(User user, NotificationRequest notification, DataContext context);
+    Task SendWarNotificationToUser(User user, NotificationRequest notification, DataContext context);
     Task SendNotificationToAll(NotificationRequest notification, DataContext context);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotifications(User user, List<int> notificationIds);
@@ -41,7 +42,22 @@ public class NotificationService : INotificationService
         // log
         Console.Out.WriteLine($"[NOTIFICATION] {user.Id}: {notificationEntity.Title} | {notificationEntity.Message} | {notificationEntity.CreatedAt}");
         
-        await _hubContext.Clients.Group(user.Id.ToString()).SendAsync("ReceiveNotification", notifResulted.ToResponse());
+        await _hubContext.Clients.Group(user.Id.ToString()).SendAsync("ReceiveNotification", notifResulted.ToResponse(notification.Type, notification.RelatedId));
+    }
+    
+    public async Task SendWarNotificationToUser(User user, NotificationRequest notification, DataContext context)
+    {
+        var notificationEntity = notification.CreateNotification();
+        
+        notificationEntity.User = user;
+        
+        // save notification in database
+        var notifResulted = context.Notifications.Add(notificationEntity).Entity;
+        
+        // log
+        Console.Out.WriteLine($"[WAR NOTIFICATION] {user.Id}: {notificationEntity.Title} | {notificationEntity.Message} | {notificationEntity.CreatedAt}");
+        
+        await _hubContext.Clients.Group(user.Id.ToString()).SendAsync("WarNotification", notifResulted.ToResponse(notification.Type, notification.RelatedId));
     }
     
     public async Task SendNotificationToAll(NotificationRequest notification, DataContext context)

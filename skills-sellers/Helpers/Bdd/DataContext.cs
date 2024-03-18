@@ -34,7 +34,8 @@ public class DataContext : DbContext
     
     // Daily task log
     public DbSet<DailyTaskLog> DailyTaskLog { get; set; }
-    
+    public DbSet<HostileRegistreAttacksLog> HostileRegistreAttacksLogs { get; set; }
+
     // Wordle game
     public DbSet<WordleGame> WordleGames { get; set; }
 
@@ -61,6 +62,7 @@ public class DataContext : DbContext
 
     // Fights
     public DbSet<FightReport> FightReports { get; set; }
+    public DbSet<War> Wars { get; set; }
     #endregion
 
     #region SPECIALS DBSETS
@@ -84,7 +86,8 @@ public class DataContext : DbContext
          .HasValue<ActionAmeliorer>("Ameliorer")
          .HasValue<ActionMuscler>("Muscler")
          .HasValue<ActionReparer>("Reparer")
-         .HasValue<ActionSatellite>("Satellite");
+         .HasValue<ActionSatellite>("Satellite")
+         .HasValue<ActionGuerre>("Guerre");
 
         modelBuilder.Entity<Registre>()
             .HasDiscriminator<RegistreType>("Type")

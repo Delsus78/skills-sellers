@@ -51,6 +51,7 @@ services.AddScoped<IWeaponService, WeaponService>();
 services.AddScoped<ICosmeticService, CosmeticService>();
 services.AddScoped<IRegistreService, RegistreService>();
 services.AddScoped<ISeasonService, SeasonService>();
+services.AddScoped<IWarService, WarService>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddSingleton<IStatsService, StatsService>();
 services.AddScoped<IAchievementsService, AchievementsService>();
@@ -68,6 +69,7 @@ services.AddScoped<CuisinerActionService>();
 services.AddScoped<MusclerActionService>();
 services.AddScoped<ReparerActionService>();
 services.AddScoped<SatelliteActionService>();
+services.AddScoped<WarActionService>();
 
 // add games services
 services.AddScoped<GamesService>();
@@ -80,11 +82,13 @@ services.AddScoped<IChristmasService, ChristmasService>();
 
 // add daily task service
 services.AddScoped<IDailyTaskService, DailyTaskService>();
+services.AddScoped<IHostileRegistreAttackService, HostileRegistreAttackService>();
 
 // hosted services
 services.AddHostedService<HostedStatsService>();
 services.AddHostedService<HostedTasksService>();
 services.AddHostedService<DailyTaskHostedService>();
+services.AddHostedService<HostileRegistreHostedService>();
 
 // DbContext
 services.AddDbContext<DataContext>(options =>

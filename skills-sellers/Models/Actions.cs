@@ -26,6 +26,7 @@ public class ActionRequest
     public string? BatimentToUpgrade { get; set; }
     public int? WeaponToUpgradeId { get; set; }
     public double? RepairChances { get; set; }
+    public int? WarId { get; set; }
 }
 
 [JsonDerivedType(typeof(ActionCuisinerResponse))]
@@ -34,6 +35,7 @@ public class ActionRequest
 [JsonDerivedType(typeof(ActionMusclerResponse))]
 [JsonDerivedType(typeof(ActionReparerResponse))]
 [JsonDerivedType(typeof(ActionSatelliteResponse))]
+[JsonDerivedType(typeof(ActionGuerreResponse))]
 public abstract class ActionResponse
 {
     public int Id { get; set; }
@@ -81,6 +83,11 @@ public class ActionMusclerResponse : ActionResponse
 
 public class ActionSatelliteResponse : ActionResponse
 {
+}
+
+public class ActionGuerreResponse : ActionResponse
+{
+    public int WarId { get; set; }
 }
 
 public class ActionEstimationResponse : ActionResponse

@@ -61,7 +61,9 @@ public class DailyTaskService : IDailyTaskService
         Console.WriteLine($"DailyTask : {count} users batiments data reset");
         
         // notify all users
-        await _notificationService.SendNotificationToAll(new NotificationRequest("Daily reset", "Les cuisines ont été réinitialisées !\r\nLe marchand a été réinitialisé !"), context);
+        await _notificationService.SendNotificationToAll(new NotificationRequest(
+            "Daily reset", 
+            "Les cuisines ont été réinitialisées !\r\nLe marchand a été réinitialisé !", ""), context);
 
         await context.SaveChangesAsync();
     }
@@ -173,7 +175,7 @@ public class DailyTaskService : IDailyTaskService
                 #endregion
             }
             
-            await _notificationService.SendNotificationToUser(user, new NotificationRequest("Echanges effectués", bigNotificationMessage), context);
+            await _notificationService.SendNotificationToUser(user, new NotificationRequest("Echanges effectués", bigNotificationMessage, ""), context);
         }
         
         await context.SaveChangesAsync();

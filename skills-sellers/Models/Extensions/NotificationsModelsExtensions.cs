@@ -4,9 +4,15 @@ namespace skills_sellers.Models.Extensions;
 
 public static class NotificationsModelsExtensions
 {
-    public static NotificationResponse ToResponse(this Notification notification)
+    public static NotificationResponse ToResponse(this Notification notification, string type = "", int? relatedId = null)
     {
-        return new NotificationResponse(notification.Id, notification.Title, notification.Message, notification.CreatedAt);
+        return new NotificationResponse(
+            notification.Id, 
+            notification.Title, 
+            notification.Message, 
+            notification.CreatedAt,
+            type,
+            relatedId);
     }
     
     public static Notification CreateNotification(this NotificationRequest model)

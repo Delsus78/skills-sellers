@@ -34,4 +34,7 @@ public class User
     
     // specials
     public Christmas Christmas { get; set; }
+    
+    // War timeout
+    public DateTime? WarTimeout { get; set; }
 }

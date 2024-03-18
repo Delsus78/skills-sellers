@@ -16,7 +16,8 @@ public static class UsersModelsExtensions
             Nourriture = 10,
             NbCardOpeningAvailable = 1,
             NbWeaponOpeningAvailable = 0,
-            NbWeaponUpgradeAvailable = 0
+            NbWeaponUpgradeAvailable = 0,
+            WarTimeout = DateTime.Now.AddDays(1)
         };
     }
     
@@ -33,7 +34,8 @@ public static class UsersModelsExtensions
             user.NbCardOpeningAvailable,
             user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
             user.NbWeaponOpeningAvailable,
-            user.NbWeaponUpgradeAvailable);
+            user.NbWeaponUpgradeAvailable,
+            user.WarTimeout);
     }
     
     public static Dictionary<string, int> GetResources(this User user)

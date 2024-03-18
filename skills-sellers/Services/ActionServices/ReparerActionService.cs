@@ -138,7 +138,8 @@ public class ReparerActionService : IActionService
             // notify user
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Construction d'arme terminée", 
-                    $"La machine de Zeiss a terminée la construction d'une nouvelle arme! Vous pouvez maintenant l'utiliser !"), 
+                    $"La machine de Zeiss a terminée la construction d'une nouvelle arme! Vous pouvez maintenant l'utiliser !", 
+                    "weapons"), 
                 context);
             
             // add weapon to user
@@ -148,7 +149,7 @@ public class ReparerActionService : IActionService
         {
             await _notificationService.SendNotificationToUser(action.User, new NotificationRequest(
                     "Construction d'arme échouée",
-                    $"Malheureusement, la machine n'a pas réussi à construire une arme... Vous pouvez retenter votre chance !"),
+                    $"Malheureusement, la machine n'a pas réussi à construire une arme... Vous pouvez retenter votre chance !", ""),
                 context);
             
             // refund user half
@@ -180,8 +181,8 @@ public class ReparerActionService : IActionService
     // Helpers
     private DateTime CalculateActionEndTime()
     {
-         //return DateTime.Now.AddHours(5);
-         return DateTime.Now.AddSeconds(10);
+         return DateTime.Now.AddHours(5);
+         //return DateTime.Now.AddSeconds(10);
     }
     
     private double CalculateRepairChances(int totalIntel, int totalCards)

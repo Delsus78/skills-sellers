@@ -65,6 +65,15 @@ public static class ActionsModelsExtensions
                 CreatedAt = actionSatellite.CreatedAt ?? DateTime.Now,
                 Cards = actionSatellite.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
+            ActionGuerre actionGuerre => new ActionGuerreResponse
+            {
+                ActionName = "guerre*",
+                Id = actionGuerre.Id,
+                EndTime = actionGuerre.DueDate,
+                CreatedAt = actionGuerre.CreatedAt ?? DateTime.Now,
+                Cards = actionGuerre.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
+                WarId = actionGuerre.WarId
+            },
             _ => throw new ArgumentException("Action inconnue")
         };
 }

@@ -23,7 +23,7 @@ public interface IUserBatimentsService
     /// - spatioport
     /// </param>
     /// <returns></returns>
-    bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null);
+    bool IsUserBatimentFull(User user, string batimentName, int newCardsNeeded = 0);
     
     (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel, string batimentName);
 }
@@ -61,9 +61,8 @@ public class UserBatimentsService : IUserBatimentsService
         return userBatimentData;
     }
 
-    public bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null)
+    public bool IsUserBatimentFull(User user, string batimentName, int newCardsNeeded = 0)
     {
-        _context = context ?? _context;
         
         var userBatimentData = GetOrCreateUserBatimentData(user);
         var batNameLower = batimentName.ToLower();
@@ -76,13 +75,14 @@ public class UserBatimentsService : IUserBatimentsService
             "cuisine" => (userBatimentData.NbCuisineUsedToday, userBatimentData.CuisineLevel),
             "salledesport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
-            "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
+            "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0) 
+                             + actionCounts.GetValueOrDefault(typeof(ActionGuerre), 0), userBatimentData.SpatioPortLevel),
             "satellite" => (actionCounts.GetValueOrDefault(typeof(ActionSatellite), 0), userBatimentData.SatelliteLevel),
             "machinezeiss" => (actionCounts.GetValueOrDefault(typeof(ActionReparer), 0), 1),
             _ => throw new AppException("Batiment name not found", 404)
         };
 
-        return nbActionsEnCours >= batLevel;
+        return nbActionsEnCours + newCardsNeeded >= batLevel;
     }
 
     public (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel, string batimentName)
@@ -99,6 +99,9 @@ public class UserBatimentsService : IUserBatimentsService
             if (currentLevel == 0)
                 price *= 10;
             else price *= 50;
+        
+        if (batimentName.ToLower() == "spatioport")
+            price *= 2;
         
         return price;
     }

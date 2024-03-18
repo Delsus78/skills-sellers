@@ -234,8 +234,9 @@ public class AmeliorerActionService : IActionService
         
         // notify user
         _notificationService.SendNotificationToUser(actionAmeliorer.User, new NotificationRequest(
-                "Amélioration terminée", 
-                $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}"), 
+            "Amélioration terminée", 
+            $"Les cartes suivantes ont gagné des points d'intelligence : {string.Join(", ", cardNameForIntelUp.Select(kvp => $"{kvp.Key} (+{kvp.Value})"))}",
+            "cards"),
             context);
         
         // stats
@@ -308,7 +309,8 @@ public class AmeliorerActionService : IActionService
         // notify user
         _notificationService.SendNotificationToUser(user, new NotificationRequest(
                 "Amélioration terminée", 
-                $"Votre arme {weapon.Weapon.Name} a été amélioré !"), 
+                $"Votre arme {weapon.Weapon.Name} a été amélioré !", 
+                "oneweapon", weapon.Id), 
             context);
         
         return weapon.Power-1 * 3;
@@ -342,7 +344,8 @@ public class AmeliorerActionService : IActionService
         // notify user
         _notificationService.SendNotificationToUser(actionAmeliorer.User, new NotificationRequest(
                 "Amélioration terminée", 
-                $"Votre bâtiment {actionAmeliorer.BatimentToUpgrade} a été amélioré !"), 
+                $"Votre bâtiment {actionAmeliorer.BatimentToUpgrade} a été amélioré !", 
+                "buildings"), 
             context);
         
         return niveauIntelADonner;
@@ -379,8 +382,8 @@ public class AmeliorerActionService : IActionService
         var hours = isBatUpgrade ? 12 * level - extraLevels : 16 * level;
         if (hours < 1) hours = 0;
         
-        //return DateTime.Now.AddHours(hours);
-        return DateTime.Now.AddSeconds(hours);
+        return DateTime.Now.AddHours(hours);
+        //return DateTime.Now.AddSeconds(hours);
     }
     
     private static int GetLevelOfUserBat(UserBatimentData batimentData, ActionRequest model)

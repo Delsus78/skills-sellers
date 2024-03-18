@@ -339,7 +339,8 @@ public class UserService : IUserService
             // notify user
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(
                    "Doublon remboursé !", 
-                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !"), 
+                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !",
+                   ""), 
                 _context);
         }
         
@@ -596,7 +597,8 @@ public class UserService : IUserService
             user, 
             new NotificationRequest(
                 "Code cadeau", 
-                $"Vous avez reçu {giftCodeEntity.NbCards} ouverture de carte, {giftCodeEntity.NbCreatium} créatium et {giftCodeEntity.NbOr} or !"),
+                $"Vous avez reçu {giftCodeEntity.NbCards} ouverture de carte, {giftCodeEntity.NbCreatium} créatium et {giftCodeEntity.NbOr} or !",
+                ""),
             _context);
         
         // set gift code as used

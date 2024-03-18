@@ -1,8 +1,9 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Registres;
 using skills_sellers.Models.Extensions;
-using skills_sellers.Services;
+using Action = System.Action;
 
 namespace skills_sellers.Helpers;
 
@@ -18,13 +19,19 @@ public static class WarHelpers
     /// -1 = card2 win
     /// 0 = draw 
     /// </returns>
-    public static (int result, int affinityWin) Fight(UserCard card1, UserCard card2)
+    public static (int result, int affinityWin) Fight(UserCard card1, UserCard card2) =>
+        Fight(
+            new FightingEntity("card1", card1.ToResponse().Power,0, "weapon1", card1.UserWeapon?.Affinity),
+            new FightingEntity("card2", card2.ToResponse().Power,0, "weapon2", card2.UserWeapon?.Affinity)
+        );
+
+    private static (int result, int affinityWin) Fight(FightingEntity card1, FightingEntity card2)
     {
         // get the power of each card
-        var card1Power = card1.ToResponse().Power;
-        var card2Power = card2.ToResponse().Power;
+        var card1Power = card1.TotalPower;
+        var card2Power = card2.TotalPower;
 
-        var affinityWin = CompareAffinity(card1.UserWeapon?.Affinity, card2.UserWeapon?.Affinity);
+        var affinityWin = CompareAffinity(card1.Affinity, card2.Affinity);
         
         // compare affinity
         switch (affinityWin)
@@ -47,6 +54,75 @@ public static class WarHelpers
             < 0 => (-1, affinityWin),
             _ => (0, affinityWin)
         };
+    }
+
+    
+    public static (bool defenseWin, string fightReport) Battle(IEnumerable<FightingEntity> armyDefense, IEnumerable<FightingEntity> armyAttack)
+    {
+        var report = new StringBuilder();
+        var defensePoints = 0;
+
+        // new list order by power
+        var orderedArmyDefense = armyDefense.OrderByDescending(c => c.TotalPower).ToList();
+        var orderedArmyAttack = armyAttack.OrderByDescending(c => c.TotalPower).ToList();
+        
+        while (orderedArmyAttack.Count > 0)
+        {
+            var cardAttack = orderedArmyAttack[0];
+            orderedArmyAttack.RemoveAt(0);
+            
+            if (orderedArmyDefense.Count == 0)
+            {
+                report.Append($"[DEFENSE] Aucune carte disponible pour défendre vs [ATTAQUE] {cardAttack.Name} ({cardAttack.TotalPower}/{cardAttack.Affinity}) => ATTAQUE GAGNE !\n");
+                defensePoints--;
+                continue;
+            }
+            var cardDefense = orderedArmyDefense[0];
+            orderedArmyDefense.RemoveAt(0);
+            
+
+            var fightResult = Fight(cardDefense, cardAttack);
+            
+            defensePoints += fightResult.result;
+            
+            report.Append($"[DEFENSE] {cardDefense.Name} ({cardDefense.TotalPower}/{cardDefense.Affinity}) vs [ATTAQUE] {cardAttack.Name} ({cardAttack.TotalPower}/{cardAttack.Affinity})");
+            report.Append(fightResult.result switch {
+                1 => " => DEFENSE GAGNE !\n",
+                -1 => " => ATTAQUE GAGNE !\n",
+                _ => " => Egalité !\n"
+            });
+
+            // calculate power added from defense success
+            var addedPower = cardDefense.TotalPower - cardAttack.TotalPower - cardDefense.Buff > 0
+                ? cardDefense.TotalPower - cardAttack.TotalPower
+                : 0;
+            
+            if (addedPower == 0)
+                continue;
+            
+            if (orderedArmyDefense.Count == 0)
+                orderedArmyDefense.Add(cardDefense with
+                {
+                    Name = cardDefense.Name+"*", 
+                    TotalPower = addedPower, 
+                    Buff = addedPower
+                });
+            else
+                orderedArmyDefense[0] = orderedArmyDefense[0] with 
+                { 
+                    Name = orderedArmyDefense[0].Name + $"(+{addedPower})",
+                    TotalPower = orderedArmyDefense[0].TotalPower + addedPower, 
+                    Buff = addedPower 
+                };
+        }
+
+        if (orderedArmyDefense.Count > 0)
+        {
+            orderedArmyDefense.ForEach(fe => report.Append($"[DEFENSE] {fe.Name} ({fe.TotalPower}/{fe.Affinity}) vs [ATTAQUE] Plus de carte disponible ! => DEFENSE GAGNE !\n"));
+            return (true, report.ToString());
+        }
+
+        return (defensePoints >= 0, report.ToString());
     }
 
     public static FightReport GetFightDescription(UserCard card1, UserCard card2)
@@ -199,7 +275,7 @@ public static class WarHelpers
             user.UserCards.Count,
             user.UserWeapons.Count,
             user.UserBatimentData.SatelliteLevel);
-        
+
         var registre = new RegistreHostile
         {
             UserId = user.Id,
@@ -207,7 +283,8 @@ public static class WarHelpers
             Name = planetName,
             Description = Randomizer.RandomQuote(planetName),
             CardPower = cardPower,
-            CardWeaponPower = cardWeaponPower
+            CardWeaponPower = cardWeaponPower,
+            Affinity = cardWeaponPower > 0 ? Randomizer.RandomWeaponAffinity() : null
         };
 
         return registre;
@@ -366,6 +443,62 @@ public static class WarHelpers
         return (Math.Max(cardPower, 0), cardWeaponPower);
     }
     
+    public static string LoosingAnAttack(User user, int nbToLoose)
+    {
+        var randomXUserCards = user.UserCards
+            .Where(uc => uc.Competences.Cuisine > 0 || uc.Competences.Charisme > 0 || uc.Competences.Intelligence > 0 || uc.Competences.Force > 0 || uc.Competences.Exploration > 0)
+            .OrderBy(c => Guid.NewGuid()).Take(nbToLoose)
+            .ToList();
+
+        var message = "";
+        
+        foreach (var userCard in randomXUserCards)
+        {
+            var competences = new List<Action>();
+
+            if (userCard.Competences.Cuisine > 0)
+                competences.Add(() =>
+                {
+                    userCard.Competences.Cuisine -= 1;
+                    message += $"{userCard.Card.Name} a perdu 1 point de cuisine. \r\n";
+                });
+            
+            if (userCard.Competences.Charisme > 0)
+                competences.Add(() =>
+                {
+                    userCard.Competences.Charisme -= 1;
+                    message += $"{userCard.Card.Name} a perdu 1 point de charisme. \r\n";
+                });
+            
+            if (userCard.Competences.Intelligence > 0)
+                competences.Add(() =>
+                {
+                    userCard.Competences.Intelligence -= 1;
+                    message += $"{userCard.Card.Name} a perdu 1 point d'intelligence. \r\n";
+                });
+            
+            if (userCard.Competences.Force > 0)
+                competences.Add(() =>
+                {
+                    userCard.Competences.Force -= 1;
+                    message += $"{userCard.Card.Name} a perdu 1 point de force. \r\n";
+                });
+            
+            if (userCard.Competences.Exploration > 0)
+                competences.Add(() =>
+                {
+                    userCard.Competences.Exploration -= 1;
+                    message += $"{userCard.Card.Name} a perdu 1 point d'exploration. \r\n";
+                });
+
+            if (competences.Count <= 0) continue;
+            var randomIndex = Randomizer.RandomInt(0, competences.Count);
+            competences[randomIndex].Invoke();
+        }
+
+        return message;
+    }
+    
     private static double CalculateExponentialFunction(double x, double croissanceExpo = 1.01, int modulo = 20)
     {
         const double a = 2.117; // Constante a déterminée précédemment
@@ -375,3 +508,5 @@ public static class WarHelpers
         return a * Math.Pow(b, x) * (1 + c * Math.Floor(x / modulo));
     }
 }
+
+public record FightingEntity(string Name, int TotalPower, int? Buff, string? WeaponName, WeaponAffinity? Affinity);

@@ -21,6 +21,7 @@ public static class RegistresModelsExtensions
             registre.Type,
             registre.Type == RegistreType.Hostile ? ((RegistreHostile)registre).CardPower : null,
             registre.Type == RegistreType.Hostile ? ((RegistreHostile)registre).CardWeaponPower : null,
+            registre.Type == RegistreType.Hostile ? ((RegistreHostile)registre).Affinity : null,
             registre.Type == RegistreType.Friendly ? ((RegistreFriendly)registre).ResourceOffer : null,
             registre.Type == RegistreType.Friendly ? ((RegistreFriendly)registre).ResourceDemand : null,
             registre.Type == RegistreType.Friendly ? ((RegistreFriendly)registre).ResourceOfferAmount : null,

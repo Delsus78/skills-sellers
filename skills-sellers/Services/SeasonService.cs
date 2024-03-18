@@ -62,7 +62,8 @@ public class SeasonService : ISeasonService
 
         _notificationService.SendNotificationToAll(
             new NotificationRequest("[SPECIAL] FIN DE LA SAISON " + season.Id, 
-                "La saison est terminée, le gagnant est " + winner.Pseudo + " avec un score de "+ winner.Score +" !"), _context);
+                "La saison est terminée, le gagnant est " + winner.Pseudo + " avec un score de "+ winner.Score +" !",
+                ""), _context);
 
         _context.SaveChanges();
         

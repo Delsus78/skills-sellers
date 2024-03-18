@@ -171,6 +171,8 @@ public class ExplorerActionService : IActionService
         var user = action.User;
         string notificationMessage;
         var userCard = action.UserCards.First();
+        // get card ref
+        context.Entry(userCard).Reference(uc => uc.Card).Load();
 
         if (actionExplorer is { needDecision: true, Decision: null })
         {
@@ -178,8 +180,9 @@ public class ExplorerActionService : IActionService
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Exploration bloquée",
-                "Voila un moment que votre carte est bloquée sur une planète habitée ! \n" +
-                "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir !"
+                $"Voila un moment que votre carte {userCard.Card.Name} est bloquée sur une planète habitée ! \n" +
+                "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir !",
+                "onecard", userCard.CardId
             ), context);
             return Task.CompletedTask;
         }
@@ -190,8 +193,8 @@ public class ExplorerActionService : IActionService
             notificationMessage = $"Votre carte {userCard.Card.Name} est arrivée sur la planète {actionExplorer.PlanetName} !";
             
             // spacio registre update : define if action gonna need a decision or not
-            WeaponUpdateInhabitedPart(context, user, actionExplorer);
-            if (!actionExplorer.needDecision) notificationMessage += "\r\n" + "Cette planète n'est pas habitée !";
+            var planeteHabite = WeaponUpdateInhabitedPart(context, user, actionExplorer);
+            if (!planeteHabite) notificationMessage += "\r\n" + "Cette planète n'est pas habitée !";
 
             // Weapons Update
             WeaponUpdateExplorationPart(context, userCard, user);
@@ -218,23 +221,34 @@ public class ExplorerActionService : IActionService
             switch (actionExplorer.Decision)
             {
                 case ExplorationDecision.Pillage:
-                    // ressources x4 and +1 card
+                    // ressources x4 and a card
                     creatiumWin *= 4;
                     orWin *= 4;
-                    WeaponUpdatePillagePart(context, user, actionExplorer);
-                    notificationMessage += $"Votre carte {userCard.Card.Name} a trouvé une nouvelle carte !\r\n";
+                    user.NbCardOpeningAvailable++;
+                    notificationMessage += "Votre carte a pillé la planète ! Elle gagne une carte supplémentaire !\r\n";
+                    var isPlanetHostile = WeaponUpdatePillagePart(context, user, actionExplorer);
+                    if (isPlanetHostile)
+                        notificationMessage += 
+                            "Pillage - Hostile\r\n" +
+                            "Votre carte a rencontré une planète hostile !\n" +
+                            $"La planète {actionExplorer.PlanetName} est désormais dans votre registre ! \n";
                     break;
                 case ExplorationDecision.Ally:
                     
-                    var commerceDone = WeaponUpdateAllyPart(context, user, actionExplorer, userCard);
-                    if (commerceDone) // ressources x0
-                    {
-                        creatiumWin = 0; orWin = 0;
-                    }
-                    else // ressources x0.5
-                    {
-                        creatiumWin /= 2; orWin /= 2;
-                    }
+                    var commerceDone = WeaponUpdateAllyPart(user, actionExplorer, userCard);
+                    // notify user
+                    if (commerceDone)
+                        notificationMessage +=
+                            "Alliance - Echec\r\n" +
+                            "mais vous n'avez pas réussi à créer une route commerciale !\r\n" +
+                            $"La planète {actionExplorer.PlanetName} est désormais dans votre registre !\r\n";
+                    else
+                        notificationMessage +=
+                            "Alliance - Succès\r\n" +
+                            $"Vous avez désormais une route commerciale avec {actionExplorer.PlanetName} !\n" +
+                            "pour plus d'information, consultez votre registre !\n";
+                    
+                    creatiumWin /= 2; orWin /= 2;
                     break;
                 case null:
                     break;
@@ -285,7 +299,8 @@ public class ExplorerActionService : IActionService
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Exploration",
-            notificationMessage
+            notificationMessage,
+            "onecard", userCard.CardId
         ), context);
         
         return context.SaveChangesAsync();
@@ -374,8 +389,7 @@ public class ExplorerActionService : IActionService
             context.Registres.Add(registreOfUser);
             context.Registres.Add(registreOfOpponent);
         }
-       
-        
+
         // adding fightReport
         context.FightReports.Add(fightReport!);
         
@@ -383,54 +397,81 @@ public class ExplorerActionService : IActionService
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Explorer - Combat",
-            notificationMessage
+            notificationMessage,
+            "onecard", userCard.CardId
         ), context);
         
         // notify opponent
         _notificationService.SendNotificationToUser(opponentCard!.User, new NotificationRequest
         (
             "Explorer - Combat",
-            opponentNotificationMessage
+            opponentNotificationMessage,
+            ""
         ), context);
     }
 
-    private void WeaponUpdateInhabitedPart(DataContext context, User user, ActionExplorer action)
+    private bool WeaponUpdateInhabitedPart(DataContext context, User user, ActionExplorer action)
     {
+        // 2% que la planète soit hostile
+        if (Randomizer.RandomPourcentageSeeded(action.PlanetName, 2))
+        {
+            // hostile
+            context.Entry(user).Collection(u => u.Registres).Load();
+            context.Entry(user).Reference(u => u.UserBatimentData).Load();
+            
+            // notify user
+            _notificationService.SendNotificationToUser(user, new NotificationRequest
+            (
+                "Explorer - Hostile !",
+                "Votre carte a rencontré une planète hostile !\n" +
+                "La planète est désormais dans votre registre ! Elle risque de revenir...\n",
+                ""
+            ), context);
+            
+            var registre = WarHelpers.GenerateHostileRegistre(user, action.PlanetName);
+            user.Registres.Add(registre);
+            return true;
+        }
+
         // 15% de chance que la planete soit habitée
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 100))
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 15))
         { // non habitée
             // adding to registre as neutral
             var registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
             user.Registres.Add(registre);
-            return;
+            return false;
         } 
         
-        // habitée
+        // a besoin d'une décision
         action.needDecision = true;
+
+        var userCard = action.UserCards.First();
+        context.Entry(userCard).Reference(uc => uc.Card).Load();
             
         // notify user
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Explorer - Diplomatie",
-            "Votre carte a rencontré une planète habitée ! Elle ne peut pas revenir pour le moment ! \n" +
-            "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir ! \n"
+            $"Votre carte {userCard.Card.Name} a rencontré une planète habitée ! Elle ne peut pas revenir pour le moment ! \n" +
+            "Vous devez lui indiquer les ordres à suivre pour qu'elle puisse revenir ! \n",
+            "onecard", userCard.CardId
         ), context);
+        return true;
     }
 
-    private void WeaponUpdatePillagePart(DataContext context, User user, ActionExplorer action)
+    private bool WeaponUpdatePillagePart(DataContext context, User user, ActionExplorer action)
     {
-        user.NbCardOpeningAvailable++;
         Registre registre;
         
-        // 50% de chance que la planète deviennent hostile
+        // 60% de chance que la planète deviennent hostile
         if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 60))
         {
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
             user.Registres.Add(registre);
-            user.Score += 150;
+            user.Score += 20;
 
-            return; // non hostile
+            return false; // non hostile
         }
         
         // hostile
@@ -440,19 +481,11 @@ public class ExplorerActionService : IActionService
         registre = WarHelpers.GenerateHostileRegistre(user, action.PlanetName);
         
         user.Registres.Add(registre);
-        user.Score += 100;
-        
-        // notify user
-        _notificationService.SendNotificationToUser(user, new NotificationRequest
-        (
-            "Explorer - Combat",
-            "Votre carte a rencontré une planète hostile !\n" +
-            $"La planète {action.PlanetName} est désormais dans votre registre ! \n"
-        ), context);
-        
+
+        return true;
     }
 
-    private bool WeaponUpdateAllyPart(DataContext context, User user, ActionExplorer action, UserCard userCard)
+    private bool WeaponUpdateAllyPart(User user, ActionExplorer action, UserCard userCard)
     {
         Registre registre;
         
@@ -463,38 +496,18 @@ public class ExplorerActionService : IActionService
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
             user.Registres.Add(registre);
-            
-            // notify user
-            _notificationService.SendNotificationToUser(user, new NotificationRequest
-            (
-                "Alliance - Echec",
-                "Votre carte a rencontré une planète amicale,\n" +
-                "mais vous n'avez pas réussi à créer une route commerciale !\n" +
-                $"La planète {action.PlanetName} est désormais dans votre registre !\n"
-            ), context);
             return false;
         }
-        else // oui
-        {
-            // add registre as Friendly
-            registre = WarHelpers.GenerateFriendlyRegistre(
-                user, 
-                action.PlanetName, 
-                userCard.ToResponse().Power);
-            user.Registres.Add(registre);
-            user.Score += 10;
-            
-            // notify user
-            _notificationService.SendNotificationToUser(user, new NotificationRequest
-            (
-                "Alliance - Succès",
-                "Votre carte a rencontré une planète amicale,\n" +
-                $"La planète {action.PlanetName} est désormais dans votre registre !\n" +
-                $"Vous avez désormais une route commerciale avec {action.PlanetName} !\n" +
-                "pour plus d'information, consultez votre registre !\n"
-            ), context);
-            return true;
-        }
+
+        // oui
+        // add registre as Friendly
+        registre = WarHelpers.GenerateFriendlyRegistre(
+            user, 
+            action.PlanetName, 
+            userCard.ToResponse().Power);
+        user.Registres.Add(registre);
+        user.Score += 10;
+        return true;
     }
     
     public Task DeleteAction(Action action, DataContext context, IServiceProvider serviceProvider)
@@ -520,8 +533,8 @@ public class ExplorerActionService : IActionService
     private DateTime CalculateActionEndTime(int exploLevel, bool returning = false)
     {
         // l’exploration prendra 5h30 - le niveau x 30 minutes 
-        return DateTime.Now.AddSeconds(10);
-        //return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
+        //return DateTime.Now.AddSeconds(10);
+        return returning ? DateTime.Now.AddMinutes(15) : DateTime.Now.AddHours(5.5 - exploLevel * 0.5);
     }
     
     // Weapons Update

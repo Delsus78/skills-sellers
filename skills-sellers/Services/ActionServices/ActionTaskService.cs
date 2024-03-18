@@ -241,7 +241,7 @@ public class ActionTaskService : IActionTaskService
 }
 
 // Factory ou stratégie pour résoudre le service d'action approprié
-public class ActionServiceResolver
+public static class ActionServiceResolver
 {
     public static IActionService Resolve(Action action, IServiceScope scope)
     {
@@ -253,6 +253,7 @@ public class ActionServiceResolver
             ActionAmeliorer _ => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             ActionExplorer _ => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             ActionSatellite _ => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
+            ActionGuerre _ => scope.ServiceProvider.GetRequiredService<WarActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }
@@ -267,6 +268,7 @@ public class ActionServiceResolver
             "ameliorer" => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             "explorer" => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             "satellite" => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
+            "guerre" => scope.ServiceProvider.GetRequiredService<WarActionService>(),
                 _ => throw new AppException("Action non trouvée", 404),
         };
     }

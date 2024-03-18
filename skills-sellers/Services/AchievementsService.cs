@@ -69,7 +69,8 @@ namespace skills_sellers.Services;
              await _notificationService.SendNotificationToUser(user, new NotificationRequest
              (
                  "Achievements !",
-                 $"Votre récompense est arrivée !"
+                 $"Votre récompense est arrivée !",
+                 ""
              ), _context);
              
              achievementContext.Claim(user);

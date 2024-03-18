@@ -159,8 +159,9 @@ public class CuisinerActionService : IActionService
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Compétence cuisine",
-                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !"
-            ), context);
+                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !", 
+                "onecard", userCard.CardId), 
+                context);
         }
         
         #endregion
@@ -172,7 +173,8 @@ public class CuisinerActionService : IActionService
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Cuisiner",
-            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !"
+            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !",
+            ""
         ), context);
         
         return context.SaveChangesAsync();

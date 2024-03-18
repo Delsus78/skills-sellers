@@ -55,7 +55,8 @@ public class RegistreService : IRegistreService
         (
             "Registre supprimé",
             "Vous avez rompu tout lien avec " + registre.Name + ".\n" +
-            "Ils ont bien compris le message..."
+            "Ils ont bien compris le message...",
+            ""
         ), _context);
 
         return _context.SaveChangesAsync();
