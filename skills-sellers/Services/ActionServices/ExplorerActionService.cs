@@ -230,17 +230,17 @@ public class ExplorerActionService : IActionService
                     if (isPlanetHostile)
                         notificationMessage += 
                             "Pillage - Hostile\r\n" +
-                            "Votre carte a rencontré une planète hostile !\n" +
+                            "Votre carte a rencontré une planète hostile ! (60% de chance)\n" +
                             $"La planète {actionExplorer.PlanetName} est désormais dans votre registre ! \n";
                     break;
                 case ExplorationDecision.Ally:
                     
                     var commerceDone = WeaponUpdateAllyPart(user, actionExplorer, userCard);
                     // notify user
-                    if (commerceDone)
+                    if (!commerceDone)
                         notificationMessage +=
                             "Alliance - Echec\r\n" +
-                            "mais vous n'avez pas réussi à créer une route commerciale !\r\n" +
+                            "mais vous n'avez pas réussi à créer une route commerciale ! (10% de chance)\r\n" +
                             $"La planète {actionExplorer.PlanetName} est désormais dans votre registre !\r\n";
                     else
                         notificationMessage +=
@@ -423,7 +423,7 @@ public class ExplorerActionService : IActionService
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Explorer - Hostile !",
-                "Votre carte a rencontré une planète hostile !\n" +
+                "Votre carte a rencontré une planète hostile ! (2% de chance)\n" +
                 "La planète est désormais dans votre registre ! Elle risque de revenir...\n",
                 ""
             ), context);
@@ -433,14 +433,14 @@ public class ExplorerActionService : IActionService
             return true;
         }
 
-        // 15% de chance que la planete soit habitée
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 15))
+        // 10% de chance que la planete soit habitée
+        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 10))
         { // non habitée
             // adding to registre as neutral
             var registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
             user.Registres.Add(registre);
             return false;
-        } 
+        }
         
         // a besoin d'une décision
         action.needDecision = true;

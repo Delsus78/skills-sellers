@@ -23,8 +23,8 @@ public class GamesService : IGameService
     {
         return DateTime.Now.DayOfWeek switch
         {
-            DayOfWeek.Monday => _machineRepairService.GetGameOfTheDay(userId),
-            DayOfWeek.Tuesday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
+            DayOfWeek.Monday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
+            DayOfWeek.Tuesday => _machineRepairService.GetGameOfTheDay(userId),
             DayOfWeek.Wednesday => _casinoService.GetGameOfTheDay(userId),
             DayOfWeek.Thursday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
             DayOfWeek.Friday => _machineRepairService.GetGameOfTheDay(userId),
