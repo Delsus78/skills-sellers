@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Models;
-using skills_sellers.Models.Cards;
 using skills_sellers.Models.Users;
 using skills_sellers.Services;
 
@@ -11,7 +10,7 @@ namespace skills_sellers.Controllers;
 [Route("[controller]")]
 public class UsersController : ControllerBase
 {
-    private IUserService _userService;
+    private readonly IUserService _userService;
 
     public UsersController(
         IUserService userService)
@@ -36,10 +35,20 @@ public class UsersController : ControllerBase
         => _userService.GetUserCards(id);
     
     [Authorize]
+    [HttpGet("{id}/weapons")]
+    public IEnumerable<UserWeaponResponse> GetUserWeapons(int id)
+        => _userService.GetUserWeapons(id);
+
+    [Authorize]
+    [HttpGet("{id}/weapons/{weaponId}")]
+    public UserWeaponResponse GetUserWeapons(int id, int weaponId)
+        => _userService.GetUserWeapon(id, weaponId);
+    
+    [Authorize]
     [HttpGet("{id}/stats")]
     public StatsResponse GetUserStats(int id)
         => _userService.GetUserStats(id);
-    
+
     [Authorize]
     [HttpGet("{id}/batiments")]
     public UserBatimentResponse GetUserBatiments(int id)

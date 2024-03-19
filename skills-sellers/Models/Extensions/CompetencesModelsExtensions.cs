@@ -32,4 +32,7 @@ public static class CompetencesModelsExtensions
     
     public static bool GotAllMaxed(this Competences competences)
         => competences is { Cuisine: 10, Force: 10, Intelligence: 10, Charisme: 10, Exploration: 10 };
+    
+    public static int GetPowerWithoutWeapon(this Competences competences)
+        => competences.Charisme + competences.Exploration + competences.Force + competences.Intelligence;
 }

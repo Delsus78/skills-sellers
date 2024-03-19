@@ -18,6 +18,7 @@ public interface IActionTaskService
     Task StopAllActionsAsync();
     Task DeleteActionAsync(int userId, int actionId);
     ActionEstimationResponse EstimateAction(int userId, ActionRequest model);
+    public bool IsActionRunning(int actionId);
 }
 public class ActionTaskService : IActionTaskService
 {
@@ -29,6 +30,8 @@ public class ActionTaskService : IActionTaskService
         _serviceProvider = serviceProvider;
     }
 
+    public bool IsActionRunning(int actionId) => TaskCancellations.ContainsKey(actionId);
+    
     public async Task<List<ActionResponse>> CreateNewActionAsync(int userId, ActionRequest model)
     {
         using var scope = _serviceProvider.CreateScope();
@@ -196,6 +199,9 @@ public class ActionTaskService : IActionTaskService
             .ThenInclude(uc => uc.Card)
             .Include(a => a.UserCards)
             .ThenInclude(uc => uc.Competences)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.UserWeapon)
+            .ThenInclude(uw => uw!.Weapon)
             .FirstOrDefaultAsync();
 
         if (actionEntity == null)
@@ -207,6 +213,7 @@ public class ActionTaskService : IActionTaskService
         await context.DisposeAsync();
     }
 
+    // TODO : refactor to add a queue system to avoid multiple actions at the same time
     private Task DispatchToCorrectEndActionService(int actionId) =>
         DispatchToCorrectService(actionId,
             (service, action, context, serviceProvider) 
@@ -234,7 +241,7 @@ public class ActionTaskService : IActionTaskService
 }
 
 // Factory ou stratégie pour résoudre le service d'action approprié
-public class ActionServiceResolver
+public static class ActionServiceResolver
 {
     public static IActionService Resolve(Action action, IServiceScope scope)
     {
@@ -245,6 +252,8 @@ public class ActionServiceResolver
             ActionReparer _ => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
             ActionAmeliorer _ => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             ActionExplorer _ => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
+            ActionSatellite _ => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
+            ActionGuerre _ => scope.ServiceProvider.GetRequiredService<WarActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }
@@ -258,7 +267,9 @@ public class ActionServiceResolver
             "reparer" => scope.ServiceProvider.GetRequiredService<ReparerActionService>(),
             "ameliorer" => scope.ServiceProvider.GetRequiredService<AmeliorerActionService>(),
             "explorer" => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
-            _ => throw new AppException("Action non trouvée", 404),
+            "satellite" => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
+            "guerre" => scope.ServiceProvider.GetRequiredService<WarActionService>(),
+                _ => throw new AppException("Action non trouvée", 404),
         };
     }
 }

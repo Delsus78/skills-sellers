@@ -14,7 +14,7 @@ public interface IResourcesService
 public class ResourcesService : IResourcesService
 {
     private readonly Random Random = new();
-    private readonly Dictionary<string, Dictionary<int, (int min, int max)>> Limits = new()
+    public static readonly Dictionary<string, Dictionary<int, (int min, int max)>> Limits = new()
     {
         {
             "creatium", new Dictionary<int, (int max, int min)>
@@ -41,9 +41,9 @@ public class ResourcesService : IResourcesService
                 {5, (50, 70)},
                 {6, (60, 80)},
                 {7, (70, 100)},
-                {8, (90, 150)},
-                {9, (125, 200)},
-                {10, (150, 250)}
+                {8, (90, 130)},
+                {9, (125, 190)},
+                {10, (175, 200)}
             }
         }
     };

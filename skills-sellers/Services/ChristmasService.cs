@@ -223,7 +223,7 @@ public class ChristmasService : IChristmasService
         
         // notify user
         await _notificationService.SendNotificationToUser(user, new NotificationRequest(
-                "SPECIAL Cadeau de Noël !", notificationMessage), _context);
+                "SPECIAL Cadeau de Noël !", notificationMessage, ""), _context);
     }
     
     private void RefreshDayClaimability(Christmas christmas)

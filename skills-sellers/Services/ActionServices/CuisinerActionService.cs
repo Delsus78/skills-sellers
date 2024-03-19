@@ -121,7 +121,7 @@ public class CuisinerActionService : IActionService
     {
         // get user linked to action
         var user = action.User;
-        context.Entry(user).Reference(u => u.UserBatimentData).LoadAsync();
+        context.Entry(user).Reference(u => u.UserBatimentData).Load();
         
         // actualise bdd and nb cuisine used today
         user.UserBatimentData.NbCuisineUsedToday -= 1;
@@ -145,6 +145,7 @@ public class CuisinerActionService : IActionService
         // give nourriture
         var amount = userCard.Competences.Cuisine;
         user.Nourriture += amount;
+        user.Score += amount;
         
         // stats
         _statsService.OnMealCooked(user.Id);
@@ -158,8 +159,9 @@ public class CuisinerActionService : IActionService
             _notificationService.SendNotificationToUser(user, new NotificationRequest
             (
                 "Compétence cuisine",
-                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !"
-            ), context);
+                $"Votre carte {userCard.Card.Name} a gagné 1 point de compétence en cuisine !", 
+                "onecard", userCard.CardId), 
+                context);
         }
         
         #endregion
@@ -171,7 +173,8 @@ public class CuisinerActionService : IActionService
         _notificationService.SendNotificationToUser(user, new NotificationRequest
         (
             "Cuisiner",
-            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !"
+            $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !",
+            ""
         ), context);
         
         return context.SaveChangesAsync();

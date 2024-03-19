@@ -2,10 +2,10 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
+using skills_sellers.Entities.Registres;
 using skills_sellers.Helpers;
 using skills_sellers.Helpers.Bdd;
 using skills_sellers.Models;
-using skills_sellers.Models.Cards;
 using skills_sellers.Models.Extensions;
 using skills_sellers.Models.Users;
 using skills_sellers.Services.ActionServices;
@@ -30,6 +30,7 @@ public interface IUserService
     Task<UserCardResponse?> OpenCard(User user);
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
+    Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true);
     UserCardResponse GetUserCard(User user, int cardId);
     Task<IEnumerable<NotificationResponse>> GetNotifications(User user);
     Task DeleteNotifications(User user, List<int> notificationIds);
@@ -42,7 +43,11 @@ public interface IUserService
     Task DeleteAction(User user, int actionId);
     Task<GiftCodeResponse> EnterGiftCode(User user, GiftCodeRequest giftCode);
     Task<GiftCodeResponse> CreateGiftCode(GiftCodeCreationRequest giftCodeCreationRequest);
-    Task<List<ActionResponse>> ResponseToBottedAgent(User user);
+    Task ResponseToBottedAgent(User user);
+    IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
+    UserWeaponResponse GetUserWeapon(int id, int weaponId);
+    Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
+    UserRegistreInfoResponse GetRegistreInfo(int id);
 }
 
 public class UserService : IUserService
@@ -334,7 +339,8 @@ public class UserService : IUserService
             // notify user
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(
                    "Doublon remboursé !", 
-                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !"), 
+                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !",
+                   ""), 
                 _context);
         }
         
@@ -359,6 +365,53 @@ public class UserService : IUserService
     
     #endregion
 
+    #region USERWEAPONS
+
+    public IEnumerable<UserWeaponResponse> GetUserWeapons(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserWeapons.Select(uc => uc.ToResponse());
+    }
+
+    public UserWeaponResponse GetUserWeapon(int id, int weaponId)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        return user.UserWeapons.FirstOrDefault(uc => uc.Id == weaponId)?.ToResponse() ?? throw new AppException("User weapon not found", 404);
+    }
+
+    public async Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true)
+    {
+        if (fromUpgradePoint && user.NbWeaponUpgradeAvailable <= 0)
+            throw new AppException("Vous n'avez plus d'amélioration d'arme disponible !", 400);
+        
+        // get user weapon
+        var userWeapon = user.UserWeapons.FirstOrDefault(uw => uw.Id == weaponId);
+        if (userWeapon == null)
+            throw new AppException("User weapon not found", 404);
+        
+        // impossible if equiped or in upgrade
+        // weapon in labo ?
+        if (user.UserCards.Any(card => card.Action is ActionAmeliorer ameliorer && ameliorer.WeaponToUpgradeId == weaponId))
+            throw new AppException("Cette arme est en amélioration", 400);
+        
+        if (userWeapon.UserCard != null)
+            throw new AppException("Cette arme est équipée, déséquipez la avant !", 400);
+        
+        // up power of weapon
+        userWeapon.Power++;
+        
+        // remove upgrade point
+        if (fromUpgradePoint)
+            user.NbWeaponUpgradeAvailable--;
+        
+        // save user weapon
+        await _context.SaveChangesAsync();
+        
+        return userWeapon.ToResponse();
+    }
+
+    #endregion
+    
     #region Stats and notifications
     public async Task<IEnumerable<NotificationResponse>> GetNotifications(User user)
         => await _notificationService.GetNotifications(user);
@@ -407,14 +460,75 @@ public class UserService : IUserService
     public async Task<List<ActionResponse>> CreateAction(User user, ActionRequest model) 
         => await _actionTaskService.CreateNewActionAsync(user.Id, model);
 
-    public ActionEstimationResponse EstimateAction(User user, ActionRequest model)
-    {
-        return _actionTaskService.EstimateAction(user.Id, model);
-    }
-    
+    public ActionEstimationResponse EstimateAction(User user, ActionRequest model) 
+        => _actionTaskService.EstimateAction(user.Id, model);
+
     public async Task DeleteAction(User user, int actionId)
         => await _actionTaskService.DeleteActionAsync(user.Id, actionId);
 
+    
+    public Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model)
+    {
+        var action = _context.Actions.FirstOrDefault(a => a.Id == model.ActionId);
+        if (action == null)
+            throw new AppException("Action not found", 404);
+
+        if (action is not ActionExplorer actionExplorer)
+            throw new AppException("Action is not an explorer action", 400);
+        
+        if (action.UserId != user.Id)
+            throw new AppException("Action is not yours", 400);
+
+        if (actionExplorer.Decision != null)
+            throw new AppException("Action already decided", 400);
+
+        // update action
+        actionExplorer.Decision = model.Decision;
+        _context.Actions.Update(actionExplorer);
+
+        // save changes
+        _context.SaveChanges();
+        
+
+        // end action if already finished
+        if (!_actionTaskService.IsActionRunning(actionExplorer.Id))
+            _actionTaskService.StartNewTaskForAction(actionExplorer);
+        
+        return Task.FromResult(actionExplorer.ToResponse());
+    }
+
+    public UserRegistreInfoResponse GetRegistreInfo(int id)
+    {
+        var user = GetUserEntity(u => u.Id == id);
+        var userRegistreInfo = _context.UserRegistreInfos.FirstOrDefault(ri => ri.UserId == user.Id);
+        if (userRegistreInfo == null) // create registre info if not exist
+        {
+            userRegistreInfo = new UserRegistreInfo
+            {
+                User = user,
+                HostileAttackWon = 0,
+                HostileAttackLost = 0
+            };
+            _context.UserRegistreInfos.Add(userRegistreInfo);
+            _context.SaveChanges();
+        }
+        
+        // get registres of user
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Load();
+        
+        // load relatedPlayers of registrePlayer
+        _context.Entry(user)
+            .Collection(u => u.Registres)
+            .Query()
+            .OfType<RegistrePlayer>()
+            .Include(rp => rp.RelatedPlayer)
+            .Load();
+        
+        return userRegistreInfo.ToResponse(user.Registres);
+    }
+    
     #endregion
     
     #region BATIMENTS
@@ -430,8 +544,9 @@ public class UserService : IUserService
         var nbLaboUsed = _context.Actions.OfType<ActionAmeliorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleMuscuUsed = _context.Actions.OfType<ActionMuscler>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         var nbSalleExplorerUsed = _context.Actions.OfType<ActionExplorer>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
+        var nbSatelliteUsed = _context.Actions.OfType<ActionSatellite>().Count(act => act.UserCards.Any(uc => uc.UserId == user.Id));
         
-        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed);
+        return userBatimentData.ToResponse(nbSalleMuscuUsed, nbLaboUsed, nbSalleExplorerUsed, nbSatelliteUsed);
     }
     
     public async Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest)
@@ -444,7 +559,7 @@ public class UserService : IUserService
         _context.UserBatiments.Update(userBatimentData);
         await _context.SaveChangesAsync();
 
-        return userBatimentData.ToResponse(-1, -1, -1);
+        return userBatimentData.ToResponse();
     }
     
     #endregion
@@ -482,7 +597,8 @@ public class UserService : IUserService
             user, 
             new NotificationRequest(
                 "Code cadeau", 
-                $"Vous avez reçu {giftCodeEntity.NbCards} ouverture de carte, {giftCodeEntity.NbCreatium} créatium et {giftCodeEntity.NbOr} or !"),
+                $"Vous avez reçu {giftCodeEntity.NbCards} ouverture de carte, {giftCodeEntity.NbCreatium} créatium et {giftCodeEntity.NbOr} or !",
+                ""),
             _context);
         
         // set gift code as used
@@ -499,7 +615,7 @@ public class UserService : IUserService
     
     #region helper methods
     
-    public async Task<List<ActionResponse>> ResponseToBottedAgent(User user)
+    public async Task ResponseToBottedAgent(User user)
     {
         if (user.Or >= 100)
             user.Or -= 100;
@@ -542,7 +658,8 @@ public static class UserIncludeExtension
             .ThenInclude(uc => uc.Competences)
             .Include(u => u.UserBatimentData)
             .Include(u => u.UserCardsDoubled)
-            // ... Autres includes si nécessaire
+            .Include(u => u.UserWeapons)
+            .ThenInclude(uw => uw.Weapon)
             .AsSplitQuery();
     }
 }

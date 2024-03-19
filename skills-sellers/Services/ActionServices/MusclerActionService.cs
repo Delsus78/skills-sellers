@@ -143,7 +143,8 @@ public class MusclerActionService : IActionService
             _notificationService.SendNotificationToUser(userCard.User, new NotificationRequest
             (
                 "Salle de sport",
-                $"Votre carte {userCard.Card.Name} était déjà au max de force ! Votre nourriture a été remboursée."
+                $"Votre carte {userCard.Card.Name} était déjà au max de force ! Votre nourriture a été remboursée.",
+                ""
             ), context);
             
             // refund resources
@@ -159,7 +160,8 @@ public class MusclerActionService : IActionService
         _notificationService.SendNotificationToUser(userCard.User, new NotificationRequest
         (
             "Salle de sport",
-            $"Votre carte {userCard.Card.Name} a gagné 1 point de force !"
+            $"Votre carte {userCard.Card.Name} a gagné 1 point de force !",
+            "onecard", userCard.CardId
         ), context);
 
         return context.SaveChangesAsync();

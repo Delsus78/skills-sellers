@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using skills_sellers.Models.Cards;
+using skills_sellers.Models;
 using skills_sellers.Services;
 
 namespace skills_sellers.Controllers;

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using skills_sellers.Entities;
 using skills_sellers.Helpers;
 using skills_sellers.Models;
-using skills_sellers.Models.Cards;
 using skills_sellers.Services;
 
 namespace skills_sellers.Controllers;
@@ -17,13 +16,15 @@ public class UserActionController : ControllerBase
     private readonly IUserService _userService;
     private readonly IMarchandService _marchandService;
     private readonly IAchievementsService _achievementsService;
+    private readonly IWeaponService _weaponService;
 
     public UserActionController(
-        IUserService userService, IMarchandService marchandService, IAchievementsService achievementsService)
+        IUserService userService, IMarchandService marchandService, IAchievementsService achievementsService, IWeaponService weaponService)
     {
         _userService = userService;
         _marchandService = marchandService;
         _achievementsService = achievementsService;
+        _weaponService = weaponService;
     }
 
     // helper methods
@@ -44,9 +45,37 @@ public class UserActionController : ControllerBase
         => await _userService.OpenCard(GetUserAuthenticated(id));
     
     [Authorize]
+    [HttpPost("actions/openweapon")]
+    public async Task<UserWeaponResponse?> OpenWeapon(int id)
+        => await _weaponService.OpenWeapon(GetUserAuthenticated(id));
+    
+    [Authorize]
+    [HttpPost("cards/{cardId}/applyweapon/{userWeaponId}")]
+    public async Task<UserCardResponse?> ApplyWeaponToUserCard(int id, int cardId, int? userWeaponId)
+        => await _weaponService.ApplyWeaponToUserCard(GetUserAuthenticated(id), cardId, userWeaponId);
+    
+    [Authorize]
     [HttpPost("cards/{cardId}/ameliorer")]
     public async Task<UserCardResponse> AmeliorerCard(int id, int cardId, CompetencesRequest competencesPointsToGive)
-        => await _userService.AmeliorerCard(GetUserAuthenticated(id), cardId, competencesPointsToGive);
+    {
+        var user = GetUserAuthenticated(id);
+        
+        var referer = Request.Headers["Referer"].ToString();
+        if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
+            await _userService.ResponseToBottedAgent(user);
+        
+        return await _userService.AmeliorerCard(user, cardId, competencesPointsToGive);
+    }
+
+    [Authorize]
+    [HttpPost("weapons/{weaponId}/ameliorer")]
+    public async Task<UserWeaponResponse> AmeliorerWeapon(int id, int weaponId)
+        => await _userService.AmeliorerWeapon(GetUserAuthenticated(id), weaponId);
+
+    [Authorize]
+    [HttpPost("actions/decision")]
+    public async Task<ActionResponse> PostDecisionForAction(int id, ActionDecisionRequest model) 
+        => await _userService.DecideForAction(GetUserAuthenticated(id), model);
 
     [Authorize]
     [HttpPost("actions")]
@@ -56,7 +85,7 @@ public class UserActionController : ControllerBase
         
         var referer = Request.Headers["Referer"].ToString();
         if (!referer.Contains("localhost:5173") && !referer.Contains("skills-sellers.fr"))
-            return await _userService.ResponseToBottedAgent(user);
+            await _userService.ResponseToBottedAgent(user);
 
         return await _userService.CreateAction(user, model);
     }
