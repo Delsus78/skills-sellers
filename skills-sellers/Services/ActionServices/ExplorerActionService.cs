@@ -545,8 +545,8 @@ public class ExplorerActionService : IActionService
             randomCard = null;
             result = 0;
             
-            // 10% de chance de rencontrer une autre carte
-            if (!Randomizer.RandomPourcentageUp(100))
+            // 5% de chance de rencontrer une autre carte
+            if (!Randomizer.RandomPourcentageUp(5))
                 return (false, null);
             
             // get all cards in exploration (except the current one and all user's cards)
