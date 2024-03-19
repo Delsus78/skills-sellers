@@ -269,12 +269,8 @@ public static class WarHelpers
     public static RegistreHostile GenerateHostileRegistre(User user, string planetName)
     {
         (int cardPower, int cardWeaponPower) = CalculatePlanetCardPower(
-            planetName, 
-            user.Creatium, 
-            user.Or, 
-            user.UserCards.Count,
-            user.UserWeapons.Count,
-            user.UserBatimentData.SatelliteLevel);
+            planetName,
+            user.UserCards.Count);
 
         var registre = new RegistreHostile
         {
@@ -342,13 +338,6 @@ public static class WarHelpers
         string seed)
     {
 
-        int f(double x)
-        {
-            double a = 9.0 / 49.0;
-            double b = 40.0 / 49.0;
-            return (int) (a * x + b);
-        }
-        
         var random = new Random(seed.GetHashCode());
 
         // Randomly pick a resource to win
@@ -398,40 +387,16 @@ public static class WarHelpers
         return (priceAmount, resourceNameToPay, winAmount, resourceNameToWin);
     }
     
-    public static (int cardPower, int cardWeaponPower) CalculatePlanetCardPower(
-        string planetName,
-        int userCreatium,
-        int userOr,
-        int userTotalCards,
-        int userTotalWeapons,
-        int userTotalSatellites)
+    public static (int cardPower, int cardWeaponPower) CalculatePlanetCardPower(string planetName, int userTotalCards)
     {
         var cardPower = 0;
         var cardWeaponPower = (int) CalculateExponentialFunction(userTotalCards);
         var random = new Random(planetName.GetHashCode());
-        
-        // creatium
-        var creatiumPower = (int) (userCreatium / 20000 * 1.1);
-        cardPower += creatiumPower;
-        
-        // or
-        var orPower = (int) (userOr / 5000 * 1.1);
-        cardPower += orPower;
 
         // total cards
-        var totalCardsPower = (int) (userTotalCards / 20 * 1.2);
+        var totalCardsPower = userTotalCards / 5;
         cardPower += totalCardsPower;
-        
-        // total weapons
-        var totalWeaponsPower = (int) (userTotalWeapons / 2 * 1.2);
-        cardPower += totalWeaponsPower;
-        cardWeaponPower += totalWeaponsPower / 2;
-        
-        // total satellites
-        var totalSatellitesPower = (int) (userTotalSatellites / 2 * 1.2);
-        cardPower += totalSatellitesPower;
-        cardWeaponPower += totalSatellitesPower / 2;
-        
+
         // random between 1/4 of the power to add or remove
         var randomPower = random.Next(0, cardPower / 4);
         bool add = random.Next(0, 2) == 1;
@@ -440,7 +405,7 @@ public static class WarHelpers
         else
             cardPower -= randomPower;
         
-        return (Math.Max(cardPower, 0), cardWeaponPower);
+        return (Math.Max(cardPower, 0), Math.Max(cardWeaponPower + random.Next(-1, 2), 0));
     }
     
     public static string LoosingAnAttack(User user, int nbToLoose)
