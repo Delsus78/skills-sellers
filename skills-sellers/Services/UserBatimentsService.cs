@@ -23,9 +23,9 @@ public interface IUserBatimentsService
     /// - spatioport
     /// </param>
     /// <returns></returns>
-    bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null);
+    bool IsUserBatimentFull(User user, string batimentName, int newCardsNeeded = 0);
     
-    (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel);
+    (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel, string batimentName);
 }
 public class UserBatimentsService : IUserBatimentsService
 {
@@ -61,9 +61,8 @@ public class UserBatimentsService : IUserBatimentsService
         return userBatimentData;
     }
 
-    public bool IsUserBatimentFull(User user, string batimentName, DataContext? context = null)
+    public bool IsUserBatimentFull(User user, string batimentName, int newCardsNeeded = 0)
     {
-        _context = context ?? _context;
         
         var userBatimentData = GetOrCreateUserBatimentData(user);
         var batNameLower = batimentName.ToLower();
@@ -76,34 +75,60 @@ public class UserBatimentsService : IUserBatimentsService
             "cuisine" => (userBatimentData.NbCuisineUsedToday, userBatimentData.CuisineLevel),
             "salledesport" => (actionCounts.GetValueOrDefault(typeof(ActionMuscler), 0), userBatimentData.SalleSportLevel),
             "laboratoire" => (actionCounts.GetValueOrDefault(typeof(ActionAmeliorer), 0), userBatimentData.LaboLevel),
-            "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0), userBatimentData.SpatioPortLevel),
+            "spatioport" => (actionCounts.GetValueOrDefault(typeof(ActionExplorer), 0) 
+                             + actionCounts.GetValueOrDefault(typeof(ActionGuerre), 0), userBatimentData.SpatioPortLevel),
+            "satellite" => (actionCounts.GetValueOrDefault(typeof(ActionSatellite), 0), userBatimentData.SatelliteLevel),
+            "machinezeiss" => (actionCounts.GetValueOrDefault(typeof(ActionReparer), 0), 1),
             _ => throw new AppException("Batiment name not found", 404)
         };
 
-        return nbActionsEnCours >= batLevel;
+        return nbActionsEnCours + newCardsNeeded >= batLevel;
     }
 
-    public (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel)
+    public (int creatiumPrice, int intelPrice, int forcePrice) GetBatimentPrices(int batimentLevel, string batimentName)
     {
-        return (GetCreatiumBatimentPrice(batimentLevel), GetIntelBatimentPrice(batimentLevel), GetForceBatimentPrice(batimentLevel));
+        return (GetCreatiumBatimentPrice(batimentLevel, batimentName), GetIntelBatimentPrice(batimentLevel, batimentName), GetForceBatimentPrice(batimentLevel, batimentName));
     }
 
-    private int GetCreatiumBatimentPrice(int currentLevel)
+    private int GetCreatiumBatimentPrice(int currentLevel, string batimentName)
     {
-        return (int)(Math.Pow(1.3, currentLevel) * 400);
+        var price = (int)(Math.Pow(1.3, currentLevel) * 400);
+        
+        // speciales cases
+        if (batimentName.ToLower() == "satellite")
+            if (currentLevel == 0)
+                price *= 10;
+            else price *= 50;
+        
+        if (batimentName.ToLower() == "spatioport")
+            price *= 2;
+        
+        return price;
     }
 
-    private int GetIntelBatimentPrice(int currentLevel)
+    private int GetIntelBatimentPrice(int currentLevel, string batimentName)
     {
-        return currentLevel * 2;
+        var price = currentLevel * 2;
+        
+        // speciales cases
+        if (batimentName.ToLower() == "satellite")
+            price *= 2;
+        
+        return price;
     }
 
-    private int GetForceBatimentPrice(int currentLevel)
+    private int GetForceBatimentPrice(int currentLevel, string batimentName)
     {
-        return currentLevel * 4;
+        var price = currentLevel * 4;
+        
+        // speciales cases
+        if (batimentName.ToLower() == "satellite")
+            price *= 2;
+        
+        return price;
     }
-    
-    public IIncludableQueryable<UserBatimentData, Object> IncludeGetUserBatimentDatas()
+
+    private IIncludableQueryable<UserBatimentData, Object> IncludeGetUserBatimentDatas()
     {
         return _context.UserBatiments.Include(ub => ub.User);
     }

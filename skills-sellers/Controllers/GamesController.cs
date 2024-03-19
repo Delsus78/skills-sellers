@@ -13,7 +13,7 @@ namespace skills_sellers.Controllers;
 [Authorize]
 [ApiController]
 [Route("[controller]/{id:int}")]
-public class GamesController : ControllerBase
+public class  GamesController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly GamesService _gamesService;

@@ -144,6 +144,7 @@ public class WordleGameService : IGameService
         {
             wordleData.Win = true;
             user.NbCardOpeningAvailable++;
+            user.Score += 20;
             
             // stats
             _statsService.OnWordleWin(user.Id);
@@ -151,7 +152,7 @@ public class WordleGameService : IGameService
             // notify player
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(
                     "WORDLE WIN", 
-                    $"Vous avez gagné 1 ouverture de carte !"), 
+                    $"Vous avez gagné 1 ouverture de carte !", ""), 
                 _context);
         }
         else if (wordleData.Words.Count >= 5)

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace skills_sellers.Models.Cards;
+namespace skills_sellers.Models;
 
 public record CardCreateRequest([Required] string Name,
     [Required] string Collection,
@@ -13,4 +13,6 @@ public record UserCardResponse(int Id,
     string Description,
     string Rarity,
     CompetencesResponse Competences,
-    ActionResponse? Action = null);
+    int Power,
+    ActionResponse? Action = null,
+    UserWeaponResponse? Weapon = null);

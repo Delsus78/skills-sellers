@@ -25,7 +25,9 @@ public static class ActionsModelsExtensions
                 CreatedAt = actionExplorer.CreatedAt ?? DateTime.Now,
                 Cards = actionExplorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 IsReturningToHome = actionExplorer.IsReturningToHome,
-                PlanetName = actionExplorer.PlanetName
+                PlanetName = actionExplorer.PlanetName,
+                Decision = actionExplorer.Decision,
+                needDecision = actionExplorer.needDecision
             },
             ActionAmeliorer actionAmeliorer => new ActionAmeliorerResponse
             {
@@ -34,6 +36,7 @@ public static class ActionsModelsExtensions
                 EndTime = actionAmeliorer.DueDate,
                 CreatedAt = actionAmeliorer.CreatedAt ?? DateTime.Now,
                 BatimentToUpgrade = actionAmeliorer.BatimentToUpgrade,
+                WeaponToUpgradeId = actionAmeliorer.WeaponToUpgradeId,
                 Cards = actionAmeliorer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
             ActionMuscler actionMuscler => new ActionMusclerResponse
@@ -53,6 +56,23 @@ public static class ActionsModelsExtensions
                 CreatedAt = actionReparer.CreatedAt ?? DateTime.Now,
                 Cards = actionReparer.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 RepairChances = actionReparer.RepairChances
+            },
+            ActionSatellite actionSatellite => new ActionSatelliteResponse
+            {
+                ActionName = "satellite",
+                Id = actionSatellite.Id,
+                EndTime = actionSatellite.DueDate,
+                CreatedAt = actionSatellite.CreatedAt ?? DateTime.Now,
+                Cards = actionSatellite.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
+            },
+            ActionGuerre actionGuerre => new ActionGuerreResponse
+            {
+                ActionName = "guerre*",
+                Id = actionGuerre.Id,
+                EndTime = actionGuerre.DueDate,
+                CreatedAt = actionGuerre.CreatedAt ?? DateTime.Now,
+                Cards = actionGuerre.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
+                WarId = actionGuerre.WarId
             },
             _ => throw new ArgumentException("Action inconnue")
         };
