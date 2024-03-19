@@ -172,6 +172,7 @@ public class AmeliorerActionService : IActionService
                 _userBatimentsService.GetBatimentPrices(level, model.BatimentToUpgrade);
             var extraLevels = intelTotal - intelPrice;
             finalExtraLevels = extraLevels < 0 ? 0 : extraLevels;
+            
             endTime = CalculateActionEndTime(level, finalExtraLevels);
         }
         else // weapon upgrade
@@ -181,19 +182,21 @@ public class AmeliorerActionService : IActionService
                 throw new AppException("Arme non trouvée", 404);
             level = weaponPower.Value * 3;
 
-            (creatiumPrice, _, _) =
+            (creatiumPrice, var intelPrice, _) =
                 _weaponService.GetWeaponPrices(weaponPower.Value, user.UserWeapons.Count, user.UserCards.Count);
-            endTime = CalculateActionEndTime(weaponPower.Value, 0, false);
+            
+            var extraLevels = intelTotal - intelPrice;
+            finalExtraLevels = extraLevels < 0 ? 0 : extraLevels;
+            endTime = CalculateActionEndTime(weaponPower.Value, finalExtraLevels, false);
         }
 
         // generates gains and couts strings
         var gain = new Dictionary<string, string>
         {
             { "Up intel", level + " fois random" },
-            { isABatUpgrade ? "Up batiment" : "Up arme", "1 fois" }
+            { isABatUpgrade ? "Up batiment" : "Up arme", "1 fois" },
+            { "Heures réduites", finalExtraLevels.ToString() }
         };
-
-        if (model.BatimentToUpgrade != null) gain.Add("Heures réduites", finalExtraLevels.ToString());
 
         var couts = new Dictionary<string, string>
         {
@@ -379,7 +382,7 @@ public class AmeliorerActionService : IActionService
     {
         if (level <= 0) level = 1;
         
-        var hours = isBatUpgrade ? 12 * level - extraLevels : 16 * level;
+        var hours = isBatUpgrade ? 12 * level - extraLevels : 16 * level - 0.5 * extraLevels;
         if (hours < 1) hours = 0;
         
         return DateTime.Now.AddHours(hours);
