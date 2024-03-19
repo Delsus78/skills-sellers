@@ -401,7 +401,7 @@ public class WarService : IWarService
                 if (target == null)
                     throw new AppException("Cible non trouvée", 404);
 
-                target.Score += 100;
+                target.Score += 1000;
                 
                 var notifMsg = "Voici votre récompense pour avoir survécu !\n";
 
@@ -453,7 +453,7 @@ public class WarService : IWarService
                 starter.Creatium += rewardedCreatiumPerAlly;
                 starter.Or += rewardedOrPerAlly;
                 starter.Nourriture += rewardedNourriturePerAlly;
-                starter.Score += 400;
+                starter.Score += 4500;
                 
                 var notifMsg = $"Voici votre récompense pour avoir vaincu à {allies.Count + 1} joueur(s) !\n" 
                                + $"Nourriture + {rewardedNourriturePerAlly}\n" 
@@ -469,7 +469,7 @@ public class WarService : IWarService
                     ally.Creatium += rewardedCreatiumPerAlly;
                     ally.Or += rewardedOrPerAlly;
                     ally.Nourriture += rewardedNourriturePerAlly;
-                    ally.Score += 150;
+                    ally.Score += 2500;
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Victoire contre {target.Pseudo}", 
                         notifMsg + "+ 150 SCORE\n", "cards"), context);
@@ -515,7 +515,7 @@ public class WarService : IWarService
                 
                 foreach (var ally in allies)
                 {
-                    ally.Score += 100;
+                    ally.Score += 1000;
                     var notifMsg = "Voici votre récompense pour avoir vaincu !\n";
                     notifMsg += WarHelpers.GetRandomWarLoot(ally) + "\n";
                     notifMsg += WarHelpers.GetRandomWarLoot(ally) + "\n";
@@ -525,7 +525,7 @@ public class WarService : IWarService
                         notifMsg, "cards"), context);
                 }
                 
-                starter.Score += 100;
+                starter.Score += 1000;
                 
                 var notifStarterMsg = "Voici votre récompense pour avoir vaincu !\n";
                 notifStarterMsg += WarHelpers.GetRandomWarLoot(starter) + "\n";
