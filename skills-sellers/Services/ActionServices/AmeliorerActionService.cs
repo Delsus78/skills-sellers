@@ -1,3 +1,4 @@
+using System.Globalization;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -119,9 +120,10 @@ public class AmeliorerActionService : IActionService
             if (weaponPower == null)
                 throw new AppException("Arme non trouvée", 404);
             
-            (creatiumPrice, _, _) =
+            (creatiumPrice,var intelPrice, _) =
                 _weaponService.GetWeaponPrices((int)weaponPower, user.UserWeapons.Count, user.UserCards.Count);
-            endTime = CalculateActionEndTime((int)weaponPower, 0, false);
+            var extraLevels = intelTotal - intelPrice;
+            endTime = CalculateActionEndTime((int)weaponPower, extraLevels, false);
         }
 
         var action = new ActionAmeliorer
@@ -195,7 +197,7 @@ public class AmeliorerActionService : IActionService
         {
             { "Up intel", level + " fois random" },
             { isABatUpgrade ? "Up batiment" : "Up arme", "1 fois" },
-            { "Heures réduites", finalExtraLevels.ToString() }
+            { "réduites", isABatUpgrade ? finalExtraLevels + "Heures" : finalExtraLevels * 30 + "Minutes" }
         };
 
         var couts = new Dictionary<string, string>
