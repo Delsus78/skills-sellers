@@ -28,7 +28,7 @@ public class HostileRegistreHostedService : IHostedService
         var timeOfDay = DateTime.Now.TimeOfDay;
         var nextFullHour = TimeSpan.FromHours(Math.Ceiling(timeOfDay.TotalHours));
         var delta = (nextFullHour - timeOfDay).TotalMilliseconds;
-        _timer = new Timer(ExecuteTask, null, (int)delta, (int)TimeSpan.FromHours(1).TotalMilliseconds);
+        _timer = new Timer(ExecuteTask, null, (int)delta, (int)TimeSpan.FromHours(2).TotalMilliseconds);
         return Task.CompletedTask;
     }
     
