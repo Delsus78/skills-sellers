@@ -24,6 +24,10 @@ public static class CardsModelsExtensions
         // format = "number/max"
         var collectionStat = card.Collection.Split(" ")[1];
         
+        // special case for meethic
+        if (collectionStat.Contains("X"))
+            return 7;
+        
         return int.Parse(collectionStat.Split("/")[1]);
     }
 }
