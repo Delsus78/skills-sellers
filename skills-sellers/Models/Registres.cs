@@ -17,6 +17,7 @@ public record RegistreResponse(
     int? ResourceOfferAmount,
     int? ResourceDemandAmount,
     string? RelatedPlayerName,
-    int? RelatedPlayerId);
+    int? RelatedPlayerId,
+    bool? IsFavorite);
 
 public record UserRegistreInfoResponse(int HostileAttackWon, int HostileAttackLost, List<RegistreResponse> Registres);

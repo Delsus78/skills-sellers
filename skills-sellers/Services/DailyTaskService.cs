@@ -37,6 +37,7 @@ public class DailyTaskService : IDailyTaskService
             try {await DailyResetBatimentDataAsync(context);} catch (Exception e) {Console.WriteLine(e);}
             try {await DailyCheckAndDeleteNotifications(context);} catch (Exception e) {Console.WriteLine(e);}
             try {await DailyCheckAndDeleteFightReports(context);} catch (Exception e) {Console.WriteLine(e);}
+            try {await DailyCheckAndDeleteNeutralRegistre(context);} catch (Exception e) {Console.WriteLine(e);}
             try {await DailyExecuteFriendlyTrade(context);} catch (Exception e) {Console.WriteLine(e);}
             try {await DailyCheckEndedSeason(context);} catch (Exception e) {Console.WriteLine(e);}
 
@@ -98,6 +99,16 @@ public class DailyTaskService : IDailyTaskService
         await context.SaveChangesAsync();
     }
 
+    private async Task DailyCheckAndDeleteNeutralRegistre(DataContext context)
+    {
+        var registresNeutres = await context.Registres
+            .OfType<RegistreNeutral>()
+            .Where(registre => registre.IsFavorite == false)
+            .ToListAsync();
+        context.Registres.RemoveRange(registresNeutres);
+        await context.SaveChangesAsync();
+    }
+    
     private async Task DailyExecuteFriendlyTrade(DataContext context)
     {
         var friendlyTrades = await context.Registres
@@ -146,6 +157,7 @@ public class DailyTaskService : IDailyTaskService
                             $"HOSTILE ! Pas assez de {resourceType} ! ({user.GetResources()[resourceType]} < {priceToPay}) La planète a pris ça comme une agression (c'est des tarés) et décide de vous attaquer !";
 
                         // power 
+                        await context.Entry(user).Collection(user => user.UserCards).LoadAsync();
                         var newHostileRegistre = WarHelpers.GenerateHostileRegistre(user, friendlyTrade.Name);
 
                         newHostileRegistre.Description =

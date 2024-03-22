@@ -177,7 +177,8 @@ public class StatsService : IStatsService
             u => u.UserCards.GroupBy(c => c.Card.GetCollectionName()).Count(g => g.Count() == g.First().Card.GetCollectionNumber()),
             u => u.UserCards.Count(c => c.Card.Rarity == "commune"),
             u => u.UserCards.Count(c => c.Card.Rarity == "epic"),
-            u => u.UserCards.Count(c => c.Card.Rarity == "legendaire")
+            u => u.UserCards.Count(c => c.Card.Rarity == "legendaire"),
+            u => u.UserCards.Count(c => c.Card.Rarity == "meethic")
         };
 
         var statsRanks = statsCriteria.AsParallel().Select(criterion => GetRankForStatCriteria(criterion, user.Id)).ToList();
@@ -203,7 +204,8 @@ public class StatsService : IStatsService
             "TotalCollectionsCompleted",
             "TotalCardsCommune",
             "TotalCardsEpic",
-            "TotalCardsLegendaire"
+            "TotalCardsLegendaire",
+            "TotalCardsMeethic"
         };
 
         var combinedRanks = statsRanks.Concat(userRanks).ToList();

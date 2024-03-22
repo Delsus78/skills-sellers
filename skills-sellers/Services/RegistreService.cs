@@ -11,6 +11,7 @@ public interface IRegistreService
 {
     Task DeleteFriendlyRegistre(User user, int registreId);
     IEnumerable<FightReportResponse> GetFightReports(int limit);
+    Task SwitchFavorite(User user, int registreId);
 }
 public class RegistreService : IRegistreService
 {
@@ -68,4 +69,23 @@ public class RegistreService : IRegistreService
             .Take(limit)
             .Select(fr => fr.ToResponse())
             .ToList();
+
+    public Task SwitchFavorite(User user, int registreId)
+    {
+        var registre = _context.Registres.FirstOrDefault(r => r.Id == registreId);
+        
+        if (registre == null)
+            throw new AppException("Registre not found", 404);
+        
+        if (registre is not RegistreNeutral registreNeutral)
+            throw new AppException("Registre is not neutral", 400);
+        
+        if (registre.UserId != user.Id)
+            throw new AppException("Registre is not yours", 400);
+        
+        registreNeutral.IsFavorite ??= false;
+        registreNeutral.IsFavorite = !registreNeutral.IsFavorite;
+        
+        return _context.SaveChangesAsync();
+    }
 }

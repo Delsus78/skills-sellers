@@ -337,7 +337,7 @@ public class ExplorerActionService : IActionService
                 var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, true);
                 
                 // score
-                opponent.Score += 10;
+                opponent.Score += 50;
                 
                 notificationMessage =
                     $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a perdu !\n" +
@@ -418,6 +418,7 @@ public class ExplorerActionService : IActionService
             // hostile
             context.Entry(user).Collection(u => u.Registres).Load();
             context.Entry(user).Reference(u => u.UserBatimentData).Load();
+            context.Entry(user).Collection(u => u.UserCards).Load();
             
             // notify user
             _notificationService.SendNotificationToUser(user, new NotificationRequest
@@ -434,7 +435,7 @@ public class ExplorerActionService : IActionService
         }
 
         // 10% de chance que la planete soit habitée
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 10))
+        if (!Randomizer.RandomPourcentageUp(10))
         { // non habitée
             // adding to registre as neutral
             var registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
@@ -464,7 +465,7 @@ public class ExplorerActionService : IActionService
         Registre registre;
         
         // 60% de chance que la planète deviennent hostile
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 60))
+        if (!Randomizer.RandomPourcentageUp(60))
         {
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
@@ -477,6 +478,7 @@ public class ExplorerActionService : IActionService
         // hostile
         context.Entry(user).Collection(u => u.Registres).Load();
         context.Entry(user).Reference(u => u.UserBatimentData).Load();
+        context.Entry(user).Collection(u => u.UserCards).Load();
         
         registre = WarHelpers.GenerateHostileRegistre(user, action.PlanetName);
         
@@ -490,9 +492,8 @@ public class ExplorerActionService : IActionService
         Registre registre;
         
         // 10 % de créer une route commerciale
-        if (!Randomizer.RandomPourcentageSeeded(action.PlanetName, 10)) // non
+        if (!Randomizer.RandomPourcentageUp(10)) // non
         {
-
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
             user.Registres.Add(registre);
@@ -545,8 +546,8 @@ public class ExplorerActionService : IActionService
             randomCard = null;
             result = 0;
             
-            // 5% de chance de rencontrer une autre carte
-            if (!Randomizer.RandomPourcentageUp(5))
+            // 6% de chance de rencontrer une autre carte
+            if (!Randomizer.RandomPourcentageUp(6))
                 return (false, null);
             
             // get all cards in exploration (except the current one and all user's cards)
@@ -571,10 +572,7 @@ public class ExplorerActionService : IActionService
             var fightResult = WarHelpers.Fight(userCard, randomCard);
             
             // get description
-            var fightReport = WarHelpers.GetFightDescription(userCard, randomCard);
-            
-            // if draw, no one win
-            result = fightResult.result;
+            var fightReport = WarHelpers.GetFightDescription(userCard, randomCard, fightResult.result);
 
             return (true, fightReport);
         }

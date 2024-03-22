@@ -327,8 +327,6 @@ public class WarService : IWarService
             .Select(uc => new FightingEntity(
                 uc.Card.Name,
                 uc.ToResponse().Power,
-                0,
-                uc.UserWeapon != null ? uc.UserWeapon.Weapon.Name : null,
                 uc.UserWeapon != null ? uc.UserWeapon.Affinity : null))
             .ToList();
 
@@ -353,9 +351,7 @@ public class WarService : IWarService
                 .ThenInclude(w => w.Weapon)
                 .Select(uc => new FightingEntity(
                     uc.Card.Name, 
-                    uc.ToResponse().Power, 
-                    0, 
-                    uc.UserWeapon != null ? uc.UserWeapon.Weapon.Name : null, 
+                    uc.ToResponse().Power,
                     uc.UserWeapon != null ? uc.UserWeapon.Affinity : null))
                 .ToList();
         }
@@ -367,11 +363,7 @@ public class WarService : IWarService
 
             targetName = registreHostile.Name;
             
-            defendingCards.Add(new FightingEntity(registreHostile.Name,
-                (registreHostile.CardPower + registreHostile.CardWeaponPower) * 5, 0,
-                Randomizer.RandomMuscle(registreHostile.Name.GetHashCode()) + " de " +
-                registreHostile.Name, // why not muscles
-                registreHostile.Affinity));
+            defendingCards.AddRange(WarHelpers.SplitArmyFromRegistreHostile(registreHostile, true));
         }
         
         // BATTLE
@@ -553,8 +545,8 @@ public class WarService : IWarService
     // check if registreTarget is not protected by a war timeout
     // check if registreAlly is not already in a war
     // check if user has done his 2 wars this week already
-    private (bool valid, string why, DateTime? estimatedDuration, Dictionary<string,string>? couts) 
-        CanStartWar(User user, List<int> userCardsIds, List<int> userAllyIds, Registre registreTarget)
+    private (bool valid, string why, DateTime? estimatedDuration, Dictionary<string,string>? couts) CanStartWar(
+        User user, List<int> userCardsIds, List<int> userAllyIds, Registre registreTarget)
     {
         // is cards estimation valid
         var actionEstimation = _actionTaskService.EstimateAction(user.Id, new ActionRequest
@@ -595,6 +587,12 @@ public class WarService : IWarService
             // war timeout
             if (registrePlayer.User.WarTimeout > DateTime.Now)
                 return (false, "La cible est protégée par un temps de guerre", null, null);
+            
+            // if started vs registrePlayer, user has done his 2 wars 
+            if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
+                    .AsEnumerable()
+                    .Count(w => EstDansSemaineActuelle(w.CreatedAt)) >= 2)
+                return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
         }
         
         // ally in war
@@ -607,12 +605,6 @@ public class WarService : IWarService
             )
            )
               return (false, "Un de vos alliés est déjà en guerre", null, null);
-        
-        // user has done his 2 wars in the week already (and not in a lapse of 7 days)
-        if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
-                .AsEnumerable()
-                .Count(w => EstDansSemaineActuelle(w.CreatedAt)) >= 2)
-              return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
 
         return (true, "", actionEstimation.EndDates.First(), actionEstimation.Couts);
     }

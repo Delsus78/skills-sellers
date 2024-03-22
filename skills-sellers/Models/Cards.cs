@@ -15,4 +15,6 @@ public record UserCardResponse(int Id,
     CompetencesResponse Competences,
     int Power,
     ActionResponse? Action = null,
-    UserWeaponResponse? Weapon = null);
+    UserWeaponResponse? Weapon = null,
+    bool IsDoublon = false,
+    bool IsDoublonFullUpgrade = false);

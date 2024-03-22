@@ -27,7 +27,8 @@ public static class RegistresModelsExtensions
             registre.Type == RegistreType.Friendly ? ((RegistreFriendly)registre).ResourceOfferAmount : null,
             registre.Type == RegistreType.Friendly ? ((RegistreFriendly)registre).ResourceDemandAmount : null,
             registre.Type == RegistreType.Player ? ((RegistrePlayer)registre).RelatedPlayer.Pseudo : null,
-            registre.Type == RegistreType.Player ? ((RegistrePlayer)registre).RelatedPlayerId : null
+            registre.Type == RegistreType.Player ? ((RegistrePlayer)registre).RelatedPlayerId : null,
+            registre.Type == RegistreType.Neutral ? ((RegistreNeutral)registre).IsFavorite : null
         );
     
     public static FightReportResponse ToResponse(this FightReport fightReport) 

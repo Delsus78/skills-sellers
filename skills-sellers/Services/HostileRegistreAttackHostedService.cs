@@ -112,14 +112,13 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
             if (rdnNumber >= hostileRegistres.Count) continue;
             
             var allSatelliteFightingEntities = user.UserCards.Where(uc => uc.Action is ActionSatellite)
-                .Select(c => new FightingEntity(c.Card.Name, c.ToResponse().Power,0, c.UserWeapon?.Weapon.Name, c.UserWeapon?.Affinity))
+                .Select(c => new FightingEntity(c.Card.Name, c.ToResponse().Power, c.UserWeapon?.Affinity))
                 .ToList();
                 
             var allHostileFightingEntities = hostileRegistres.Select(
                     r => 
                         new FightingEntity(r.Name, 
-                            r.CardPower + r.CardWeaponPower, 0,
-                            Randomizer.RandomMuscle(r.Name.GetHashCode()) + " de " + r.Name, // why not muscles
+                            r.CardPower + r.CardWeaponPower, // why not muscles
                             r.Affinity))
                 .ToList();
 

@@ -18,10 +18,6 @@ namespace skills_sellers.Services;
      private readonly DataContext _context;
      private readonly INotificationService _notificationService;
      private readonly IUserService _userService;
-     private readonly List<string> _legendaryAchievements = new()
-     {
-         "CardAtFull10"
-     };
      
      public AchievementsService(DataContext context, IUserService userService, INotificationService notificationService)
      {

@@ -48,4 +48,9 @@ public class RegistreController : ControllerBase
     [HttpGet("fightreports")]
     public IEnumerable<FightReportResponse> GetFightReports(int limit = 20)
         => _registreService.GetFightReports(limit);
+    
+    [Authorize]
+    [HttpPost("favorite/{registreId}")]
+    public async Task SwitchFavorite(int id, int registreId)
+        => await _registreService.SwitchFavorite(GetUserAuthenticated(id), registreId);
 }
