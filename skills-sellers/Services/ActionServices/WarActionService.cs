@@ -37,11 +37,7 @@ public class WarActionService : IActionService
         // une des carte est déjà en action
         if (userCards.Any(uc => uc.Action != null))
             return (false, "Une des cartes est déjà en action");
-        
-        // Batiment déjà plein
-        if (_userBatimentsService.IsUserBatimentFull(user, "spatioport", userCards.Count))
-            return (false, "Batiment déjà plein");
-        
+
         // ressources insuffisantes
         if (user.Nourriture < userCards.Count * 4)
             return (false, "Ressources insuffisantes");
@@ -127,6 +123,10 @@ public class WarActionService : IActionService
                 .ToList();
             UpForceOfCards(userCardsToUp);
 
+            // remove action
+            context.Actions.Remove(actionGuerre);
+            await context.SaveChangesAsync();
+            
             // notify user
             await _notificationService.SendNotificationToUser(actionGuerre.User, new NotificationRequest(
                     "Guerre terminée",
@@ -134,9 +134,6 @@ public class WarActionService : IActionService
                     "cards"),
                 context);
 
-            // remove action
-            context.Actions.Remove(actionGuerre);
-            
             // change war status
             war.Status = WarStatus.Finie;
         }

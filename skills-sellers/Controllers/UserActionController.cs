@@ -41,7 +41,7 @@ public class UserActionController : ControllerBase
     
     [Authorize]
     [HttpPost("actions/opencard")]
-    public async Task<UserCardResponse?> OpenCard(int id)
+    public async Task<UserCardResponse> OpenCard(int id)
         => await _userService.OpenCard(GetUserAuthenticated(id));
     
     [Authorize]

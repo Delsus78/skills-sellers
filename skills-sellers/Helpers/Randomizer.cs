@@ -62,8 +62,9 @@ public static class Randomizer
         var randomInt = RandomInt(0, 100);
         var type = randomInt switch
         {
-            < 3 => "legendaire",
-            < 13 => "epic",
+            < 1 => "meethic",
+            < 4 => "legendaire",
+            < 14 => "epic",
             _ => "commune"
         };
         Console.Out.WriteLine($"Random card res : {randomInt} => {type}");
@@ -151,6 +152,7 @@ public static class Randomizer
     
     
     /// <summary>
+    /// meethic = 20 pts
     /// legendaire = 15 pts
     /// epic = 10 pts
     /// commune = 5 pts
@@ -168,6 +170,7 @@ public static class Randomizer
     {
         // repartir les points en fonction de la rareté sur les 4 stats (force, intel, cuisine, charisme)
         // chaque compétence ne peut pas dépasser 10 pts
+        // 20 pts pour meethic
         // 15 pts pour legendaire
         // 10 pts pour epic
         // 5 pts pour commune
@@ -183,6 +186,7 @@ public static class Randomizer
 
         ptsLeft = rarity switch
         {
+            "meethic" => 20,
             "legendaire" => 15,
             "epic" => 10,
             "commune" => 5,
@@ -253,7 +257,9 @@ public static class Randomizer
             var bytes = new byte[8];
             RandomNumberGenerator.Fill(bytes);
             var d = BitConverter.ToDouble(bytes, 0);
-            return i + d * (i1 - i);
+            var res = i + d * (i1 - i);
+            Console.Out.WriteLine($"Random pourcentage up {res} ({i} - {i1})");
+            return res;
         }
     }
     

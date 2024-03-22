@@ -129,7 +129,7 @@ public class ReparerActionService : IActionService
         // calculate chances (random double between 0 and 100)
         var chances = Randomizer.RandomDouble(0, 100);
         
-        if (chances < actionReparer.RepairChances)
+        if (chances < actionReparer.RepairChances || actionReparer.RepairChances >= 100)
         {
             
             // logs

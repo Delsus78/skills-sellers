@@ -148,7 +148,7 @@ public class WeaponService : IWeaponService
 
     public (int creatiumPrice, int intelPrice, int forcePrice) GetWeaponPrices(int actualPower, int numberOfWeapons, int numberOfCards)
     {
-        var creatiumPrice = (int)(150 * (Math.Pow(5, numberOfCards / 100.0) + numberOfWeapons * 4) * Math.Pow(1.3,actualPower));
+        var creatiumPrice = (int)(150 * (Math.Pow(6, numberOfCards / 100.0) + numberOfWeapons * 4) * Math.Pow(1.3,actualPower));
         var intelPrice = actualPower * 25;
         var forcePrice = actualPower * 50;
         

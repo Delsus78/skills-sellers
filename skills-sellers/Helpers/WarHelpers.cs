@@ -19,118 +19,215 @@ public static class WarHelpers
     /// -1 = card2 win
     /// 0 = draw 
     /// </returns>
-    public static (int result, int affinityWin) Fight(UserCard card1, UserCard card2) =>
+    public static (int result, int pointDiff) Fight(UserCard card1, UserCard card2) =>
         Fight(
-            new FightingEntity("card1", card1.ToResponse().Power,0, "weapon1", card1.UserWeapon?.Affinity),
-            new FightingEntity("card2", card2.ToResponse().Power,0, "weapon2", card2.UserWeapon?.Affinity)
+            new FightingEntity("card1", card1.ToResponse().Power, card1.UserWeapon?.Affinity),
+            new FightingEntity("card2", card2.ToResponse().Power, card2.UserWeapon?.Affinity)
         );
 
-    private static (int result, int affinityWin) Fight(FightingEntity card1, FightingEntity card2)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="card1"></param>
+    /// <param name="card2"></param>
+    /// <returns>
+    /// 1 = card1 win
+    /// -1 = card2 win
+    /// 0 = draw 
+    /// </returns>
+    private static (int result, int pointDiff) Fight(FightingEntity card1, FightingEntity card2)
     {
         // get the power of each card
         var card1Power = card1.TotalPower;
         var card2Power = card2.TotalPower;
 
         var affinityWin = CompareAffinity(card1.Affinity, card2.Affinity);
-        
+
         // compare affinity
         switch (affinityWin)
         {
             case 1:
-                card2Power = (int) (card2Power * 0.5);
+                card2Power = (int)(card2Power * 0.5);
                 break;
             case -1:
-                card1Power = (int) (card1Power * 0.5);
+                card1Power = (int)(card1Power * 0.5);
                 break;
         }
 
         // get the difference
         var difference = card1Power - card2Power;
-        
+
         // return the result
         return difference switch
         {
-            > 0 => (1, affinityWin),
-            < 0 => (-1, affinityWin),
-            _ => (0, affinityWin)
+            > 0 => (1, difference),
+            < 0 => (-1, difference),
+            _ => (0, difference)
         };
     }
 
-    
-    public static (bool defenseWin, string fightReport) Battle(IEnumerable<FightingEntity> armyDefense, IEnumerable<FightingEntity> armyAttack)
+    public static List<FightingEntity> SplitArmyFromRegistreHostile(RegistreHostile registreHostile, bool isDefending = false)
+    {
+        var powerRemaining = (registreHostile.CardPower + registreHostile.CardWeaponPower) * (isDefending ? 1 : 5);
+        
+        var army = new List<FightingEntity>();
+        
+        while (powerRemaining > 0)
+        {
+            var cardPower = Math.Min(powerRemaining, 40);
+            powerRemaining -= cardPower;
+            army.Add(new FightingEntity("Carte", cardPower, registreHostile.Affinity));
+        }
+        
+        // explique en une phrase comment l'armée a été divisée
+        return army;
+
+    }
+
+    public static (bool defenseWin, string fightReport) Battle(IEnumerable<FightingEntity> armyDefense,
+        IEnumerable<FightingEntity> armyAttack)
     {
         var report = new StringBuilder();
-        var defensePoints = 0;
 
         // new list order by power
         var orderedArmyDefense = armyDefense.OrderByDescending(c => c.TotalPower).ToList();
         var orderedArmyAttack = armyAttack.OrderByDescending(c => c.TotalPower).ToList();
+        var fightDone = 0;
         
-        while (orderedArmyAttack.Count > 0)
+        // write in the report the number of cards in each army and total power
+        report.Append(
+            $"[*!DEFENSE!*] {orderedArmyDefense.Count} cartes avec un total de {orderedArmyDefense.Sum(c => c.TotalPower)} de puissance\n");
+        report.Append(
+            $"[*!ATTAQUE!*] {orderedArmyAttack.Count} cartes avec un total de {orderedArmyAttack.Sum(c => c.TotalPower)} de puissance\n");
+
+        if (orderedArmyDefense.Count == 0)
         {
-            var cardAttack = orderedArmyAttack[0];
-            orderedArmyAttack.RemoveAt(0);
-            
-            if (orderedArmyDefense.Count == 0)
-            {
-                report.Append($"[DEFENSE] Aucune carte disponible pour défendre vs [ATTAQUE] {cardAttack.Name} ({cardAttack.TotalPower}/{cardAttack.Affinity}) => ATTAQUE GAGNE !\n");
-                defensePoints--;
-                continue;
-            }
-            var cardDefense = orderedArmyDefense[0];
-            orderedArmyDefense.RemoveAt(0);
-            
-
-            var fightResult = Fight(cardDefense, cardAttack);
-            
-            defensePoints += fightResult.result;
-            
-            report.Append($"[DEFENSE] {cardDefense.Name} ({cardDefense.TotalPower}/{cardDefense.Affinity}) vs [ATTAQUE] {cardAttack.Name} ({cardAttack.TotalPower}/{cardAttack.Affinity})");
-            report.Append(fightResult.result switch {
-                1 => " => DEFENSE GAGNE !\n",
-                -1 => " => ATTAQUE GAGNE !\n",
-                _ => " => Egalité !\n"
-            });
-
-            // calculate power added from defense success
-            var addedPower = cardDefense.TotalPower - cardAttack.TotalPower - cardDefense.Buff > 0
-                ? cardDefense.TotalPower - cardAttack.TotalPower
-                : 0;
-            
-            if (addedPower == 0)
-                continue;
-            
-            if (orderedArmyDefense.Count == 0)
-                orderedArmyDefense.Add(cardDefense with
-                {
-                    Name = cardDefense.Name+"*", 
-                    TotalPower = addedPower, 
-                    Buff = addedPower
-                });
-            else
-                orderedArmyDefense[0] = orderedArmyDefense[0] with 
-                { 
-                    Name = orderedArmyDefense[0].Name + $"(+{addedPower})",
-                    TotalPower = orderedArmyDefense[0].TotalPower + addedPower, 
-                    Buff = addedPower 
-                };
+            report.Append("[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => ATTAQUE GAGNE !\n");
+            return (false, report.ToString());
         }
-
-        if (orderedArmyDefense.Count > 0)
+        
+        if (orderedArmyAttack.Count == 0)
         {
-            orderedArmyDefense.ForEach(fe => report.Append($"[DEFENSE] {fe.Name} ({fe.TotalPower}/{fe.Affinity}) vs [ATTAQUE] Plus de carte disponible ! => DEFENSE GAGNE !\n"));
+            report.Append("[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => DEFENSE GAGNE !\n");
             return (true, report.ToString());
         }
+        
+        var attackingCard = orderedArmyAttack[0];
+        var defendingCard = orderedArmyDefense[0];
+        
+        while (fightDone == 0)
+        {
+            // fight
+            var fightResult = Fight(defendingCard, attackingCard);
+            
+            switch (fightResult.result)
+            {
+                // defense win
+                case 1:
+                    report.Append(
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => DEFENSE GAGNE !\n");
+                    
+                    // carte attaque retirée
+                    orderedArmyAttack.RemoveAt(0);
 
-        return (defensePoints >= 0, report.ToString());
+                    // calculate power damage and remove power from actual defending card
+                    defendingCard = defendingCard with
+                    {
+                        Name = defendingCard.Name + "!*-*!",
+                        TotalPower = Math.Abs(fightResult.pointDiff)
+                    };
+                    break;
+                // attaque win
+                case -1:
+                {
+                    report.Append(
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => ATTAQUE GAGNE !\n");
+                    
+                    // attaque card get damaged
+                    attackingCard = attackingCard with
+                    {
+                        Name = attackingCard.Name + "!*-*!",
+                        TotalPower = Math.Abs(fightResult.pointDiff)
+                    };
+                
+                    // defense card removed
+                    orderedArmyDefense.RemoveAt(0);
+                
+                    // calculate power added from defense fail and add the power to the next defense card
+                    var addedDefensePower = Math.Max(defendingCard.TotalPower - attackingCard.TotalPower, 0);
+                
+                    if (orderedArmyDefense.Count == 0 && addedDefensePower > 0) // ajout d'une carte en plus
+                        orderedArmyDefense.Add(defendingCard with
+                        {
+                            Name = defendingCard.Name + "*",
+                            TotalPower = addedDefensePower
+                        });
+                    else if (addedDefensePower > 0)
+                    {
+                        defendingCard = orderedArmyDefense[0] with
+                        {
+                            Name = orderedArmyDefense[0].Name + $"!*(+{addedDefensePower})*!",
+                            TotalPower = orderedArmyDefense[0].TotalPower + addedDefensePower
+                        };
+                    }
+
+                    break;
+                }
+                // draw
+                default:
+                {
+                    report.Append(
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => Egalité !\n");
+                    
+                    // carte attaque retirée
+                    orderedArmyAttack.RemoveAt(0);
+                
+                    // defense card removed
+                    orderedArmyDefense.RemoveAt(0);
+                
+                    // calculate power added from defense fail and add the power to the next defense card
+                    var addedDefensePower = Math.Max(defendingCard.TotalPower - attackingCard.TotalPower, 0);
+                
+                    if (orderedArmyDefense.Count == 0 && addedDefensePower > 0) // ajout d'une carte en plus
+                        orderedArmyDefense.Add(defendingCard with
+                        {
+                            Name = defendingCard.Name + "*",
+                            TotalPower = addedDefensePower
+                        });
+                    else if (addedDefensePower > 0)
+                    {
+                        defendingCard = orderedArmyDefense[0] with
+                        {
+                            Name = orderedArmyDefense[0].Name + $"!*(+{addedDefensePower})*!",
+                            TotalPower = orderedArmyDefense[0].TotalPower + addedDefensePower
+                        };
+                    }
+
+                    break;
+                }
+            }
+
+            if (orderedArmyAttack.Count == 0) // si plus de carte attaque, la défense gagne
+            {
+                report.Append(
+                    "[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => DEFENSE GAGNE !\n");
+                fightDone = 1;
+            } else if (orderedArmyDefense.Count == 0) // si plus de carte défense mais qu'il reste des cartes attaque, l'attaque gagne
+            {
+                report.Append(
+                    "[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => ATTAQUE GAGNE !\n");
+                fightDone = -1;
+            }
+        }
+
+        return (fightDone > 0, report.ToString());
     }
 
-    public static FightReport GetFightDescription(UserCard card1, UserCard card2)
+    public static FightReport GetFightDescription(UserCard card1, UserCard card2, int fightResult)
     {
         // get the power of each card
         var card1Power = card1.ToResponse().Power;
         var card2Power = card2.ToResponse().Power;
-        var result = Fight(card1, card2).result;
 
         var description = new List<string>
         {
@@ -154,24 +251,28 @@ public static class WarHelpers
                 description.Add($"[*!{card2.User.Pseudo}!*] *!{card2.Card.Name}!* => *!{card2Power}!* de puissance!\n");
                 break;
             case 1:
-                description.Add($"L'affinité de l'arme de *!{card1.User.Pseudo}!* est supérieure à celle de *!{card2.User.Pseudo}!* !\n");
+                description.Add(
+                    $"L'affinité de l'arme de *!{card1.User.Pseudo}!* est supérieure à celle de *!{card2.User.Pseudo}!* !\n");
                 description.Add(
                     $"L'affinité *!{card1.UserWeapon?.Affinity}!* fait passer la puissance de *!{card2.User.Pseudo}!*[*!{card2.Card.Name}!*] de *!{card2Power}!* à *!{card2Power * 0.5}!* ! \n");
 
-                description.Add($"[*!{card1.User.Pseudo}!*] *!{card1.Card.Name}!* => *!{card1Power}!* de puissance!\n"); 
-                description.Add($"[*!{card2.User.Pseudo}!*] *!{card2.Card.Name}!* => *!{card2Power * 0.5}!* de puissance!\n");
+                description.Add($"[*!{card1.User.Pseudo}!*] *!{card1.Card.Name}!* => *!{card1Power}!* de puissance!\n");
+                description.Add(
+                    $"[*!{card2.User.Pseudo}!*] *!{card2.Card.Name}!* => *!{card2Power * 0.5}!* de puissance!\n");
                 break;
             case -1:
-                description.Add($"L'affinité de l'arme de *!{card1.User.Pseudo}!* est inférieure à celle de *!{card2.User.Pseudo}!* !\n");
+                description.Add(
+                    $"L'affinité de l'arme de *!{card1.User.Pseudo}!* est inférieure à celle de *!{card2.User.Pseudo}!* !\n");
                 description.Add(
                     $"L'affinité *!{card2.UserWeapon?.Affinity}!* fait passer la puissance de *!{card1.User.Pseudo}!*[*!{card1.Card.Name}!*] de *!{card1Power}!* à *!{card1Power * 0.5}!* !\n");
 
-                description.Add($"[*!{card1.User.Pseudo}!*] *!{card1.Card.Name}!* => *!{card1Power * 0.5}!* de puissance! \n");
+                description.Add(
+                    $"[*!{card1.User.Pseudo}!*] *!{card1.Card.Name}!* => *!{card1Power * 0.5}!* de puissance! \n");
                 description.Add($"[*!{card2.User.Pseudo}!*] *!{card2.Card.Name}!* => *!{card2Power}!* de puissance!\n");
                 break;
         }
 
-        switch (result)
+        switch (fightResult)
         {
             case 1: // user win
                 description.Add(
@@ -193,7 +294,7 @@ public static class WarHelpers
             FightDate = DateTime.Now
         };
     }
-    
+
     /// <summary>
     /// 
     /// </summary>
@@ -211,25 +312,25 @@ public static class WarHelpers
                 return 0;
             else
                 return -1;
-        
+
         if (affinity2 == null)
             return 1;
-        
+
         if (affinity1 == affinity2)
             return 0;
-        
+
         switch (affinity1)
         {
             case WeaponAffinity.Pierre when affinity2 == WeaponAffinity.Ciseaux:
             case WeaponAffinity.Feuille when affinity2 == WeaponAffinity.Pierre:
             case WeaponAffinity.Ciseaux when affinity2 == WeaponAffinity.Feuille:
                 return 1;
-            
+
             case WeaponAffinity.Pierre when affinity2 == WeaponAffinity.Feuille:
             case WeaponAffinity.Feuille when affinity2 == WeaponAffinity.Ciseaux:
             case WeaponAffinity.Ciseaux when affinity2 == WeaponAffinity.Pierre:
                 return -1;
-            
+
             default:
                 return 0;
         }
@@ -248,15 +349,15 @@ public static class WarHelpers
         {
             case < 79:
                 var amountCreatium = Randomizer.RandomInt(2000, 5001);
-                user.Creatium += (int) (amountCreatium * (isOpponent ? 0.5 : 1));
+                user.Creatium += (int)(amountCreatium * (isOpponent ? 0.5 : 1));
                 return $"{amountCreatium} créatium [COMMUN]";
             case < 94:
                 var amountOr = Randomizer.RandomInt(1000, 3001);
-                user.Or += (int) (amountOr * (isOpponent ? 0.5 : 1));
+                user.Or += (int)(amountOr * (isOpponent ? 0.5 : 1));
                 return $"{amountOr} or [RARE]";
             case < 99:
                 var amountPack = Randomizer.RandomInt(5, 16);
-                user.NbCardOpeningAvailable += (int) (amountPack * (isOpponent ? 0.5 : 1));
+                user.NbCardOpeningAvailable += (int)(amountPack * (isOpponent ? 0.5 : 1));
                 return $"{amountPack} packs [EPIC]";
             case < 100:
                 user.NbWeaponUpgradeAvailable++;
@@ -265,7 +366,7 @@ public static class WarHelpers
                 throw new AppException("Erreur lors de la récupération du butin de guerre", 500);
         }
     }
-    
+
     public static RegistreHostile GenerateHostileRegistre(User user, string planetName)
     {
         (int cardPower, int cardWeaponPower) = CalculatePlanetCardPower(
@@ -285,7 +386,7 @@ public static class WarHelpers
 
         return registre;
     }
-    
+
     public static RegistreFriendly GenerateFriendlyRegistre(User user, string planetName, int powerLevel)
     {
         (int price, string resourceNameToPay, int winAmount, string resourceNameToWin) =
@@ -305,7 +406,7 @@ public static class WarHelpers
 
         return registre;
     }
-    
+
     public static RegistrePlayer GeneratePlayerRegistre(User user, User relatedPlayer, DbSet<Card> cardsDb)
     {
         var registre = new RegistrePlayer
@@ -319,7 +420,7 @@ public static class WarHelpers
 
         return registre;
     }
-    
+
     public static RegistreNeutral GenerateNeutralRegistre(User user, string planetName)
     {
         var registre = new RegistreNeutral
@@ -345,7 +446,7 @@ public static class WarHelpers
         var winIndex = random.Next(resources.Count);
         var resourceNameToWin = resources[winIndex];
         resources.RemoveAt(winIndex);
-        
+
         var resourceNameToPay = resources[random.Next(resources.Count)];
         var priceAmount = 0;
         var winAmount = 0;
@@ -355,7 +456,7 @@ public static class WarHelpers
             case "nourriture":
                 var foodRatio = random.Next(15, 31);
                 winAmount = random.Next(
-                    Math.Max(powerLevel - 35, 3), 
+                    Math.Max(powerLevel - 35, 3),
                     Math.Max(powerLevel - 25, 10));
                 priceAmount = resourceNameToPay switch
                 {
@@ -386,12 +487,12 @@ public static class WarHelpers
 
         return (priceAmount, resourceNameToPay, winAmount, resourceNameToWin);
     }
-    
+
     public static (int cardPower, int cardWeaponPower) CalculatePlanetCardPower(string planetName, int userTotalCards)
     {
-        var cardPower = 0;
-        var cardWeaponPower = (int) CalculateExponentialFunction(userTotalCards);
         var random = new Random(planetName.GetHashCode());
+        var cardPower = 0;
+        var cardWeaponPower = random.Next(0,userTotalCards / 10);
 
         // total cards
         var totalCardsPower = userTotalCards / 5;
@@ -404,19 +505,20 @@ public static class WarHelpers
             cardPower += randomPower;
         else
             cardPower -= randomPower;
-        
+
         return (Math.Max(cardPower, 0), Math.Max(cardWeaponPower + random.Next(-1, 2), 0));
     }
-    
+
     public static string LoosingAnAttack(User user, int nbToLoose)
     {
         var randomXUserCards = user.UserCards
-            .Where(uc => uc.Competences.Cuisine > 0 || uc.Competences.Charisme > 0 || uc.Competences.Intelligence > 0 || uc.Competences.Force > 0 || uc.Competences.Exploration > 0)
+            .Where(uc => uc.Competences.Cuisine > 0 || uc.Competences.Charisme > 0 || uc.Competences.Intelligence > 0 ||
+                         uc.Competences.Force > 0 || uc.Competences.Exploration > 0)
             .OrderBy(c => Guid.NewGuid()).Take(nbToLoose)
             .ToList();
 
         var message = "";
-        
+
         foreach (var userCard in randomXUserCards)
         {
             var competences = new List<Action>();
@@ -427,28 +529,28 @@ public static class WarHelpers
                     userCard.Competences.Cuisine -= 1;
                     message += $"{userCard.Card.Name} a perdu 1 point de cuisine. \r\n";
                 });
-            
+
             if (userCard.Competences.Charisme > 0)
                 competences.Add(() =>
                 {
                     userCard.Competences.Charisme -= 1;
                     message += $"{userCard.Card.Name} a perdu 1 point de charisme. \r\n";
                 });
-            
+
             if (userCard.Competences.Intelligence > 0)
                 competences.Add(() =>
                 {
                     userCard.Competences.Intelligence -= 1;
                     message += $"{userCard.Card.Name} a perdu 1 point d'intelligence. \r\n";
                 });
-            
+
             if (userCard.Competences.Force > 0)
                 competences.Add(() =>
                 {
                     userCard.Competences.Force -= 1;
                     message += $"{userCard.Card.Name} a perdu 1 point de force. \r\n";
                 });
-            
+
             if (userCard.Competences.Exploration > 0)
                 competences.Add(() =>
                 {
@@ -463,15 +565,6 @@ public static class WarHelpers
 
         return message;
     }
-    
-    private static double CalculateExponentialFunction(double x, double croissanceExpo = 1.01, int modulo = 20)
-    {
-        const double a = 2.117; // Constante a déterminée précédemment
-        var b = croissanceExpo; // Croissance exponentielle lente
-        const double c = 0.1; // Augmentation à chaque multiple de 20
-
-        return a * Math.Pow(b, x) * (1 + c * Math.Floor(x / modulo));
-    }
 }
 
-public record FightingEntity(string Name, int TotalPower, int? Buff, string? WeaponName, WeaponAffinity? Affinity);
+public record FightingEntity(string Name, int TotalPower, WeaponAffinity? Affinity);

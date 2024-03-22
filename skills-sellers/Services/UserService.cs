@@ -27,7 +27,7 @@ public interface IUserService
     Task<List<ActionResponse>> CreateAction(User user, ActionRequest model);
     ActionEstimationResponse EstimateAction(User user, ActionRequest model);
     Task<UserBatimentResponse> SetLevelOfBatiments(int id, UserBatimentRequest batimentsRequest);
-    Task<UserCardResponse?> OpenCard(User user);
+    Task<UserCardResponse> OpenCard(User user);
     Task<UserCardResponse?> OpenCard(int userId);
     Task<UserCardResponse> AmeliorerCard(User user, int userCardId, CompetencesRequest competencesRequest);
     Task<UserWeaponResponse> AmeliorerWeapon(User user, int weaponId, bool fromUpgradePoint = true);
@@ -237,7 +237,7 @@ public class UserService : IUserService
         return userCard.ToResponse();
     }
     
-    public async Task<UserCardResponse?> OpenCard(User user)
+    public async Task<UserCardResponse> OpenCard(User user)
     {
         // 0 card ?
         if (user.NbCardOpeningAvailable <= 0)
@@ -253,7 +253,7 @@ public class UserService : IUserService
         // check if user has already this card
         var userCards = user.UserCards;
         var doublon = userCards.FirstOrDefault(uc => uc.CardId == card.Id);
-        
+
         if (doublon != null)
         {
             var usercardDoubled = new UserCardDoubled
@@ -265,14 +265,39 @@ public class UserService : IUserService
             _context.Users.Update(user);
             _statsService.OnDoublonsEarned(user.Id);
             await _context.SaveChangesAsync();
-            return null;
+            
+            // special case : card is already at 10 10 10 10 10 (A CHANGER QUAND LES CARTES POURRONT MONTER A 11)
+            if (doublon.Competences.GotAllMaxed())
+            {
+                var multiplicateur = doublon.Card.Rarity.ToLower() switch
+                {
+                    "meethic" => 4,
+                    "legendaire" => 3,
+                    "epic" => 2,
+                    "commune" => 1,
+                    _ => throw new AppException("Rarity not found", 404)
+                };
+                // refund depending on rarity
+                user.Or += 1000 * multiplicateur;
+            
+                // notify user
+                await _notificationService.SendNotificationToUser(user, new NotificationRequest(
+                        "Doublon remboursé !", 
+                        $"Votre doublon de {doublon.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * multiplicateur} or !",
+                        ""), 
+                    _context);
+            }
+            
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return doublon.ToResponse(true, doublon.Competences.GotAllMaxed());
         }
 
         // random competences
         var competence = Randomizer.GetRandomCompetenceBasedOnRarity(card.Rarity);
         
-        // special case for legendary
-        if (card.Rarity == "legendaire")
+        // special case for legendary and meethic
+        if (card.Rarity is "legendaire" or "meethic")
             competence.Exploration++;
         
         var userCardEntity = new UserCard
@@ -321,6 +346,7 @@ public class UserService : IUserService
 
         var maxPointsAccepted = userCard.Card.Rarity.ToLower() switch
         {
+            "meethic" => 4,
             "legendaire" => 3,
             "epic" => 2,
             "commune" => 1,
@@ -330,20 +356,6 @@ public class UserService : IUserService
         if (nbPoints > maxPointsAccepted)
             throw new AppException("Too much points for this rarity", 400);
 
-        // special case : card is already at 10 10 10 10 10 (A CHANGER QUAND LES CARTES POURRONT MONTER A 11)
-        if (userCard.Competences is { Intelligence: 10, Force: 10, Cuisine: 10, Charisme: 10, Exploration: 10 })
-        {
-            // refund
-            user.Or += 1000 * maxPointsAccepted;
-            
-            // notify user
-            await _notificationService.SendNotificationToUser(user, new NotificationRequest(
-                   "Doublon remboursé !", 
-                   $"Votre doublon de {userCard.Card.Name} a été remboursé car vous avez déjà toutes les compétences à 10 ! Vous avez reçu {1000 * maxPointsAccepted} or !",
-                   ""), 
-                _context);
-        }
-        
         // update user card
         userCard.Competences.Intelligence += competencesRequest.Intelligence + userCard.Competences.Intelligence > 10 ? 0 : competencesRequest.Intelligence;
         userCard.Competences.Force += competencesRequest.Force + userCard.Competences.Force > 10 ? 0 : competencesRequest.Force;
@@ -637,9 +649,6 @@ public class UserService : IUserService
 
         return user ?? throw new AppException("User not found", 404);
     }
-    
-    public bool IsUserExist(Expression<Func<User, bool>> predicate) 
-        => _context.Users.Any(predicate);
 
     #endregion
 }

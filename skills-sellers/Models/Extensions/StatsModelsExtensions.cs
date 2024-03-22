@@ -16,6 +16,7 @@ public static class StatsModelsExtensions
         nbCardsByRarity.TryAdd("commune", 0);
         nbCardsByRarity.TryAdd("epic", 0);
         nbCardsByRarity.TryAdd("legendaire", 0);
+        nbCardsByRarity.TryAdd("meethic", 0);
 
         var totalCardsWithAStatMaxed = userCards.Count(c => c.Competences.GotOneMaxed());
         var totalCardsAtFull10 = userCards.Count(c => c.Competences.GotAllMaxed());
@@ -51,7 +52,8 @@ public static class StatsModelsExtensions
         {
             { "commune", new("Nombre de cartes communes", nbCardsByRarity["commune"], ranks["TotalCardsCommune"]) },
             { "epic", new("Nombre de cartes épiques", nbCardsByRarity["epic"], ranks["TotalCardsEpic"]) },
-            { "legendaire", new("Nombre de cartes légendaires", nbCardsByRarity["legendaire"], ranks["TotalCardsLegendaire"]) }
+            { "legendaire", new("Nombre de cartes légendaires", nbCardsByRarity["legendaire"], ranks["TotalCardsLegendaire"]) },
+            { "meethic", new("Nombre de cartes meethic", nbCardsByRarity["meethic"], ranks["TotalCardsMeethic"]) }
         };
 
         return new StatsResponse(

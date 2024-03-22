@@ -11,7 +11,7 @@ public static class UserCardsModelsExtensions
             null,
             userCard.UserWeapon?.ToResponse());
 
-    public static UserCardResponse ToResponse(this UserCard userCard)
+    public static UserCardResponse ToResponse(this UserCard userCard, bool isDoublon, bool isDoublonFullUpgrade)
         => new(userCard.Card.Id, 
             userCard.Card.Name, 
             userCard.Card.Collection, 
@@ -20,5 +20,10 @@ public static class UserCardsModelsExtensions
             userCard.Competences.ToResponse(), 
             userCard.Competences.GetPowerWithoutWeapon() + (userCard.UserWeapon?.Power ?? 0), 
             userCard.Action?.ToResponse(), 
-            userCard.UserWeapon?.ToResponse());
+            userCard.UserWeapon?.ToResponse(),
+            isDoublon,
+            isDoublonFullUpgrade);
+
+    public static UserCardResponse ToResponse(this UserCard userCard)
+        => userCard.ToResponse(false, false);
 }

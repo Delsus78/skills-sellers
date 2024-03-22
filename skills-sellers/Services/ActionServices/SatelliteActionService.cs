@@ -12,35 +12,24 @@ namespace skills_sellers.Services.ActionServices;
 public class SatelliteActionService : IActionService
 {
     private readonly IUserBatimentsService _userBatimentsService;
-    private readonly INotificationService _notificationService;
-    private readonly IStatsService _statsService;
     
     public SatelliteActionService(
-        IUserBatimentsService userBatimentsService,
-        INotificationService notificationService, 
-        IStatsService statsService)
+        IUserBatimentsService userBatimentsService)
     {
         _userBatimentsService = userBatimentsService;
-        _notificationService = notificationService;
-        _statsService = statsService;
     }
 
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        if (user.Nourriture < 10)
+        if (user.Nourriture < 10 * userCards.Count)
             return (false, "Pas assez de nourriture");
-        
-        // une seule carte pour etre en orbite
-        if (userCards.Count != 1)
-            return (false, "Une seule carte pour être en orbite");
-        var userCard = userCards.First();
-        
+
         // Carte déjà en action
-        if (userCard.Action != null)
+        if (userCards.Any(uc => uc.Action != null))
             return (false, "Carte déjà en action");
         
         // Batiment déjà plein
-        if (_userBatimentsService.IsUserBatimentFull(user, "satellite"))
+        if (_userBatimentsService.IsUserBatimentFull(user, "satellite", userCards.Count))
             return (false, "Batiment déjà plein !");
 
         return (true, "");
@@ -93,13 +82,10 @@ public class SatelliteActionService : IActionService
         var errorMessages = new StringBuilder();
         var endTime = CalculateActionEndTime();
 
-        foreach (var userCard in userCards)
+        var validation = CanExecuteAction(user, userCards, null);
+        if (!validation.valid)
         {
-            var validation = CanExecuteAction(user, new List<UserCard> { userCard }, null);
-            if (!validation.valid)
-            {
-                errorMessages.AppendLine($"{userCard.Card.Name} : {validation.why}");
-            }
+            errorMessages.AppendLine(validation.why);
         }
 
         return new ActionEstimationResponse
