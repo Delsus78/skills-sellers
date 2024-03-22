@@ -186,7 +186,7 @@ public static class Randomizer
 
         ptsLeft = rarity switch
         {
-            "meethic" => 20,
+            "meethic" => 15,
             "legendaire" => 15,
             "epic" => 10,
             "commune" => 5,
