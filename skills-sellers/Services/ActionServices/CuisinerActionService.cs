@@ -174,7 +174,7 @@ public class CuisinerActionService : IActionService
         (
             "Cuisiner",
             $"Votre carte {userCard.Card.Name} a cuisiné {amount} nourriture avec son plat {actionCuisiner.Plat} !",
-            ""
+            "onecard", userCard.CardId
         ), context);
         
         return context.SaveChangesAsync();
