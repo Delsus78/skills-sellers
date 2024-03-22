@@ -21,7 +21,7 @@ public class SatelliteActionService : IActionService
 
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        if (user.Nourriture < 10 * userCards.Count)
+        if (user.Nourriture < 5 * userCards.Count)
             return (false, "Pas assez de nourriture");
 
         // Carte déjà en action
@@ -64,7 +64,7 @@ public class SatelliteActionService : IActionService
             await context.Actions.AddAsync(action);
             
             // consume resources
-            user.Nourriture -= 10;
+            user.Nourriture -= 5;
 
             actions.Add(action);
         }
@@ -99,7 +99,7 @@ public class SatelliteActionService : IActionService
             },
             Couts = new Dictionary<string, string>
             {
-                { "nourriture", (10 * userCards.Count).ToString() }
+                { "nourriture", (5 * userCards.Count).ToString() }
             },
             Error = errorMessages.ToString() // Retourne tous les messages d'erreur collectés
         };
