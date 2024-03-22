@@ -256,15 +256,6 @@ public class UserService : IUserService
 
         if (doublon != null)
         {
-            var usercardDoubled = new UserCardDoubled
-            {
-                User = user,
-                Card = card
-            };
-            user.UserCardsDoubled.Add(usercardDoubled);
-            _context.Users.Update(user);
-            _statsService.OnDoublonsEarned(user.Id);
-            await _context.SaveChangesAsync();
             
             // special case : card is already at 10 10 10 10 10 (A CHANGER QUAND LES CARTES POURRONT MONTER A 11)
             if (doublon.Competences.GotAllMaxed())
@@ -287,7 +278,17 @@ public class UserService : IUserService
                         ""), 
                     _context);
             }
-            
+            else
+            {
+                var usercardDoubled = new UserCardDoubled
+                {
+                    User = user,
+                    Card = card
+                };
+                user.UserCardsDoubled.Add(usercardDoubled);
+            }
+
+            _statsService.OnDoublonsEarned(user.Id);
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return doublon.ToResponse(true, doublon.Competences.GotAllMaxed());
