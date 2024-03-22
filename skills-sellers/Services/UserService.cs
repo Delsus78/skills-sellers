@@ -47,7 +47,7 @@ public interface IUserService
     IEnumerable<UserWeaponResponse> GetUserWeapons(int id);
     UserWeaponResponse GetUserWeapon(int id, int weaponId);
     Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
-    UserRegistreInfoResponse GetRegistreInfo(int id);
+    Task<UserRegistreInfoResponse> GetRegistreInfo(int id);
 }
 
 public class UserService : IUserService
@@ -56,6 +56,7 @@ public class UserService : IUserService
     private readonly ICardService _cardService;
     private readonly IAuthService _authService;
     private readonly IStatsService _statsService;
+    private readonly IWarService _warService;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly INotificationService _notificationService;
     private readonly IRegistrationLinkCreatorService _registrationLinkCreatorService;
@@ -70,7 +71,9 @@ public class UserService : IUserService
         IStatsService statsService, 
         IUserBatimentsService userBatimentsService,
         INotificationService notificationService,
-        IRegistrationLinkCreatorService registrationLinkCreatorService, IActionTaskService actionTaskService)
+        IRegistrationLinkCreatorService registrationLinkCreatorService, 
+        IActionTaskService actionTaskService, 
+        IWarService warService)
     {
         _context = context;
         _cardService = cardService;
@@ -80,6 +83,7 @@ public class UserService : IUserService
         _notificationService = notificationService;
         _registrationLinkCreatorService = registrationLinkCreatorService;
         _actionTaskService = actionTaskService;
+        _warService = warService;
     }
 
     #region USER
@@ -510,7 +514,7 @@ public class UserService : IUserService
         return Task.FromResult(actionExplorer.ToResponse());
     }
 
-    public UserRegistreInfoResponse GetRegistreInfo(int id)
+    public async Task<UserRegistreInfoResponse> GetRegistreInfo(int id)
     {
         var user = GetUserEntity(u => u.Id == id);
         var userRegistreInfo = _context.UserRegistreInfos.FirstOrDefault(ri => ri.UserId == user.Id);
@@ -539,7 +543,10 @@ public class UserService : IUserService
             .Include(rp => rp.RelatedPlayer)
             .Load();
         
-        return userRegistreInfo.ToResponse(user.Registres);
+        // get war of the player
+        var war = await _warService.GetActualWar(user);
+
+        return userRegistreInfo.ToResponse(user.Registres, war);
     }
     
     #endregion

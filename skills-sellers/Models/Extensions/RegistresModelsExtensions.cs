@@ -5,11 +5,12 @@ namespace skills_sellers.Models.Extensions;
 
 public static class RegistresModelsExtensions
 {
-    public static UserRegistreInfoResponse ToResponse(this UserRegistreInfo userRegistreInfo, List<Registre> registres) 
+    public static UserRegistreInfoResponse ToResponse(this UserRegistreInfo userRegistreInfo, List<Registre> registres, WarResponse? war) 
         => new(
             userRegistreInfo.HostileAttackWon,
             userRegistreInfo.HostileAttackLost,
-            registres.Select(r => r.ToResponse()).ToList()
+            registres.Select(r => r.ToResponse()).ToList(),
+            war
         );
 
     public static RegistreResponse ToResponse(this Registre registre) 

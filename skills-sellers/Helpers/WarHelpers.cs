@@ -96,19 +96,19 @@ public static class WarHelpers
         
         // write in the report the number of cards in each army and total power
         report.Append(
-            $"[*!DEFENSE!*] {orderedArmyDefense.Count} cartes avec un total de {orderedArmyDefense.Sum(c => c.TotalPower)} de puissance\n");
+            $"[*!DEFENSE!*] *!{orderedArmyDefense.Count}!* cartes avec un total de *!{orderedArmyDefense.Sum(c => c.TotalPower)}!* de puissance\n");
         report.Append(
-            $"[*!ATTAQUE!*] {orderedArmyAttack.Count} cartes avec un total de {orderedArmyAttack.Sum(c => c.TotalPower)} de puissance\n");
+            $"[*!ATTAQUE!*] *!{orderedArmyAttack.Count}!* cartes avec un total de *!{orderedArmyAttack.Sum(c => c.TotalPower)}!* de puissance\n");
 
         if (orderedArmyDefense.Count == 0)
         {
-            report.Append("[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => ATTAQUE GAGNE !\n");
+            report.Append("[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => *!ATTAQUE GAGNE !!*\n");
             return (false, report.ToString());
         }
         
         if (orderedArmyAttack.Count == 0)
         {
-            report.Append("[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => DEFENSE GAGNE !\n");
+            report.Append("[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => *!DEFENSE GAGNE !!*\n");
             return (true, report.ToString());
         }
         
@@ -125,7 +125,7 @@ public static class WarHelpers
                 // defense win
                 case 1:
                     report.Append(
-                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => DEFENSE GAGNE !\n");
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!DEFENSE GAGNE !!* !\n");
                     
                     // carte attaque retirée
                     orderedArmyAttack.RemoveAt(0);
@@ -141,7 +141,7 @@ public static class WarHelpers
                 case -1:
                 {
                     report.Append(
-                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => ATTAQUE GAGNE !\n");
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!ATTAQUE GAGNE !!*\n");
                     
                     // attaque card get damaged
                     attackingCard = attackingCard with
@@ -177,7 +177,7 @@ public static class WarHelpers
                 default:
                 {
                     report.Append(
-                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* ({defendingCard.TotalPower}/{defendingCard.Affinity}) vs [ATTAQUE] *!{attackingCard.Name}!* ({attackingCard.TotalPower}/{attackingCard.Affinity}) => Egalité !\n");
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => Egalité !!*\n");
                     
                     // carte attaque retirée
                     orderedArmyAttack.RemoveAt(0);
@@ -210,12 +210,12 @@ public static class WarHelpers
             if (orderedArmyAttack.Count == 0) // si plus de carte attaque, la défense gagne
             {
                 report.Append(
-                    "[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => DEFENSE GAGNE !\n");
+                    "[*!ATTAQUE!*] *!Aucune!* carte disponible pour attaquer => *!DEFENSE GAGNE !!*\n");
                 fightDone = 1;
             } else if (orderedArmyDefense.Count == 0) // si plus de carte défense mais qu'il reste des cartes attaque, l'attaque gagne
             {
                 report.Append(
-                    "[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => ATTAQUE GAGNE !\n");
+                    "[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => *!ATTAQUE GAGNE !!*\n");
                 fightDone = -1;
             }
         }

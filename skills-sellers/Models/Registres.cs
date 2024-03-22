@@ -20,4 +20,4 @@ public record RegistreResponse(
     int? RelatedPlayerId,
     bool? IsFavorite);
 
-public record UserRegistreInfoResponse(int HostileAttackWon, int HostileAttackLost, List<RegistreResponse> Registres);
+public record UserRegistreInfoResponse(int HostileAttackWon, int HostileAttackLost, List<RegistreResponse> Registres, WarResponse? War);
