@@ -124,6 +124,18 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
 
             var results = WarHelpers.Battle(allSatelliteFightingEntities, allHostileFightingEntities);
 
+            // adding fightReport
+            var fightDesc = new List<string>
+            {
+                $"[*!ATTAQUE HOSTILE!*] - *!{user.Pseudo}!* "
+            };
+            fightDesc.AddRange(results.fightReport.Split("\n").ToList());
+            context.FightReports.Add(new FightReport
+            {
+                Description = fightDesc,
+                FightDate = DateTime.Now
+            });
+            
             var msgNotif = !results.defenseWin ? 
                 $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
                 + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count) : "Vous avez gagné contre les registres hostiles.\r\n";

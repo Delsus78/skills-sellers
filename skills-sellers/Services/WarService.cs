@@ -17,7 +17,8 @@ public interface IWarService
     Task<WarEstimationResponse> EstimateWar(User user, WarCreationRequest model);
     Task<WarResponse> AcceptWar(User user, int warId, AddCardsToWarRequest model);
     Task DeclineWar(User user, int warId);
-    Task<WarResponse> GetInvitedWar(User user);
+    Task<WarResponse?> GetActualWar(User user);
+    Task<WarResponse?> GetInvitedWar(User user);
     Task StartBattle(int warId, DataContext context);
 }
 public class WarService : IWarService
@@ -108,8 +109,7 @@ public class WarService : IWarService
                     $"\r\n La bataille aura lieu dans 30 minutes ! Alors préparez vos satellites !",
                     ""), _context);
         }
-            
-        
+
         await _context.SaveChangesAsync();
     }
 
@@ -235,7 +235,7 @@ public class WarService : IWarService
         
         await _context.SaveChangesAsync();
 
-        return await GetInvitedWar(user);
+        return await GetInvitedWar(user) ?? throw new AppException("Auncune guerre en cours.", 404);
     }
 
     public async Task DeclineWar(User user, int warId)
@@ -261,7 +261,34 @@ public class WarService : IWarService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<WarResponse> GetInvitedWar(User user)
+    public async Task<WarResponse?> GetActualWar(User user)
+    {
+        var actualWars = _context.Wars
+            .Include(w => w.User)
+            .Where(w => w.UserAllyIds.Contains(user.Id) || w.UserId == user.Id)
+            .Where(w => w.Status == WarStatus.EnCours || w.Status == WarStatus.EnAttente)
+            .ToList();
+        
+        if (actualWars.Count == 0)
+            return null;
+        
+        var war = actualWars[0];
+        
+        var allies = _context.Users
+            .Where(u => war.UserAllyIds.Contains(u.Id))
+            .ToList();
+
+        var registreTarget = await _context.Registres.FindAsync(war.RegistreTargetId);
+        if (registreTarget == null)
+            throw new AppException("Cible non trouvée", 404);
+
+        if (registreTarget is RegistrePlayer rPl)
+            await _context.Entry(rPl).Reference(rPl => rPl.RelatedPlayer).LoadAsync();
+
+        return war.ToWarResponse(registreTarget.ToResponse(), allies);
+    }
+    
+    public async Task<WarResponse?> GetInvitedWar(User user)
     {
         var actionGuerres = user.UserCards
             .Where(uc => uc.Action is ActionGuerre)
@@ -278,7 +305,7 @@ public class WarService : IWarService
                                   actionGuerres.Count(a => actualWars.Select(w => w.Id).Contains(a.WarId)) == 0;
 
         if (actualWars.Count == 0)
-            throw new AppException("Aucune guerre en attente", 404);
+            return null;
         
         var war = actualWars[0];
         
@@ -369,15 +396,15 @@ public class WarService : IWarService
         // BATTLE
         var results = WarHelpers.Battle(defendingCards, attackingCards);
         results.fightReport += results.defenseWin
-            ? "[GUERRE] - Victoire de la défense !\n"
-            : "[GUERRE] - Victoire de l'attaque !\n";
+            ? "[*!GUERRE!*] - *!Victoire de la défense !!*\n"
+            : "[*!GUERRE!*] - *!Victoire de l'attaque !!*\n";
 
         // adding fightReport
         var fightDesc = new List<string>
         {
-            $"[GUERRE] - {war.User.Pseudo} " 
-            + (allies.Count > 0 ? "(" + string.Join(", ", allies.Select(a => a.Pseudo)) + ")" : "") 
-            + $" vs {targetName} - {DateTime.Now}"
+            $"[*!GUERRE!*] - *!{war.User.Pseudo}!* " 
+            + (allies.Count > 0 ? "(*!" + string.Join(", ", allies.Select(a => a.Pseudo)) + "!*)" : "") 
+            + $" vs *!{targetName}!* - {DateTime.Now}"
         };
         fightDesc.AddRange(results.fightReport.Split("\n").ToList());
         context.FightReports.Add(new FightReport

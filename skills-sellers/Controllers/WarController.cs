@@ -51,6 +51,6 @@ public class WarController : ControllerBase
         => await _warService.EstimateWar(GetUserAuthenticated(), model);
     
     [HttpGet("invitedWar")]
-    public async Task<WarResponse> GetInvitedWar()
+    public async Task<WarResponse?> GetInvitedWar()
         => await _warService.GetInvitedWar(GetUserAuthenticated());
 }

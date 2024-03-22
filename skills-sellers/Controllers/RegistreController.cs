@@ -41,8 +41,8 @@ public class RegistreController : ControllerBase
         
     [Authorize]
     [HttpGet("registreInfo")]
-    public UserRegistreInfoResponse GetRegistreInfo(int id)
-        => _userService.GetRegistreInfo(id);
+    public async Task<UserRegistreInfoResponse> GetRegistreInfo(int id)
+        => await _userService.GetRegistreInfo(id);
     
     [Authorize]
     [HttpGet("fightreports")]
