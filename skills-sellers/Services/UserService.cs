@@ -48,6 +48,7 @@ public interface IUserService
     UserWeaponResponse GetUserWeapon(int id, int weaponId);
     Task<ActionResponse> DecideForAction(User user, ActionDecisionRequest model);
     Task<UserRegistreInfoResponse> GetRegistreInfo(int id);
+    void SwitchAutoSatelliteMode(User user, int actionId);
 }
 
 public class UserService : IUserService
@@ -547,6 +548,23 @@ public class UserService : IUserService
         var war = await _warService.GetActualWar(user);
 
         return userRegistreInfo.ToResponse(user.Registres, war);
+    }
+    
+    public void SwitchAutoSatelliteMode(User user, int actionId)
+    {
+        var action = _context.Actions.OfType<ActionSatellite>().FirstOrDefault(a => a.Id == actionId);
+        
+        if (action == null)
+            throw new AppException("Action not found", 404);
+        
+        if (action.UserId != user.Id)
+            throw new AppException("Action is not yours", 400);
+        
+        action.IsAuto = !action.IsAuto;
+        
+        _context.Actions.Update(action);
+        
+        _context.SaveChanges();
     }
     
     #endregion

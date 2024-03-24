@@ -83,6 +83,7 @@ public class ActionMusclerResponse : ActionResponse
 
 public class ActionSatelliteResponse : ActionResponse
 {
+    public bool IsAuto { get; set; }
 }
 
 public class ActionGuerreResponse : ActionResponse

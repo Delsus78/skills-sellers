@@ -341,22 +341,22 @@ public static class WarHelpers
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    public static string GetRandomWarLoot(User user, bool isOpponent = false)
+    public static string GetRandomWarLoot(User user, int multiplicator, bool isOpponent = false)
     {
         var random = Randomizer.RandomInt(0, 100);
 
         switch (random)
         {
             case < 79:
-                var amountCreatium = Randomizer.RandomInt(2000, 5001);
+                var amountCreatium = Randomizer.RandomInt(multiplicator * 100, multiplicator * 300);
                 user.Creatium += (int)(amountCreatium * (isOpponent ? 0.5 : 1));
                 return $"{amountCreatium} créatium [COMMUN]";
             case < 94:
-                var amountOr = Randomizer.RandomInt(1000, 3001);
+                var amountOr = Randomizer.RandomInt(multiplicator * 150, multiplicator * 250);
                 user.Or += (int)(amountOr * (isOpponent ? 0.5 : 1));
                 return $"{amountOr} or [RARE]";
             case < 99:
-                var amountPack = Randomizer.RandomInt(5, 16);
+                var amountPack = Randomizer.RandomInt(multiplicator, multiplicator * 2);
                 user.NbCardOpeningAvailable += (int)(amountPack * (isOpponent ? 0.5 : 1));
                 return $"{amountPack} packs [EPIC]";
             case < 100:

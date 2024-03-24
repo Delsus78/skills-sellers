@@ -310,15 +310,16 @@ public class ExplorerActionService : IActionService
     {
         var (fightAppend, fightReport) = TryToEncounterAnOtherCardOnExploration(userCard, context, out var opponentCard, out var result);
         
-        if (!fightAppend) return;
+        if (!fightAppend || opponentCard == null) return;
         string notificationMessage;
         string opponentNotificationMessage;
-
+        var averageCardNb =
+            context.UserCards.Count(uc => uc.UserId == user.Id || uc.UserId == opponentCard.UserId) / 2;
+        
         switch (result)
         {
             case 1: // user win
-                
-                var stringReward = WarHelpers.GetRandomWarLoot(user);
+                var stringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb);
                 
                 // score 
                 user.Score += 50;
@@ -334,7 +335,7 @@ public class ExplorerActionService : IActionService
                 break;
             case -1: // opponent win
                 var opponent = opponentCard!.User;
-                var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, true);
+                var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, averageCardNb, true);
                 
                 // score
                 opponent.Score += 50;
@@ -539,7 +540,7 @@ public class ExplorerActionService : IActionService
     }
     
     // Weapons Update
-    private (bool result, FightReport? report) TryToEncounterAnOtherCardOnExploration(UserCard userCard, DataContext context, out UserCard? randomCard, out int result)
+    private (bool append, FightReport? report) TryToEncounterAnOtherCardOnExploration(UserCard userCard, DataContext context, out UserCard? randomCard, out int result)
     {
         try
         {
@@ -574,6 +575,8 @@ public class ExplorerActionService : IActionService
             // get description
             var fightReport = WarHelpers.GetFightDescription(userCard, randomCard, fightResult.result);
 
+            result = fightResult.result;
+            
             return (true, fightReport);
         }
         catch (Exception e)

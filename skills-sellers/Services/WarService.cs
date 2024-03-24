@@ -20,20 +20,24 @@ public interface IWarService
     Task<WarResponse?> GetActualWar(User user);
     Task<WarResponse?> GetInvitedWar(User user);
     Task StartBattle(int warId, DataContext context);
+    Task GiveRandomWarLoot(int userId, int multiplicator);
 }
 public class WarService : IWarService
 {
     private readonly DataContext _context;
     private readonly IActionTaskService _actionTaskService;
     private readonly INotificationService _notificationService;
+    private readonly IUserService _userService;
 
     public WarService(DataContext context, 
         IActionTaskService actionTaskService, 
-        INotificationService notificationService)
+        INotificationService notificationService, 
+        IUserService userService)
     {
         _context = context;
         _actionTaskService = actionTaskService;
         _notificationService = notificationService;
+        _userService = userService;
     }
 
     public async Task StartWar(User starter, WarCreationRequest model)
@@ -427,8 +431,11 @@ public class WarService : IWarService
                 
                 var notifMsg = "Voici votre récompense pour avoir survécu !\n";
 
-                notifMsg += WarHelpers.GetRandomWarLoot(target) + "\n";
-                notifMsg += WarHelpers.GetRandomWarLoot(target) + "\n";
+                var averageTotalCards 
+                    = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/2 + target.UserCards.Count)/2;
+                
+                notifMsg += WarHelpers.GetRandomWarLoot(target, averageTotalCards) + "\n";
+                notifMsg += WarHelpers.GetRandomWarLoot(target, averageTotalCards) + "\n";
                 
                 await _notificationService.SendNotificationToUser(target, new NotificationRequest(
                     $"[GUERRE] - Victoire de la défense contre {war.User.Pseudo}", 
@@ -515,7 +522,7 @@ public class WarService : IWarService
             else
             {
                 var registreTarget = await _context.Registres.FindAsync(war.RegistreTargetId);
-                if (registreTarget == null || registreTarget is not RegistreHostile)
+                if (registreTarget is not RegistreHostile)
                     throw new AppException("Cible non trouvée", 404);
                 
                 // deleting registre and all registres with a name containing the same name (ex: "Tue" will delete "Tueur", "Tueur de la mort", etc)
@@ -539,8 +546,12 @@ public class WarService : IWarService
                 {
                     ally.Score += 1000;
                     var notifMsg = "Voici votre récompense pour avoir vaincu !\n";
-                    notifMsg += WarHelpers.GetRandomWarLoot(ally) + "\n";
-                    notifMsg += WarHelpers.GetRandomWarLoot(ally) + "\n";
+                    
+                    var averageTotalCards 
+                        = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/(allies.Count + 1) + ally.UserCards.Count)/3;
+                    
+                    notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
+                    notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
                 
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Victoire contre {registreTarget.Name}", 
@@ -548,10 +559,12 @@ public class WarService : IWarService
                 }
                 
                 starter.Score += 1000;
+                var averageTotalCardsStarter 
+                    = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/(allies.Count + 1) + starter.UserCards.Count)/3;
                 
                 var notifStarterMsg = "Voici votre récompense pour avoir vaincu !\n";
-                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter) + "\n";
-                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter) + "\n";
+                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, averageTotalCardsStarter) + "\n";
+                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, averageTotalCardsStarter) + "\n";
                 
                 await _notificationService.SendNotificationToUser(starter, new NotificationRequest(
                     $"[GUERRE] - Victoire contre {registreTarget.Name}", 
@@ -567,7 +580,18 @@ public class WarService : IWarService
                 "Une guerre vient de se terminée, un nouveau rapport de combat est disponible !", ""),
             context);
     }
-    
+
+    public Task GiveRandomWarLoot(int userId, int multiplicator)
+    {
+        var user = _userService.GetUserEntity(u => u.Id == userId);
+        
+        var stringReward = WarHelpers.GetRandomWarLoot(user, multiplicator);
+        
+        return _notificationService.SendNotificationToUser(user, new NotificationRequest(
+            "[WarLoot] - Récompense", 
+            stringReward, "cards"), _context);
+    }
+
     // get if cards aren't in actions using the classic Estimation Methods for ActionGuerre
     // check if registreTarget is not protected by a war timeout
     // check if registreAlly is not already in a war
