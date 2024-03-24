@@ -35,7 +35,7 @@ public class SatelliteActionService : IActionService
             return (false, "Carte déjà en action");
         
         // Batiment déjà plein
-        if (_userBatimentsService.IsUserBatimentFull(user, "satellite", userCards.Count))
+        if (_userBatimentsService.IsUserBatimentFull(user, "satellite", userCards.Count - 1))
             return (false, "Batiment déjà plein !");
 
         return (true, "");
