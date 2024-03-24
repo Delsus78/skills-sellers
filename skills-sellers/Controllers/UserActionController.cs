@@ -97,7 +97,7 @@ public class UserActionController : ControllerBase
         => _userService.EstimateAction(GetUserAuthenticated(id), model);
     
     [Authorize]
-    [HttpPost("satellite/{actionId}")]
+    [HttpPost("satellite/switchAutoMode/{actionId}")]
     public void SwitchAutoSatelliteMode(int id, int actionId)
         => _userService.SwitchAutoSatelliteMode(GetUserAuthenticated(id), actionId);
     
