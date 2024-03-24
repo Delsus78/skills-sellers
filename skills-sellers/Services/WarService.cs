@@ -27,17 +27,14 @@ public class WarService : IWarService
     private readonly DataContext _context;
     private readonly IActionTaskService _actionTaskService;
     private readonly INotificationService _notificationService;
-    private readonly IUserService _userService;
 
     public WarService(DataContext context, 
         IActionTaskService actionTaskService, 
-        INotificationService notificationService, 
-        IUserService userService)
+        INotificationService notificationService)
     {
         _context = context;
         _actionTaskService = actionTaskService;
         _notificationService = notificationService;
-        _userService = userService;
     }
 
     public async Task StartWar(User starter, WarCreationRequest model)
@@ -583,8 +580,9 @@ public class WarService : IWarService
 
     public Task GiveRandomWarLoot(int userId, int multiplicator)
     {
-        var user = _userService.GetUserEntity(u => u.Id == userId);
-        
+        var user = _context.Users
+            .SelectUserDetails().FirstOrDefault(u => u.Id == userId);
+
         var stringReward = WarHelpers.GetRandomWarLoot(user, multiplicator);
         
         return _notificationService.SendNotificationToUser(user, new NotificationRequest(
