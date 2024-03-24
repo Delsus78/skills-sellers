@@ -97,6 +97,11 @@ public class UserActionController : ControllerBase
         => _userService.EstimateAction(GetUserAuthenticated(id), model);
     
     [Authorize]
+    [HttpPost("satellite/switchAutoMode/{actionId}")]
+    public void SwitchAutoSatelliteMode(int id, int actionId)
+        => _userService.SwitchAutoSatelliteMode(GetUserAuthenticated(id), actionId);
+    
+    [Authorize]
     [HttpDelete("actions/{actionId}")]
     public async Task DeleteAction(int id, int actionId)
         => await _userService.DeleteAction(GetUserAuthenticated(id), actionId);

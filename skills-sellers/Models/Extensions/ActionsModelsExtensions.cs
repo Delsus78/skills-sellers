@@ -63,6 +63,7 @@ public static class ActionsModelsExtensions
                 Id = actionSatellite.Id,
                 EndTime = actionSatellite.DueDate,
                 CreatedAt = actionSatellite.CreatedAt ?? DateTime.Now,
+                IsAuto = actionSatellite.IsAuto,
                 Cards = actionSatellite.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
             },
             ActionGuerre actionGuerre => new ActionGuerreResponse
