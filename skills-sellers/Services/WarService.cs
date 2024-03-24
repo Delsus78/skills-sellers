@@ -585,9 +585,11 @@ public class WarService : IWarService
 
         var stringReward = WarHelpers.GetRandomWarLoot(user, multiplicator);
         
-        return _notificationService.SendNotificationToUser(user, new NotificationRequest(
+        _notificationService.SendNotificationToUser(user, new NotificationRequest(
             "[WarLoot] - Récompense", 
             stringReward, "cards"), _context);
+        
+        return _context.SaveChangesAsync();
     }
 
     // get if cards aren't in actions using the classic Estimation Methods for ActionGuerre
