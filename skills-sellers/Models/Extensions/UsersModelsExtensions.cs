@@ -35,9 +35,13 @@ public static class UsersModelsExtensions
             user.UserCardsDoubled.Select(x => new CustomTupleDoublon(x.Id, x.CardId)).ToList(),
             user.NbWeaponOpeningAvailable,
             user.NbWeaponUpgradeAvailable,
-            user.WarTimeout);
+            user.WarTimeout,
+            user.CosmeticPoints());
     }
     
+    public static int CosmeticPoints(this User user) 
+        => user.Score / 100 - user.SpendedCosmeticPoints;
+
     public static Dictionary<string, int> GetResources(this User user)
     {
         return new Dictionary<string, int>

@@ -221,12 +221,16 @@ public class ExplorerActionService : IActionService
             switch (actionExplorer.Decision)
             {
                 case ExplorationDecision.Pillage:
-                    // ressources x4 and a card
-                    creatiumWin *= 4;
-                    orWin *= 4;
+                    // ressources x3 and a card
+                    creatiumWin *= 3;
+                    orWin *= 3;
                     user.NbCardOpeningAvailable++;
                     notificationMessage += "Votre carte a pillé la planète ! Elle gagne une carte supplémentaire !\r\n";
                     var isPlanetHostile = WeaponUpdatePillagePart(context, user, actionExplorer);
+                    
+                    // stat
+                    _statsService.OnPlanetAttacked(user.Id);
+                    
                     if (isPlanetHostile)
                         notificationMessage += 
                             "Pillage - Hostile\r\n" +
@@ -248,7 +252,6 @@ public class ExplorerActionService : IActionService
                             $"Vous avez désormais une route commerciale avec {actionExplorer.PlanetName} !\n" +
                             "pour plus d'information, consultez votre registre !\n";
                     
-                    creatiumWin /= 2; orWin /= 2;
                     break;
                 case null:
                     break;
@@ -260,6 +263,7 @@ public class ExplorerActionService : IActionService
             user.Creatium += creatiumWin;
             user.Or += orWin;
             user.Score += 5;
+            notificationMessage += "+5 SCORE\r\n";
             
             _statsService.OnCreatiumMined(user.Id, creatiumWin);
             _statsService.OnOrMined(user.Id, orWin);
@@ -493,7 +497,7 @@ public class ExplorerActionService : IActionService
         Registre registre;
         
         // 10 % de créer une route commerciale
-        if (!Randomizer.RandomPourcentageUp(10)) // non
+        if (!Randomizer.RandomPourcentageUp(50)) // non
         {
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);

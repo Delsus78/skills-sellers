@@ -41,6 +41,8 @@ public static class StatsModelsExtensions
         CustomTuple totalLooseAtCharismeCasinoTuple = new("Nombre d'or perdu au casino", stats.TotalLooseAtCharismeCasino, ranks["TotalLooseAtCharismeCasino"]);
         CustomTuple totalWinAtCharismeCasinoTuple = new("Nombre de charisme remporté au casino", stats.TotalWinAtCharismeCasino, ranks["TotalWinAtCharismeCasino"]);
         CustomTuple totalCollectionsCompletedTuple = new("Nombre de collection complétées", totalCollectionsCompleted, ranks["TotalCollectionsCompleted"]);
+        CustomTuple totalPlanetAttackedTuple = new("Nombre de planètes attaquées", stats.TotalPlanetAttacked, ranks["TotalPlanetAttacked"]);
+        CustomTuple totalAttackSurvivedTuple = new("Nombre d'attaques survécues", stats.TotalAttackSurvived, ranks["TotalAttackSurvived"]);
         
         var totalResourcesMinedTuples = new Dictionary<string, CustomTuple>
         {
@@ -74,6 +76,8 @@ public static class StatsModelsExtensions
             totalWinAtCharismeCasinoTuple,
             totalCardsAtFull10Tuple,
             totalCollectionsCompletedTuple,
+            totalPlanetAttackedTuple,
+            totalAttackSurvivedTuple,
             nbCardsInBDD);
     }
 

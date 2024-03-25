@@ -69,10 +69,13 @@ public interface IHostileRegistreAttackService
 public class HostileRegistreAttackService : IHostileRegistreAttackService
 {
     private readonly INotificationService _notificationService;
+    private readonly IStatsService _statService;
 
-    public HostileRegistreAttackService(INotificationService notificationService)
+    public HostileRegistreAttackService(INotificationService notificationService, 
+        IStatsService statService)
     {
         _notificationService = notificationService;
+        _statService = statService;
     }
 
     public async Task ExecuteHostileAttacksCheckAsync(DataContext context)
@@ -124,6 +127,9 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
 
             var results = WarHelpers.Battle(allSatelliteFightingEntities, allHostileFightingEntities);
 
+            //stat
+            _statService.OnAttackSurvived(user.Id);
+            
             // adding fightReport
             var fightDesc = new List<string>
             {
@@ -136,7 +142,7 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
                 FightDate = DateTime.Now
             });
             
-            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count/5);
+            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count/5, false, 5);
             var msgNotif = !results.defenseWin ? 
                 $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
                 + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count) : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}";

@@ -38,5 +38,7 @@ public class AchievementContext
         yield return new AchievementEach5CardsWithStat10(stats.TotalCardWithAStatMaxed.Stat, achievement);
         yield return new AchievementEachCardsFullStat(stats.TotalCardsFull10.Stat, achievement);
         yield return new AchievementEachCollectionsCompleted(stats.TotalCollectionsCompleted.Stat, achievement);
+        yield return new AchievementFirstPlanetAttack(stats.TotalPlanetAttacked.Stat, achievement);
+        yield return new AchievementSurviveToAnAttack(stats.TotalAttackSurvived.Stat, achievement);
     }
 }

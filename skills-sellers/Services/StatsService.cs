@@ -24,6 +24,8 @@ public interface IStatsService
     void OnDoublonsEarned(int userId);
     void OnLooseGoldAtCharismeCasino(int userId, int amount);
     void OnWinAtCharismeCasino(int userId);
+    void OnPlanetAttacked(int userId);
+    void OnAttackSurvived(int userId);
     Stats GetOrCreateStatsEntity(User user);
     Dictionary<string, int> GetRanks(User user);
 }
@@ -117,6 +119,16 @@ public class StatsService : IStatsService
     {
         AddStat(userId, "TotalWinAtCharismeCasino");
     }
+    
+    public void OnPlanetAttacked(int userId)
+    {
+        AddStat(userId, "TotalPlanetAttacked");
+    }
+    
+    public void OnAttackSurvived(int userId)
+    {
+        AddStat(userId, "TotalAttackSurvived");
+    }
 
 
     #region Helpers methods
@@ -167,7 +179,9 @@ public class StatsService : IStatsService
             s => s.TotalMachineUsed,
             s => s.TotalLooseAtCharismeCasino,
             s => s.TotalWinAtCharismeCasino,
-            s => s.TotalWordleWon
+            s => s.TotalWordleWon,
+            s => s.TotalPlanetAttacked,
+            s => s.TotalAttackSurvived
         };
 
         var userCriteria = new List<Func<User, int>> {
@@ -198,6 +212,8 @@ public class StatsService : IStatsService
             "TotalLooseAtCharismeCasino",
             "TotalWinAtCharismeCasino",
             "TotalWordleWon",
+            "TotalPlanetAttacked",
+            "TotalAttackSurvived",
             "TotalCards",
             "TotalCardWithAStatMaxed",
             "TotalCardsAtFull10",

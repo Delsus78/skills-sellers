@@ -123,10 +123,10 @@ public class CosmeticService : ICosmeticService
         if (cosmetic == null)
             throw new AppException("Cosmetic not found", 404);
 
-        if (user.Or < cosmetic.Price)
-            throw new AppException("Pas assez d'or", 400);
+        if (user.CosmeticPoints() < cosmetic.Price)
+            throw new AppException("Pas assez de points de cosmétique.", 400);
         
-        user.Or -= cosmetic.Price;
+        user.SpendedCosmeticPoints += cosmetic.Price;
         
         var userCosmetic = new UserCosmetic
         {
