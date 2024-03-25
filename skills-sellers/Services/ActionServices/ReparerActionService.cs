@@ -187,6 +187,6 @@ public class ReparerActionService : IActionService
     
     private double CalculateRepairChances(int totalIntel, int totalCards)
     {
-        return totalIntel / ((double)totalCards * 6) * 100;
+        return totalIntel / ((double)totalCards * 4) * 100;
     }
 }
