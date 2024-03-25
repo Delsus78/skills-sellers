@@ -136,7 +136,7 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
                 FightDate = DateTime.Now
             });
             
-            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count/5);
+            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count/5, false, 5);
             var msgNotif = !results.defenseWin ? 
                 $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
                 + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count) : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}";
