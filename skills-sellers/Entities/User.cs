@@ -24,6 +24,7 @@ public class User
     public int NbCardOpeningAvailable { get; set; }
     public int NbWeaponOpeningAvailable { get; set; }
     public int NbWeaponUpgradeAvailable { get; set; }
+    public int SpendedCosmeticPoints { get; set; }
 
     // One to one
     public Stats Stats { get; set; }

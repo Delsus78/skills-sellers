@@ -14,7 +14,9 @@ public record AchievementResponse(
     CustomAchievementTuple Each50FailCharism,
     CustomAchievementTuple Each5CardsWithStat10,
     CustomAchievementTuple EachCardsFullStat,
-    CustomAchievementTuple EachCollectionsCompleted);
+    CustomAchievementTuple EachCollectionsCompleted,
+    CustomAchievementTuple FirstPlanetAttack,
+    CustomAchievementTuple SurviveToAnAttack);
 
 public record AchievementRequest(
     string AchievementName);

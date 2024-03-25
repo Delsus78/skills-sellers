@@ -19,6 +19,8 @@ public class Stats
     public int TotalLooseAtCharismeCasino { get; set; }
     public int TotalWinAtCharismeCasino { get; set; }
     public int TotalMachineUsed { get; set; }
+    public int TotalPlanetAttacked { get; set; }
+    public int TotalAttackSurvived { get; set; }
 
     // One to one
     public User User { get; set; }

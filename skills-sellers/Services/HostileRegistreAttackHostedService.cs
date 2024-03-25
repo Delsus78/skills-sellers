@@ -69,10 +69,13 @@ public interface IHostileRegistreAttackService
 public class HostileRegistreAttackService : IHostileRegistreAttackService
 {
     private readonly INotificationService _notificationService;
+    private readonly IStatsService _statService;
 
-    public HostileRegistreAttackService(INotificationService notificationService)
+    public HostileRegistreAttackService(INotificationService notificationService, 
+        IStatsService statService)
     {
         _notificationService = notificationService;
+        _statService = statService;
     }
 
     public async Task ExecuteHostileAttacksCheckAsync(DataContext context)
@@ -124,6 +127,9 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
 
             var results = WarHelpers.Battle(allSatelliteFightingEntities, allHostileFightingEntities);
 
+            //stat
+            _statService.OnAttackSurvived(user.Id);
+            
             // adding fightReport
             var fightDesc = new List<string>
             {

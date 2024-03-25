@@ -35,7 +35,11 @@ public static class AchievementsModelsExtensions
             new CustomAchievementTuple("Toutes les cartes full 10 stats",
                 achievement.EachCardsFullStat, claimableAchievementsName.Contains("EachCardsFullStat")),
             new CustomAchievementTuple("Toutes les collections full",
-                achievement.EachCollectionsCompleted, claimableAchievementsName.Contains("EachCollectionsCompleted"))
+                achievement.EachCollectionsCompleted, claimableAchievementsName.Contains("EachCollectionsCompleted")),
+            new CustomAchievementTuple("Première attaque de planète",
+                achievement.FirstPlanetAttack, claimableAchievementsName.Contains("FirstPlanetAttack")),
+            new CustomAchievementTuple("Survivre à une attaque",
+                achievement.SurviveToAnAttack, claimableAchievementsName.Contains("SurviveToAnAttack"))
         );
     }
 }

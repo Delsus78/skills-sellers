@@ -24,4 +24,6 @@ public class Achievement
     public int Each5CardsWithStat10 { get; set; }
     public int EachCardsFullStat { get; set; }
     public int EachCollectionsCompleted { get; set; }
+    public int FirstPlanetAttack { get; set; }
+    public int SurviveToAnAttack { get; set; }
 }

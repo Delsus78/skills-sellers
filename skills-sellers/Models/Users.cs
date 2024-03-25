@@ -35,6 +35,7 @@ public record UserResponse(
     List<CustomTupleDoublon> CardsDoublons,
     int NbWeaponOpeningAvailable,
     int NbWeaponUpgradeAvailable,
-    DateTime? WarTimeout);
+    DateTime? WarTimeout,
+    int ComsmeticPoints);
 
 public record CustomTupleDoublon(int DoublonId, int CardId);

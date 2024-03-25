@@ -25,6 +25,7 @@ public class AchievementEach5CuisineLevels : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 200;
     }
 }
 
@@ -51,6 +52,7 @@ public class AchievementEach5SalleDeSportLevels : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 200;
     }
 }
 
@@ -77,6 +79,7 @@ public class AchievementEach5SpatioportLevels : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 500;
     }
 }
 
@@ -103,6 +106,7 @@ public class AchievementEach100RocketLaunched : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 500;
     }
 }
 
@@ -134,6 +138,9 @@ public class AchievementEach100Doublon : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        if (Achievement.Each50FailCharism > 1) 
+            user.Score += 100;
+        user.Score += 100;
     }
 }
 
@@ -160,6 +167,7 @@ public class AchievementEach10Cards : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 100;
     }
 }
 
@@ -191,6 +199,9 @@ public class AchievementEach25CasinoWin : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        if (Achievement.Each50FailCharism > 1) 
+            user.Score += 200;
+        user.Score += 100;
     }
 }
 
@@ -217,6 +228,7 @@ public class AchievementEach100MealCooked : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 200;
     }
 }
 
@@ -243,6 +255,7 @@ public class AchievementEach25kCreatium : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 500;
     }
 }
 
@@ -269,6 +282,7 @@ public class AchievementEach20kGold : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 500;
     }
 }
 
@@ -295,6 +309,7 @@ public class AchievementEach50FailCharism : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 200;
     }
 }
 
@@ -326,6 +341,7 @@ public class AchievementEach5CardsWithStat10 : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
+        user.Score += 100;
     }
 }
 
@@ -357,6 +373,7 @@ public class AchievementEachCardsFullStat : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable += 5;
+        user.Score += 500;
     }
 }
 
@@ -383,5 +400,55 @@ public class AchievementEachCollectionsCompleted : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable += 5;
+        user.Score += 500;
+    }
+}
+
+// attaquer et gagner pour la première fois une planète (hostile ou joueur)
+public class AchievementFirstPlanetAttack : AchievementStrategy
+{
+    private const int RequiredAmount = 1;
+    
+    public AchievementFirstPlanetAttack(int statValue, Achievement achievement) 
+        : base(statValue, achievement)
+    {}
+
+    public override string Name => "FirstPlanetAttack";
+
+    public override bool IsClaimable()
+        => StatValue == 1 && Achievement.FirstPlanetAttack != RequiredAmount;
+    
+    public override void Claim(User user)
+    {
+        // achievement val update
+        Achievement.FirstPlanetAttack = RequiredAmount;
+        
+        // user val update
+        user.NbCardOpeningAvailable ++;
+        user.Score += 100;
+    }
+}
+
+public class AchievementSurviveToAnAttack : AchievementStrategy
+{
+    private const int RequiredAmount = 1;
+    
+    public AchievementSurviveToAnAttack(int statValue, Achievement achievement) 
+        : base(statValue, achievement)
+    {}
+
+    public override string Name => "SurviveToAnAttack";
+
+    public override bool IsClaimable()
+        => StatValue == 1 && Achievement.SurviveToAnAttack != RequiredAmount;
+    
+    public override void Claim(User user)
+    {
+        // achievement val update
+        Achievement.SurviveToAnAttack = RequiredAmount;
+        
+        // user val update
+        user.NbCardOpeningAvailable ++;
+        user.Score += 100;
     }
 }

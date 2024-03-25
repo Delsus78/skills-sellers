@@ -424,7 +424,7 @@ public class WarService : IWarService
                 if (target == null)
                     throw new AppException("Cible non trouvée", 404);
 
-                target.Score += 1000;
+                target.Score += 500;
                 
                 var notifMsg = "Voici votre récompense pour avoir survécu !\n";
 
@@ -436,24 +436,24 @@ public class WarService : IWarService
                 
                 await _notificationService.SendNotificationToUser(target, new NotificationRequest(
                     $"[GUERRE] - Victoire de la défense contre {war.User.Pseudo}", 
-                    notifMsg + "+ 100 SCORE\n",""), context);
+                    notifMsg + "+ 500 SCORE\n",""), context);
                 
                 // attack loose
                 var looseMsg = "Les cartes suivantes ont perdu 1 point de compétence : \r\n";
                 looseMsg += WarHelpers.LoosingAnAttack(war.User, attackingCards.Count);
-                war.User.Score += 30;
+                war.User.Score += 100;
                 await _notificationService.SendNotificationToUser(war.User, new NotificationRequest(
                     $"[GUERRE] - Défaite contre {target.Pseudo}", 
-                    looseMsg + "+ 30 SCORE\n", "cards"), context);
+                    looseMsg + "+ 100 SCORE\n", "cards"), context);
                 
                 foreach (var ally in allies)
                 {
                     var loosingAllyMsg = "Les cartes suivantes ont perdu 1 point de compétence : \r\n";
                     loosingAllyMsg += WarHelpers.LoosingAnAttack(ally, attackingCards.Count);
-                    ally.Score += 50;
+                    ally.Score += 150;
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Défaite contre {target.Pseudo}", 
-                        loosingAllyMsg + "+ 50 SCORE\n", "cards"), context);
+                        loosingAllyMsg + "+ 150 SCORE\n", "cards"), context);
                 }
             } 
             
@@ -479,7 +479,7 @@ public class WarService : IWarService
                 starter.Creatium += rewardedCreatiumPerAlly;
                 starter.Or += rewardedOrPerAlly;
                 starter.Nourriture += rewardedNourriturePerAlly;
-                starter.Score += 4500;
+                starter.Score += 400;
                 
                 var notifMsg = $"Voici votre récompense pour avoir vaincu à {allies.Count + 1} joueur(s) !\n" 
                                + $"Nourriture + {rewardedNourriturePerAlly}\n" 
@@ -495,22 +495,22 @@ public class WarService : IWarService
                     ally.Creatium += rewardedCreatiumPerAlly;
                     ally.Or += rewardedOrPerAlly;
                     ally.Nourriture += rewardedNourriturePerAlly;
-                    ally.Score += 2500;
+                    ally.Score += 300;
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Victoire contre {target.Pseudo}", 
-                        notifMsg + "+ 150 SCORE\n", "cards"), context);
+                        notifMsg + "+ 300 SCORE\n", "cards"), context);
                 }
                 
                 // defense loose
                 target.Creatium -= creatium;
                 target.Or -= or;
                 target.Nourriture -= nourriture;
-                target.Score += 30;
+                target.Score += 200;
                 var loosingMsg = "Voici ce que vous avez perdu :(\n"
                     + $"Nourriture - {nourriture}\n"
                     + $"Or - {or}\n"
                     + $"Créatium - {creatium}\n"
-                    + "+ 30 SCORE\n";
+                    + "+ 200 SCORE\n";
                 
                 await _notificationService.SendNotificationToUser(target, new NotificationRequest(
                     $"[GUERRE] - Défaite contre {war.User.Pseudo}",
@@ -541,7 +541,7 @@ public class WarService : IWarService
                 
                 foreach (var ally in allies)
                 {
-                    ally.Score += 1000;
+                    ally.Score += 100;
                     var notifMsg = "Voici votre récompense pour avoir vaincu !\n";
                     
                     var averageTotalCards 
@@ -549,13 +549,13 @@ public class WarService : IWarService
                     
                     notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
                     notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
-                
+
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Victoire contre {registreTarget.Name}", 
-                        notifMsg, "cards"), context);
+                        notifMsg + "+100 SCORE", "cards"), context);
                 }
                 
-                starter.Score += 1000;
+                starter.Score += 100;
                 var averageTotalCardsStarter 
                     = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/(allies.Count + 1) + starter.UserCards.Count)/3;
                 
@@ -565,7 +565,7 @@ public class WarService : IWarService
                 
                 await _notificationService.SendNotificationToUser(starter, new NotificationRequest(
                     $"[GUERRE] - Victoire contre {registreTarget.Name}", 
-                    notifStarterMsg, "cards"), context);
+                    notifStarterMsg + "+100 SCORE", "cards"), context);
                 
             }
         }
