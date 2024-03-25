@@ -341,9 +341,9 @@ public static class WarHelpers
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    public static string GetRandomWarLoot(User user, int multiplicator, bool isOpponent = false)
+    public static string GetRandomWarLoot(User user, int multiplicator, bool isOpponent = false, int basePourcentageForRarity = 0)
     {
-        var random = Randomizer.RandomInt(0, 100);
+        var random = Randomizer.RandomInt(0, 100) - basePourcentageForRarity;
 
         switch (random)
         {
