@@ -428,15 +428,15 @@ public class AchievementFirstPlanetAttack : AchievementStrategy
     }
 }
 
-public class AchievementEach50SurvivedPlanetAttack : AchievementStrategy
+public class AchievementSurviveToAnAttack : AchievementStrategy
 {
     private const int RequiredAmount = 50;
     
-    public AchievementEach50SurvivedPlanetAttack(int statValue, Achievement achievement) 
+    public AchievementSurviveToAnAttack(int statValue, Achievement achievement) 
         : base(statValue, achievement)
     {}
 
-    public override string Name => "Each50SurvivedPlanetAttack";
+    public override string Name => "SurviveToAnAttack";
 
     public override bool IsClaimable()
     {
