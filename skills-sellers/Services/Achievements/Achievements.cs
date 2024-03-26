@@ -125,7 +125,7 @@ public class AchievementEach100Doublon : AchievementStrategy
         var claimableTimes = StatValue / RequiredAmount;
         
         // special case for first claim
-        if (StatValue == 1)
+        if (StatValue >= 1 && Achievement.Each100Doublon == 0)
             claimableTimes = 1;
         
         return Achievement.Each100Doublon < claimableTimes;
@@ -186,7 +186,7 @@ public class AchievementEach25CasinoWin : AchievementStrategy
         var claimableTimes = StatValue / RequiredAmount;
         
         // special case for first claim 
-        if (StatValue == 1)
+        if (StatValue >= 1 && Achievement.Each25CasinoWin == 0)
             claimableTimes = 1;
         
         return Achievement.Each25CasinoWin < claimableTimes;
@@ -328,7 +328,7 @@ public class AchievementEach5CardsWithStat10 : AchievementStrategy
         var claimableTimes = StatValue / RequiredAmount;
         
         // special case for first claim 
-        if (StatValue == 1)
+        if (StatValue >= 1 && Achievement.Each5CardsWithStat10 == 0)
             claimableTimes = 1;
         
         return Achievement.Each5CardsWithStat10 < claimableTimes;
@@ -360,7 +360,7 @@ public class AchievementEachCardsFullStat : AchievementStrategy
         var claimableTimes = StatValue / RequiredAmount;
         
         // special case for first claim 
-        if (StatValue == 1)
+        if (StatValue >= 1 && Achievement.EachCardsFullStat == 0)
             claimableTimes = 1;
         
         return Achievement.EachCardsFullStat < claimableTimes;
@@ -443,7 +443,7 @@ public class AchievementSurviveToAnAttack : AchievementStrategy
         var claimableTimes = StatValue / RequiredAmount;
         
         // special case for first claim
-        if (StatValue == 1)
+        if (StatValue >= 1 && Achievement.SurviveToAnAttack == 0)
             claimableTimes = 1;
         
         return Achievement.SurviveToAnAttack < claimableTimes;
