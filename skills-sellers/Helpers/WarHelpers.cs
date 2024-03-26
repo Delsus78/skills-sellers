@@ -348,15 +348,15 @@ public static class WarHelpers
         switch (random)
         {
             case < 79:
-                var amountCreatium = Randomizer.RandomInt(multiplicator * 100, multiplicator * 300);
+                var amountCreatium = Randomizer.RandomInt(multiplicator * 10, multiplicator * 30);
                 user.Creatium += (int)(amountCreatium * (isOpponent ? 0.5 : 1));
                 return $"{amountCreatium} créatium [COMMUN]";
             case < 94:
-                var amountOr = Randomizer.RandomInt(multiplicator * 150, multiplicator * 250);
+                var amountOr = Randomizer.RandomInt(multiplicator * 15, multiplicator * 20);
                 user.Or += (int)(amountOr * (isOpponent ? 0.5 : 1));
                 return $"{amountOr} or [RARE]";
             case < 99:
-                var amountPack = Randomizer.RandomInt(multiplicator, multiplicator * 2);
+                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/2, 1), multiplicator);
                 user.NbCardOpeningAvailable += (int)(amountPack * (isOpponent ? 0.5 : 1));
                 return $"{amountPack} packs [EPIC]";
             case < 100:
