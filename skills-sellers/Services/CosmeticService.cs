@@ -105,6 +105,8 @@ public class CosmeticService : ICosmeticService
         userCosmetic.CoordinateX = model.CoordinateX;
         userCosmetic.CoordinateY = model.CoordinateY;
         userCosmetic.Size = model.Size;
+        userCosmetic.ZIndex = model.ZIndex;
+        userCosmetic.Rotation = model.Rotation;
         
         _context.SaveChanges();
         
@@ -134,7 +136,9 @@ public class CosmeticService : ICosmeticService
             CosmeticId = cosmeticId,
             CoordinateX = model.CoordinateX,
             CoordinateY = model.CoordinateY,
-            Size = model.Size
+            Size = model.Size,
+            ZIndex = model.ZIndex,
+            Rotation = model.Rotation
         };
         
         _context.UserCosmetics.Add(userCosmetic);
