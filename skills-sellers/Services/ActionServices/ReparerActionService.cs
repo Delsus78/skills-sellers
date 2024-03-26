@@ -13,14 +13,17 @@ public class ReparerActionService : IActionService
     private readonly INotificationService _notificationService;
     private readonly IWeaponService _weaponService;
     private readonly IUserBatimentsService _userBatimentsService;
+    private readonly IStatsService _statsService;
 
     public ReparerActionService(
         INotificationService notificationService, 
-        IWeaponService weaponService, 
+        IWeaponService weaponService,
+        IStatsService statsService,
         IUserBatimentsService userBatimentsService)
     {
         _notificationService = notificationService;
         _weaponService = weaponService;
+        _statsService = statsService;
         _userBatimentsService = userBatimentsService;
     }
     
@@ -144,6 +147,9 @@ public class ReparerActionService : IActionService
             
             // add weapon to user
             user.NbWeaponOpeningAvailable++;
+
+            // stats
+            _statsService.OnMachineUsed(user.Id);
         }
         else 
         {
