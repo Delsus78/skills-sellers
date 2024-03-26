@@ -38,7 +38,7 @@ public static class AchievementsModelsExtensions
                 achievement.EachCollectionsCompleted, claimableAchievementsName.Contains("EachCollectionsCompleted")),
             new CustomAchievementTuple("Première attaque de planète",
                 achievement.FirstPlanetAttack, claimableAchievementsName.Contains("FirstPlanetAttack")),
-            new CustomAchievementTuple("Survivre à une attaque",
+            new CustomAchievementTuple("Toutes les 50 attaques hostiles survécues",
                 achievement.SurviveToAnAttack, claimableAchievementsName.Contains("SurviveToAnAttack"))
         );
     }

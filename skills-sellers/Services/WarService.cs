@@ -27,14 +27,17 @@ public class WarService : IWarService
     private readonly DataContext _context;
     private readonly IActionTaskService _actionTaskService;
     private readonly INotificationService _notificationService;
+    private readonly IStatsService _statsService;
 
     public WarService(DataContext context, 
         IActionTaskService actionTaskService, 
-        INotificationService notificationService)
+        INotificationService notificationService, 
+        IStatsService statsService)
     {
         _context = context;
         _actionTaskService = actionTaskService;
         _notificationService = notificationService;
+        _statsService = statsService;
     }
 
     public async Task StartWar(User starter, WarCreationRequest model)
@@ -570,6 +573,9 @@ public class WarService : IWarService
             }
         }
         #endregion 
+        
+        // stat
+        _statsService.OnPlanetAttacked(starter.Id);
         
         // notify all
         await _notificationService.SendNotificationToAll(new NotificationRequest(

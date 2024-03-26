@@ -404,7 +404,6 @@ public class AchievementEachCollectionsCompleted : AchievementStrategy
     }
 }
 
-// attaquer et gagner pour la première fois une planète (hostile ou joueur)
 public class AchievementFirstPlanetAttack : AchievementStrategy
 {
     private const int RequiredAmount = 1;
@@ -416,7 +415,7 @@ public class AchievementFirstPlanetAttack : AchievementStrategy
     public override string Name => "FirstPlanetAttack";
 
     public override bool IsClaimable()
-        => StatValue == 1 && Achievement.FirstPlanetAttack != RequiredAmount;
+        => StatValue >= 1 && Achievement.FirstPlanetAttack != RequiredAmount;
     
     public override void Claim(User user)
     {
@@ -431,7 +430,7 @@ public class AchievementFirstPlanetAttack : AchievementStrategy
 
 public class AchievementSurviveToAnAttack : AchievementStrategy
 {
-    private const int RequiredAmount = 1;
+    private const int RequiredAmount = 50;
     
     public AchievementSurviveToAnAttack(int statValue, Achievement achievement) 
         : base(statValue, achievement)
@@ -440,7 +439,15 @@ public class AchievementSurviveToAnAttack : AchievementStrategy
     public override string Name => "SurviveToAnAttack";
 
     public override bool IsClaimable()
-        => StatValue == 1 && Achievement.SurviveToAnAttack != RequiredAmount;
+    {
+        var claimableTimes = StatValue / RequiredAmount;
+        
+        // special case for first claim
+        if (StatValue == 1)
+            claimableTimes = 1;
+        
+        return Achievement.SurviveToAnAttack < claimableTimes;
+    }
     
     public override void Claim(User user)
     {
