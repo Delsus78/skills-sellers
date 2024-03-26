@@ -9,4 +9,6 @@ public class UserCosmetic
     public int CoordinateX { get; set; }
     public int CoordinateY { get; set; }
     public int Size { get; set; }
+    public int ZIndex { get; set; }
+    public int Rotation { get; set; }
 }

@@ -13,7 +13,9 @@ public static class CosmeticsModelsExtensions
             userCosmetic.Cosmetic.Rarity,
             userCosmetic.CoordinateX,
             userCosmetic.CoordinateY,
-            userCosmetic.Size);
+            userCosmetic.Size,
+            userCosmetic.ZIndex,
+            userCosmetic.Rotation);
     }
 
     public static CosmeticResponse ToResponse(this Cosmetic cosmetic)
