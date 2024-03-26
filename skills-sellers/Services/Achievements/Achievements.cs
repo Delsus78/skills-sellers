@@ -420,7 +420,7 @@ public class AchievementFirstPlanetAttack : AchievementStrategy
     public override void Claim(User user)
     {
         // achievement val update
-        Achievement.FirstPlanetAttack = RequiredAmount;
+        Achievement.FirstPlanetAttack++;
         
         // user val update
         user.NbCardOpeningAvailable ++;
@@ -452,7 +452,7 @@ public class AchievementSurviveToAnAttack : AchievementStrategy
     public override void Claim(User user)
     {
         // achievement val update
-        Achievement.SurviveToAnAttack = RequiredAmount;
+        Achievement.SurviveToAnAttack++;
         
         // user val update
         user.NbCardOpeningAvailable ++;
