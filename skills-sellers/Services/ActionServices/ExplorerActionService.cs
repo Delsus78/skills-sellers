@@ -227,10 +227,7 @@ public class ExplorerActionService : IActionService
                     user.NbCardOpeningAvailable++;
                     notificationMessage += "Votre carte a pillé la planète ! Elle gagne une carte supplémentaire !\r\n";
                     var isPlanetHostile = WeaponUpdatePillagePart(context, user, actionExplorer);
-                    
-                    // stat
-                    _statsService.OnPlanetAttacked(user.Id);
-                    
+
                     if (isPlanetHostile)
                         notificationMessage += 
                             "Pillage - Hostile\r\n" +
