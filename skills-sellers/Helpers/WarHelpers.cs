@@ -356,7 +356,7 @@ public static class WarHelpers
                 user.Or += (int)(amountOr * (isOpponent ? 0.5 : 1));
                 return $"{amountOr} or [RARE]";
             case < 99:
-                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/2, 1), multiplicator);
+                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/4, 1), multiplicator/2);
                 user.NbCardOpeningAvailable += (int)(amountPack * (isOpponent ? 0.5 : 1));
                 return $"{amountPack} packs [EPIC]";
             case < 100:
