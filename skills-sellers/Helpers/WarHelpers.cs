@@ -136,6 +136,10 @@ public static class WarHelpers
                         Name = defendingCard.Name + "!*-*!",
                         TotalPower = Math.Abs(fightResult.pointDiff)
                     };
+                    
+                    // get next attack card
+                    if (orderedArmyAttack.Count > 0)
+                        attackingCard = orderedArmyAttack[0];
                     break;
                 // attaque win
                 case -1:
