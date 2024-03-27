@@ -515,6 +515,10 @@ public class WarService : IWarService
                     + $"Créatium - {creatium}\n"
                     + "+ 200 SCORE\n";
                 
+                // defense consolation
+                loosingMsg += $"Voici votre consolation pour avoir perdu !\n{
+                    WarHelpers.GetRandomWarLoot(target, attackingCards.Count, true, 3)}\n";
+                
                 await _notificationService.SendNotificationToUser(target, new NotificationRequest(
                     $"[GUERRE] - Défaite contre {war.User.Pseudo}",
                     loosingMsg, ""), context);
