@@ -341,7 +341,7 @@ public static class WarHelpers
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    public static string GetRandomWarLoot(User user, int multiplicator, bool isOpponent = false, int basePourcentageForRarity = 0)
+    public static string GetRandomWarLoot(User user, int multiplicator, bool isLooser = false, int basePourcentageForRarity = 0)
     {
         var random = Randomizer.RandomInt(0, 100) - basePourcentageForRarity;
 
@@ -349,16 +349,19 @@ public static class WarHelpers
         {
             case < 79:
                 var amountCreatium = Randomizer.RandomInt(multiplicator * 10, multiplicator * 30);
-                user.Creatium += (int)(amountCreatium * (isOpponent ? 0.5 : 1));
-                return $"{amountCreatium} créatium [COMMUN]";
+                var finalAmountCreatium = isLooser ? amountCreatium/4 : amountCreatium;
+                user.Creatium += finalAmountCreatium;
+                return $"{finalAmountCreatium} créatium [COMMUN]";
             case < 94:
                 var amountOr = Randomizer.RandomInt(multiplicator * 15, multiplicator * 20);
-                user.Or += (int)(amountOr * (isOpponent ? 0.5 : 1));
-                return $"{amountOr} or [RARE]";
+                var finalAmountOr = isLooser ? amountOr/4 : amountOr;
+                user.Or += finalAmountOr;
+                return $"{finalAmountOr} or [RARE]";
             case < 99:
                 var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/4, 1), multiplicator/2);
-                user.NbCardOpeningAvailable += (int)(amountPack * (isOpponent ? 0.5 : 1));
-                return $"{amountPack} packs [EPIC]";
+                var finalAmountPack = isLooser ? amountPack/4 : amountPack;
+                user.NbCardOpeningAvailable += finalAmountPack;
+                return $"{finalAmountPack} packs [EPIC]";
             case < 100:
                 user.NbWeaponUpgradeAvailable++;
                 return "1 amélioration d'arme [LEGENDAIRE]";
