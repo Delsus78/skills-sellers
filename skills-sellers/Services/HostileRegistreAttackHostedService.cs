@@ -82,14 +82,15 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
     {
         // Check if the task has already been executed this hour
         var thisHour = DateTime.Now;
-        var logEntry = await context.HostileRegistreAttacksLogs.SingleOrDefaultAsync(e => e.ExectuedAt.Date == thisHour.Date && e.ExectuedAt.Hour == thisHour.Hour);
-        
+        var logEntry = await context.HostileRegistreAttacksLogs.SingleOrDefaultAsync(e =>
+            e.ExectuedAt.Date == thisHour.Date && e.ExectuedAt.Hour == thisHour.Hour);
+
         if (logEntry != null) return;
-        
+
         Console.WriteLine($"[{thisHour}] Executing Hostile Attacks Check...");
 
         var users = context.Users
-        .Include(u => u.UserCards)
+            .Include(u => u.UserCards)
             .ThenInclude(uc => uc.UserWeapon)
             .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Card)
@@ -100,28 +101,29 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
             .ThenInclude(uw => uw.Weapon)
             .Include(u => u.UserCards)
             .ThenInclude(uc => uc.Competences)
-        .Include(u => u.Registres)
-        .Where(u => u.Registres.Any(r => r.Type == RegistreType.Hostile))
-        .ToList();
+            .Include(u => u.Registres)
+            .Where(u => u.Registres.Any(r => r.Type == RegistreType.Hostile))
+            .ToList();
 
         foreach (var user in users)
         {
             var hostileRegistres = user.Registres.OfType<RegistreHostile>().ToList();
-            
+
             // nb of hostile registres = chance of attack (24/24 = 100%)
             var rdnNumber = Randomizer.RandomInt(0, 24);
-            Console.WriteLine($"[HOSTILE TASK] Random number for {user.Pseudo} : {rdnNumber} out of {hostileRegistres.Count}/24");
-            
+            Console.WriteLine(
+                $"[HOSTILE TASK] Random number for {user.Pseudo} : {rdnNumber} out of {hostileRegistres.Count}/24");
+
             if (rdnNumber >= hostileRegistres.Count) continue;
-            
+
             var allSatelliteFightingEntities = user.UserCards.Where(uc => uc.Action is ActionSatellite)
                 .Select(c => new FightingEntity(c.Card.Name, c.ToResponse().Power, c.UserWeapon?.Affinity))
                 .ToList();
-                
+
             var allHostileFightingEntities = hostileRegistres.Select(
-                    r => 
-                        new FightingEntity(r.Name, 
-                            r.CardPower + r.CardWeaponPower, // why not muscles
+                    r =>
+                        new FightingEntity(r.Name,
+                            r.CardPower + r.CardWeaponPower,
                             r.Affinity))
                 .ToList();
 
@@ -129,7 +131,7 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
 
             //stat
             _statService.OnAttackSurvived(user.Id);
-            
+
             // adding fightReport
             var fightDesc = new List<string>
             {
@@ -141,31 +143,23 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
                 Description = fightDesc,
                 FightDate = DateTime.Now
             });
-            
-            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count/5, false, 5);
-            var msgNotif = !results.defenseWin ? 
-                $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
-                + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count) : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}";
+
+            var stringReward = WarHelpers.GetRandomWarLoot(user, user.UserCards.Count / 5, false, 5);
+            var msgNotif = !results.defenseWin
+                ? $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
+                  + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count)
+                : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}";
             msgNotif += results.fightReport;
-                
+
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(
-                "Rapport attaque des planètes hostiles !", 
+                "Rapport attaque des planètes hostiles !",
                 msgNotif,
                 ""), context);
         }
-        
+
         // Log the execution
         context.HostileRegistreAttacksLogs.Add(new HostileRegistreAttacksLog { ExectuedAt = thisHour });
-        
+
         await context.SaveChangesAsync();
     }
-    
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="user"></param>
-    /// <param name="nbOfHostileRegistres"></param>
-    /// <returns>the message to print to the user</returns>
-    
 }
