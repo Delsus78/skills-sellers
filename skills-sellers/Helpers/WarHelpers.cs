@@ -134,7 +134,7 @@ public static class WarHelpers
                     defendingCard = defendingCard with
                     {
                         Name = defendingCard.Name + "!*-*!",
-                        TotalPower = Math.Abs(fightResult.pointDiff)
+                        TotalPower = defendingCard.TotalPower - Math.Abs(fightResult.pointDiff)
                     };
                     
                     // get next attack card
@@ -210,6 +210,13 @@ public static class WarHelpers
                     break;
                 }
             }
+            
+            // get next attack card // get next defense card
+            if (attackingCard.TotalPower <= 0)
+                attackingCard = orderedArmyAttack[0];
+
+            if (defendingCard.TotalPower <= 0)
+                defendingCard = orderedArmyDefense[0];
 
             if (orderedArmyAttack.Count == 0) // si plus de carte attaque, la défense gagne
             {
