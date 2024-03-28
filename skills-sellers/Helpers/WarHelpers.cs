@@ -134,7 +134,7 @@ public static class WarHelpers
                     defendingCard = defendingCard with
                     {
                         Name = defendingCard.Name + "!*-*!",
-                        TotalPower = defendingCard.TotalPower - Math.Abs(fightResult.pointDiff)
+                        TotalPower = Math.Abs(fightResult.pointDiff)
                     };
                     
                     // get next attack card
