@@ -117,7 +117,7 @@ public class WarActionService : IActionService
 
         if (war.Status == WarStatus.EnCours)
         {
-            var notifMessage = $"La guerre {war.Id} est terminée !";
+            var notifMessage = $"La guerre {war.Id} est terminée !\r\n";
             
             // up force x2 if not 2 wars are already done this week
             if (context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == actionGuerre.User.Id)
