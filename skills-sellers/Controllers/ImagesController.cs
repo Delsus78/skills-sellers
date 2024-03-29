@@ -20,15 +20,15 @@ public class ImagesController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetImage(int id)
     {
-        if (_cache.TryGetValue(id, out byte[]? imageBytes))
+        var imagePath = Path.Combine("Images", id + ".jpg");
+        if (_cache.TryGetValue(imagePath, out byte[]? imageBytes))
             if (imageBytes != null)
                 return File(imageBytes, "image/jpeg"); // Assume all images are JPEGs
 
-        var imagePath = Path.Combine("Images", id + ".jpg");
         if (System.IO.File.Exists(imagePath))
         {
             imageBytes = System.IO.File.ReadAllBytes(imagePath);
-            _cache.Set(id, imageBytes, new MemoryCacheEntryOptions {
+            _cache.Set(imagePath, imageBytes, new MemoryCacheEntryOptions {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) // cache for 1 hour
             });
         } else return NotFound();
@@ -42,15 +42,15 @@ public class ImagesController : ControllerBase
     [HttpGet("weapon/{id}")]
     public IActionResult GetWeaponImage(int id)
     {
-        if (_cache.TryGetValue(id, out byte[]? imageBytes))
+        var imagePath = Path.Combine("Images/Weapons", id + ".jpg");
+        if (_cache.TryGetValue(imagePath, out byte[]? imageBytes))
             if (imageBytes != null)
                 return File(imageBytes, "image/jpeg"); // Assume all images are JPEGs
-
-        var imagePath = Path.Combine("Images/Weapons", id + ".jpg");
+        
         if (System.IO.File.Exists(imagePath))
         {
             imageBytes = System.IO.File.ReadAllBytes(imagePath);
-            _cache.Set(id, imageBytes, new MemoryCacheEntryOptions {
+            _cache.Set(imagePath, imageBytes, new MemoryCacheEntryOptions {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) // cache for 1 hour
             });
         } else return NotFound();
