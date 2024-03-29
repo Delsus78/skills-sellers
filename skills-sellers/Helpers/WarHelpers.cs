@@ -355,7 +355,7 @@ public static class WarHelpers
     public static string GetRandomWarLoot(User user, int multiplicator, bool isLooser = false, int basePourcentageForRarity = 0)
     {
         var random = Randomizer.RandomInt(0, 100) - basePourcentageForRarity;
-
+        multiplicator = multiplicator <= 0 ? 1 : multiplicator;
         switch (random)
         {
             case < 79:
