@@ -140,8 +140,8 @@ public class WeaponService : IWeaponService
 
     public (int creatiumPrice, int orPrice) GetWeaponConstructionPrice(int numberOfCards, int numberOfWeapons)
     {
-        var creatiumPrice = (int)(1500 * (Math.Pow(5, numberOfCards / 100.0) + numberOfWeapons * 4));
-        var orPrice = (int)(500 * (Math.Pow(5, numberOfCards / 100.0) + numberOfWeapons * 2));
+        var creatiumPrice = 1000 + numberOfWeapons * 5000;
+        var orPrice = 500 + numberOfWeapons * 1250;
         
         return (creatiumPrice, orPrice);
     }
