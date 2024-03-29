@@ -649,7 +649,7 @@ public class WarService : IWarService
             // if started vs registrePlayer, user has done his 2 wars 
             if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
                     .AsEnumerable()
-                    .Count(w => EstDansSemaineActuelle(w.CreatedAt)) >= 2)
+                    .Count(w => w.CreatedAt.EstDansSemaineActuelle()) >= 2)
                 return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
         }
         
@@ -703,17 +703,5 @@ public class WarService : IWarService
             return (false, "Vous devez utiliser au moins une carte", null, null);
 
         return (true, "", actionEstimation.EndDates.First(), actionEstimation.Couts);
-    }
-    
-    private bool EstDansSemaineActuelle(DateTime date)
-    {
-        var today = DateTime.Today;
-
-        var debutSemaine = today.AddDays(-(int)today.DayOfWeek).Date;
-
-        var finSemaine = debutSemaine.AddDays(6).Date;
-        finSemaine = finSemaine.AddHours(23).AddMinutes(59).AddSeconds(59);
-
-        return date >= debutSemaine && date <= finSemaine;
     }
 }
