@@ -87,6 +87,55 @@ public static class WarHelpers
     public static (bool defenseWin, string fightReport) Battle(IEnumerable<FightingEntity> armyDefense,
         IEnumerable<FightingEntity> armyAttack)
     {
+        FightingEntity DamageCardWithPFC(FightingEntity attackingCard2, (int result, int pointDiff) fightResult)
+        {
+            attackingCard2 = attackingCard2 with
+            {
+                Name = attackingCard2.Name + "!*-*!",
+                TotalPower = Math.Abs(fightResult.pointDiff)
+            };
+            return attackingCard2;
+        }
+
+        FightingEntity PostAttackLooseActionsForFightingEntity(List<FightingEntity> list, FightingEntity fightingEntity1)
+        {
+            // carte attaque retirée
+            list.RemoveAt(0);
+            // get next attack card
+            if (list.Count > 0)
+                fightingEntity1 = list[0];
+            return fightingEntity1;
+        }
+
+        FightingEntity PostDefenseLooseActionsForFightingEntity(List<FightingEntity> fightingEntities, FightingEntity fightingEntity, FightingEntity attackingCard1)
+        {
+            // defense card removed
+            fightingEntities.RemoveAt(0);
+
+            // calculate power added from defense fail and add the power to the next defense card
+            var addedDefensePower = Math.Max(fightingEntity.TotalPower - attackingCard1.TotalPower, 0);
+
+            if (fightingEntities.Count == 0 && addedDefensePower > 0) // ajout d'une carte en plus
+            {
+                fightingEntities.Add(fightingEntity with
+                {
+                    Name = fightingEntity.Name + "(*)",
+                    TotalPower = addedDefensePower
+                });
+                fightingEntity = fightingEntities[0];
+            }
+            else if (addedDefensePower > 0)
+            {
+                fightingEntity = fightingEntities[0] with
+                {
+                    Name = fightingEntities[0].Name + $"!*(+{addedDefensePower})*!",
+                    TotalPower = fightingEntities[0].TotalPower + addedDefensePower
+                };
+            }
+
+            return fightingEntity;
+        }
+
         var report = new StringBuilder();
 
         // new list order by power
@@ -122,101 +171,36 @@ public static class WarHelpers
             
             switch (fightResult.result)
             {
-                // defense win
-                case 1:
+                case 1: // defense win
                     report.Append(
-                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!DEFENSE GAGNE !!* !\n");
+                        $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!DEFENSE GAGNE !!*\n");
                     
-                    // carte attaque retirée
-                    orderedArmyAttack.RemoveAt(0);
-
-                    // calculate power damage and remove power from actual defending card
-                    defendingCard = defendingCard with
-                    {
-                        Name = defendingCard.Name + "!*-*!",
-                        TotalPower = Math.Abs(fightResult.pointDiff)
-                    };
+                    defendingCard = DamageCardWithPFC(defendingCard, fightResult);
+                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard);
                     
-                    // get next attack card
-                    if (orderedArmyAttack.Count > 0)
-                        attackingCard = orderedArmyAttack[0];
                     break;
-                // attaque win
-                case -1:
+                
+                case -1: // attaque win
                 {
                     report.Append(
                         $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!ATTAQUE GAGNE !!*\n");
                     
-                    // attaque card get damaged
-                    attackingCard = attackingCard with
-                    {
-                        Name = attackingCard.Name + "!*-*!",
-                        TotalPower = Math.Abs(fightResult.pointDiff)
-                    };
-                
-                    // defense card removed
-                    orderedArmyDefense.RemoveAt(0);
-                
-                    // calculate power added from defense fail and add the power to the next defense card
-                    var addedDefensePower = Math.Max(defendingCard.TotalPower - attackingCard.TotalPower, 0);
-                
-                    if (orderedArmyDefense.Count == 0 && addedDefensePower > 0) // ajout d'une carte en plus
-                        orderedArmyDefense.Add(defendingCard with
-                        {
-                            Name = defendingCard.Name + "*",
-                            TotalPower = addedDefensePower
-                        });
-                    else if (addedDefensePower > 0)
-                    {
-                        defendingCard = orderedArmyDefense[0] with
-                        {
-                            Name = orderedArmyDefense[0].Name + $"!*(+{addedDefensePower})*!",
-                            TotalPower = orderedArmyDefense[0].TotalPower + addedDefensePower
-                        };
-                    }
+                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard);
+                    attackingCard = DamageCardWithPFC(attackingCard, fightResult);
 
                     break;
                 }
-                // draw
-                default:
+                default: // draw
                 {
                     report.Append(
                         $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => Egalité !!*\n");
                     
-                    // carte attaque retirée
-                    orderedArmyAttack.RemoveAt(0);
-                
-                    // defense card removed
-                    orderedArmyDefense.RemoveAt(0);
-                
-                    // calculate power added from defense fail and add the power to the next defense card
-                    var addedDefensePower = Math.Max(defendingCard.TotalPower - attackingCard.TotalPower, 0);
-                
-                    if (orderedArmyDefense.Count == 0 && addedDefensePower > 0) // ajout d'une carte en plus
-                        orderedArmyDefense.Add(defendingCard with
-                        {
-                            Name = defendingCard.Name + "*",
-                            TotalPower = addedDefensePower
-                        });
-                    else if (addedDefensePower > 0)
-                    {
-                        defendingCard = orderedArmyDefense[0] with
-                        {
-                            Name = orderedArmyDefense[0].Name + $"!*(+{addedDefensePower})*!",
-                            TotalPower = orderedArmyDefense[0].TotalPower + addedDefensePower
-                        };
-                    }
+                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard);
+                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard);
 
                     break;
                 }
             }
-            
-            // get next attack card // get next defense card
-            if (attackingCard.TotalPower <= 0)
-                attackingCard = orderedArmyAttack[0];
-
-            if (defendingCard.TotalPower <= 0)
-                defendingCard = orderedArmyDefense[0];
 
             if (orderedArmyAttack.Count == 0) // si plus de carte attaque, la défense gagne
             {
@@ -226,7 +210,7 @@ public static class WarHelpers
             } else if (orderedArmyDefense.Count == 0) // si plus de carte défense mais qu'il reste des cartes attaque, l'attaque gagne
             {
                 report.Append(
-                    "[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre => *!ATTAQUE GAGNE !!*\n");
+                    $"[*!DEFENSE!*] *!Aucune!* carte disponible pour défendre contre *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!ATTAQUE GAGNE !!*\n");
                 fightDone = -1;
             }
         }
@@ -506,7 +490,7 @@ public static class WarHelpers
     {
         var random = new Random(planetName.GetHashCode());
         var cardPower = 0;
-        var cardWeaponPower = random.Next(0,userTotalCards / 10);
+        var cardWeaponPower = random.Next(0,userTotalCards / 30);
 
         // total cards
         var totalCardsPower = userTotalCards / 5;
@@ -520,7 +504,7 @@ public static class WarHelpers
         else
             cardPower -= randomPower;
 
-        return (Math.Max(cardPower, 0), Math.Max(cardWeaponPower + random.Next(-1, 2), 0));
+        return (Math.Max(cardPower, 1), cardWeaponPower > 0 ? Math.Max(cardWeaponPower + random.Next(-3, 5), 0) : 0);
     }
 
     public static string LoosingAnAttack(User user, int nbToLoose)
