@@ -283,13 +283,10 @@ public class WarService : IWarService
             .ToList();
 
         var registreTarget = await _context.Registres.FindAsync(war.RegistreTargetId);
-        if (registreTarget == null)
-            throw new AppException("Cible non trouvée", 404);
-
         if (registreTarget is RegistrePlayer rPl)
             await _context.Entry(rPl).Reference(rPl => rPl.RelatedPlayer).LoadAsync();
 
-        return war.ToWarResponse(registreTarget.ToResponse(), allies);
+        return war.ToWarResponse(registreTarget?.ToResponse(), allies);
     }
     
     public async Task<WarResponse?> GetInvitedWar(User user)
