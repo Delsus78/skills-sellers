@@ -117,11 +117,25 @@ public class WarActionService : IActionService
 
         if (war.Status == WarStatus.EnCours)
         {
-            // up force x2
-            var userCardsToUp = actionGuerre.UserCards
-                .Where(card => card.Competences.Intelligence < 10)
-                .ToList();
-            UpForceOfCards(userCardsToUp);
+            var notifMessage = $"La guerre {war.Id} est terminée !";
+            
+            // up force x2 if not 2 wars are already done this week
+            if (context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == actionGuerre.User.Id)
+                    .AsEnumerable()
+                    .Count(w => w.CreatedAt.EstDansSemaineActuelle()) >= 2)
+            {
+                var userCardsToUp = actionGuerre.UserCards
+                    .Where(card => card.Competences.Force < 10)
+                    .ToList();
+                UpForceOfCards(userCardsToUp);
+                
+                notifMessage +=
+                    $"Les cartes suivantes ont gagné 2 points de force : {string.Join(", ", userCardsToUp.Select(kvp => $"{kvp.Card.Name}"))}";
+            }
+            else
+            {
+                notifMessage += "Vous avez déjà effectué 2 guerres cette semaine, les cartes n'ont pas gagné de force.";
+            }
 
             // remove action
             context.Actions.Remove(actionGuerre);
@@ -130,7 +144,7 @@ public class WarActionService : IActionService
             // notify user
             await _notificationService.SendNotificationToUser(actionGuerre.User, new NotificationRequest(
                     "Guerre terminée",
-                    $"Les cartes suivantes ont gagné 2 points de force : {string.Join(", ", userCardsToUp.Select(kvp => $"{kvp.Card.Name}"))}",
+                    notifMessage,
                     "cards"),
                 context);
 
