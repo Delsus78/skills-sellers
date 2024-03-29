@@ -360,17 +360,17 @@ public static class WarHelpers
         {
             case < 79:
                 var amountCreatium = Randomizer.RandomInt(multiplicator * 10, multiplicator * 30);
-                var finalAmountCreatium = isLooser ? amountCreatium/4 : amountCreatium;
+                var finalAmountCreatium = isLooser ? amountCreatium/3 : amountCreatium;
                 user.Creatium += finalAmountCreatium;
                 return $"{finalAmountCreatium} créatium [COMMUN]";
             case < 94:
                 var amountOr = Randomizer.RandomInt(multiplicator * 15, multiplicator * 20);
-                var finalAmountOr = isLooser ? amountOr/4 : amountOr;
+                var finalAmountOr = isLooser ? amountOr/3 : amountOr;
                 user.Or += finalAmountOr;
                 return $"{finalAmountOr} or [RARE]";
             case < 99:
-                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/4, 1), multiplicator/2);
-                var finalAmountPack = isLooser ? amountPack/4 : amountPack;
+                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/4, 1), Math.Max(multiplicator/2,3));
+                var finalAmountPack = isLooser ? (amountPack/3 <= 0 ? 1 : amountPack/3) : amountPack;
                 user.NbCardOpeningAvailable += finalAmountPack;
                 return $"{finalAmountPack} packs [EPIC]";
             case < 100:
