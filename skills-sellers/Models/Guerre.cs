@@ -18,7 +18,7 @@ public record AddCardsToWarRequest(List<int> UserCardIds);
 
 public record WarResponse(
     int Id, 
-    RegistreResponse RegistreTarget,
+    RegistreResponse? RegistreTarget,
     List<UserResponse> UserAllies,
     WarStatus Status, 
     DateTime CreatedAt, 
