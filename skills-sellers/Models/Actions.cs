@@ -27,6 +27,7 @@ public class ActionRequest
     public int? WeaponToUpgradeId { get; set; }
     public double? RepairChances { get; set; }
     public int? WarId { get; set; }
+    public DateTime? DueDate { get; set; }
 }
 
 [JsonDerivedType(typeof(ActionCuisinerResponse))]
@@ -36,6 +37,7 @@ public class ActionRequest
 [JsonDerivedType(typeof(ActionReparerResponse))]
 [JsonDerivedType(typeof(ActionSatelliteResponse))]
 [JsonDerivedType(typeof(ActionGuerreResponse))]
+[JsonDerivedType(typeof(ActionBossResponse))]
 public abstract class ActionResponse
 {
     public int Id { get; set; }
@@ -98,6 +100,13 @@ public class ActionEstimationResponse : ActionResponse
     
     public Dictionary<string, string> Couts { get; set; } = new();
     public string? Error { get; set; }
+}
+
+public class ActionBossResponse : ActionResponse
+{
+    public string BossName { get; set; }
+    public int BossPower { get; set; }
+    public Dictionary<string,int> PlayersPower { get; set; } = new();
 }
 
 public record ActionDecisionRequest(int ActionId, ExplorationDecision Decision);

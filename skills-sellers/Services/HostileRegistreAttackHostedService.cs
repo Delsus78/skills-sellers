@@ -148,7 +148,7 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
             var msgNotif = !results.defenseWin
                 ? $"Vous avez perdu contre {allHostileFightingEntities.Count} registres hostiles. Les cartes suivantes ont perdu 1 point de compétence : \r\n"
                   + WarHelpers.LoosingAnAttack(user, allHostileFightingEntities.Count)
-                : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}";
+                : $"Vous avez gagné contre les registres hostiles.\r\nVous gagnez {stringReward}\r\n";
             msgNotif += results.fightReport;
 
             await _notificationService.SendNotificationToUser(user, new NotificationRequest(

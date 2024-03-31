@@ -21,6 +21,7 @@ public interface IWarService
     Task<WarResponse?> GetInvitedWar(User user);
     Task StartBattle(int warId, DataContext context);
     Task GiveRandomWarLoot(int userId, int multiplicator);
+    WarLootEstimationResponse GetEstimatedWarLootForUser(int multiplicator, int reducedPourcentage);
 }
 public class WarService : IWarService
 {
@@ -523,8 +524,12 @@ public class WarService : IWarService
             else
             {
                 var registreTarget = await _context.Registres.FindAsync(war.RegistreTargetId);
-                if (registreTarget is not RegistreHostile)
+                
+                if (registreTarget is not RegistreHostile registreHostile)
                     throw new AppException("Cible non trouvée", 404);
+                
+                // based on planet hostile total power
+                var multiplicator = registreHostile.CardPower + registreHostile.CardWeaponPower;
                 
                 // deleting registre and all registres with a name containing the same name (ex: "Tue" will delete "Tueur", "Tueur de la mort", etc)
                 
@@ -547,12 +552,9 @@ public class WarService : IWarService
                 {
                     ally.Score += 100;
                     var notifMsg = "Voici votre récompense pour avoir vaincu !\n";
-                    
-                    var averageTotalCards 
-                        = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/(allies.Count + 1) + ally.UserCards.Count)/3;
-                    
-                    notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
-                    notifMsg += WarHelpers.GetRandomWarLoot(ally, averageTotalCards) + "\n";
+
+                    notifMsg += WarHelpers.GetRandomWarLoot(ally, multiplicator) + "\n";
+                    notifMsg += WarHelpers.GetRandomWarLoot(ally, multiplicator) + "\n";
 
                     await _notificationService.SendNotificationToUser(ally, new NotificationRequest(
                         $"[GUERRE] - Victoire contre {registreTarget.Name}", 
@@ -560,12 +562,10 @@ public class WarService : IWarService
                 }
                 
                 starter.Score += 100;
-                var averageTotalCardsStarter 
-                    = ((starter.UserCards.Count + allies.Sum(a => a.UserCards.Count))/(allies.Count + 1) + starter.UserCards.Count)/3;
                 
                 var notifStarterMsg = "Voici votre récompense pour avoir vaincu !\n";
-                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, averageTotalCardsStarter) + "\n";
-                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, averageTotalCardsStarter) + "\n";
+                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, multiplicator) + "\n";
+                notifStarterMsg += WarHelpers.GetRandomWarLoot(starter, multiplicator) + "\n";
                 
                 await _notificationService.SendNotificationToUser(starter, new NotificationRequest(
                     $"[GUERRE] - Victoire contre {registreTarget.Name}", 
@@ -597,6 +597,38 @@ public class WarService : IWarService
             stringReward, "cards"), _context);
         
         return _context.SaveChangesAsync();
+    }
+
+    public WarLootEstimationResponse GetEstimatedWarLootForUser(int multiplicator, int reducedPourcentage)
+    {
+        var estimations = new Dictionary<string, string>();
+        var finalMultiplicator = multiplicator <= 0 ? 1 : multiplicator;
+        
+        string GetLootRange(int index)
+        {
+            return index switch
+            {
+                0 => finalMultiplicator * 10 + " - " + finalMultiplicator * 30 + " Creatium",
+                1 => finalMultiplicator * 15 + " - " + finalMultiplicator * 20 + " Or",
+                2 => Math.Max(multiplicator / 4, 1) + " - " + Math.Max(multiplicator / 2, 3) + " Packs",
+                3 => "1 Amélioration d'arme",
+                _ => throw new ArgumentOutOfRangeException(nameof(index), index, null)
+            };
+        }
+        
+        var pourcentages = new List<int> { 79, 15, 5, 1 };
+
+        for (var index = 0; index < pourcentages.Count; index++)
+        {
+            var pourcentage = pourcentages[index];
+            var finalPourcentage = pourcentage - reducedPourcentage;
+            if (finalPourcentage <= 0)
+                continue;
+
+            estimations.Add(finalPourcentage + "% : ", GetLootRange(index));
+        }
+
+        return new WarLootEstimationResponse(estimations);
     }
 
     // get if cards aren't in actions using the classic Estimation Methods for ActionGuerre
@@ -652,6 +684,12 @@ public class WarService : IWarService
                     .Count(w => w.CreatedAt.EstDansSemaineActuelle()) >= 2)
                 return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
         }
+        
+        // deja effectué une guerre aujourd'hui
+        if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
+                .AsEnumerable()
+                .Count(w => w.CreatedAt.EstDansLajourneeActuelle()) >= 1)
+            return (false, "Vous avez déjà fait une guerre aujourd'hui", null, null);
         
         // ally in war
         if (_context.Wars

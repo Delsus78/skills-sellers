@@ -75,6 +75,14 @@ public static class ActionsModelsExtensions
                 Cards = actionGuerre.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList(),
                 WarId = actionGuerre.WarId
             },
+            ActionBoss actionBoss => new ActionBossResponse
+            {
+                ActionName = "boss*",
+                Id = actionBoss.Id,
+                EndTime = actionBoss.DueDate,
+                CreatedAt = actionBoss.CreatedAt ?? DateTime.Now,
+                Cards = actionBoss.UserCards.Select(uc => uc.ToUserCardInActionResponse()).ToList()
+            },
             _ => throw new ArgumentException("Action inconnue")
         };
 }

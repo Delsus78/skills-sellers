@@ -70,12 +70,14 @@ services.AddScoped<MusclerActionService>();
 services.AddScoped<ReparerActionService>();
 services.AddScoped<SatelliteActionService>();
 services.AddScoped<WarActionService>();
+services.AddScoped<BossActionService>();
 
 // add games services
 services.AddScoped<GamesService>();
 services.AddScoped<CasinoService>();
 services.AddScoped<MachineRepairService>();
 services.AddScoped<WordleGameService>();
+services.AddScoped<BossService>();
 
 // special services
 services.AddScoped<IChristmasService, ChristmasService>();

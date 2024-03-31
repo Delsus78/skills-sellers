@@ -53,9 +53,13 @@ public class WarController : ControllerBase
     [HttpGet("invitedWar")]
     public async Task<WarResponse?> GetInvitedWar()
         => await _warService.GetInvitedWar(GetUserAuthenticated());
+    
+    [HttpGet("warLoot/estimate")]
+    public WarLootEstimationResponse GetEstimatedWarLootForUser(int multiplicator = 1, int reducedPourcentage = 0)
+        => _warService.GetEstimatedWarLootForUser(multiplicator, reducedPourcentage);
 
     [Authorize(Roles = "admin")]
-    [HttpGet("giveRandomWarLoot/{userId}")]
+    [HttpPost("warLoot/{userId}")]
     public async Task GiveRandomWarLoot(int userId, int multiplicator = 1)
         => await _warService.GiveRandomWarLoot(userId, multiplicator);
 }

@@ -12,17 +12,14 @@ namespace skills_sellers.Services.ActionServices;
 public class WarActionService : IActionService
 {
     private readonly INotificationService _notificationService;
-    private readonly IUserBatimentsService _userBatimentsService;
     private readonly IWarService _warService;
     private readonly IActionTaskService _actionTaskService;
 
     public WarActionService(
-        IUserBatimentsService userBatimentsService, 
         INotificationService notificationService, 
         IWarService warService, 
         IActionTaskService actionTaskService)
     {
-        _userBatimentsService = userBatimentsService;
         _notificationService = notificationService;
         _warService = warService;
         _actionTaskService = actionTaskService;
@@ -30,7 +27,7 @@ public class WarActionService : IActionService
 
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
     {
-        // une seule carte pour améliorer
+        // une seule carte pour partir en guerre
         if (userCards.Count < 1)
             return (false, "Une carte ou plus est nécessaire pour partir en guerre !");
 

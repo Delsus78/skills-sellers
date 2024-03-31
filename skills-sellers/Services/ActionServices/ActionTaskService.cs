@@ -38,7 +38,7 @@ public class ActionTaskService : IActionTaskService
         
         var service = ActionServiceResolver.Resolve(model.ActionName.ToLower(), scope);
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
-        var user = GetUser(userId, context);
+        var user = userId != -1 ? GetUser(userId, context) : null;
 
         // start action
         var responseActions = await service.StartAction(user, model, context, _serviceProvider);
@@ -254,6 +254,7 @@ public static class ActionServiceResolver
             ActionExplorer _ => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             ActionSatellite _ => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
             ActionGuerre _ => scope.ServiceProvider.GetRequiredService<WarActionService>(),
+            ActionBoss _ => scope.ServiceProvider.GetRequiredService<BossActionService>(),
             _ => throw new AppException("Action non trouvée", 404),
         };
     }
@@ -269,6 +270,7 @@ public static class ActionServiceResolver
             "explorer" => scope.ServiceProvider.GetRequiredService<ExplorerActionService>(),
             "satellite" => scope.ServiceProvider.GetRequiredService<SatelliteActionService>(),
             "guerre" => scope.ServiceProvider.GetRequiredService<WarActionService>(),
+            "boss" => scope.ServiceProvider.GetRequiredService<BossActionService>(),
                 _ => throw new AppException("Action non trouvée", 404),
         };
     }

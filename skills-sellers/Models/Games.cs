@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using skills_sellers.Entities;
 
 namespace skills_sellers.Models;
 
@@ -6,6 +7,7 @@ namespace skills_sellers.Models;
 
 [JsonDerivedType(typeof(GamesMachineResponse))]
 [JsonDerivedType(typeof(GamesWordleResponse))]
+[JsonDerivedType(typeof(GamesBossResponse))]
 public class GamesResponse
 {
     public string Name { get; set; }
@@ -18,6 +20,14 @@ public class GamesMachineResponse : GamesResponse
     public bool IsRepairing { get; set; }
     public int CreatiumPrice { get; set; }
     public int OrPrice { get; set; }
+}
+
+public class GamesBossResponse : GamesResponse
+{
+    public DateTime EndDate { get; set; }
+    public DateTime StartDate { get; set; }
+    public UserCardResponse BossCard { get; set; }
+    public Dictionary<string,int> PlayersPower { get; set; } = new();
 }
 
 public class GamesWordleResponse : GamesResponse
