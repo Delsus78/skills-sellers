@@ -15,6 +15,6 @@ public abstract class Action
 
     public override string ToString()
     {
-        return $"Action {Id} - DDate : {DueDate} - [{UserId}]: \n {UserCards.Aggregate("", (current, userCard) => current + $"Card {userCard.CardId} - {userCard.Card.Name} \n")}";
+        return $"Action {Id} - DDate : {DueDate} - [{UserId}]: \n {UserCards.Aggregate("", (current, userCard) => current + $"Card {userCard.CardId} - {userCard.Card?.Name} \n")}";
     }
 }

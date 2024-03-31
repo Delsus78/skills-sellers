@@ -53,6 +53,10 @@ public class  GamesController : ControllerBase
     public async Task<GamesPlayResponse> PlayGameOfTheDay(int id, GamesRequest model)
         => await _gamesService.PlayGameOfTheDay(GetUserAuthenticated(id), model);
 
+    [HttpPost("gameOfTheDay/cancel")]
+    public async Task<GamesPlayResponse> CancelPlayOfTheDay(int id, GamesRequest model)
+        => await _gamesService.CancelPlayOfTheDay(GetUserAuthenticated(id), model);
+    
     [HttpGet("wordle")]
     public GamesResponse GetWordle(int id)
         => _gamesService.GetWordle(id);

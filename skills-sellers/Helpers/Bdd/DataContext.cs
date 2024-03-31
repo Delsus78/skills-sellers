@@ -87,7 +87,8 @@ public class DataContext : DbContext
          .HasValue<ActionMuscler>("Muscler")
          .HasValue<ActionReparer>("Reparer")
          .HasValue<ActionSatellite>("Satellite")
-         .HasValue<ActionGuerre>("Guerre");
+         .HasValue<ActionGuerre>("Guerre")
+         .HasValue<ActionBoss>("Boss");
 
         modelBuilder.Entity<Registre>()
             .HasDiscriminator<RegistreType>("Type")

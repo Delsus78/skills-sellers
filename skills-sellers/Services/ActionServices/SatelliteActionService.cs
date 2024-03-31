@@ -158,6 +158,7 @@ public class SatelliteActionService : IActionService
             user.Or -= user.UserCards.Count * 2;
             
             // start timer for returning
+            actionSatellite.DueDate = CalculateActionEndTime();
             _ = _actionTaskService.StartNewTaskForAction(action);
             
             return context.SaveChangesAsync();

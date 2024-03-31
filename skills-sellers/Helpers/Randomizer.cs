@@ -57,9 +57,10 @@ public static class Randomizer
         return boolRes;
     }
 
-    public static string RandomCardType()
+    public static string RandomCardType(int? seed = null)
     {
-        var randomInt = RandomInt(0, 100);
+        var finalSeed = seed ?? new Random().Next();
+        var randomInt = RandomInt(0, 100, finalSeed);
         var type = randomInt switch
         {
             < 1 => "meethic",
@@ -67,18 +68,21 @@ public static class Randomizer
             < 14 => "epic",
             _ => "commune"
         };
-        Console.Out.WriteLine($"Random card res : {randomInt} => {type}");
+        if (seed == null) Console.Out.WriteLine($"Random card res : {randomInt} => {type}");
         
         return type;
     }
     
-    public static WeaponAffinity RandomWeaponAffinity() 
-        => RandomInt(0, 3) switch
+    public static WeaponAffinity RandomWeaponAffinity(int? seed = null)
+    {
+        seed ??= new Random().Next();
+        return RandomInt(0, 3, seed) switch
         {
             0 => WeaponAffinity.Pierre,
             1 => WeaponAffinity.Ciseaux,
             _ => WeaponAffinity.Feuille
         };
+    }
 
     public static List<string> GetAllCardNameWord(this DbSet<Card> cardsDb)
     {
@@ -238,10 +242,18 @@ public static class Randomizer
         return explo;
     }
     
-    public static int RandomInt(int min, int max)
+    public static int RandomInt(int min, int max, int? seed = null)
     {
         lock (SyncLock)
-            return RandomNumberGenerator.GetInt32(min, max);
+        {
+            seed ??= new Random().Next();
+            return new Random(seed.Value).Next(min, max);
+        }
+    }
+    
+    public static Random Random(int? seed = null)
+    {
+        return seed.HasValue ? new Random(seed.Value) : new Random();
     }
 
     public static string RandomPlanet()

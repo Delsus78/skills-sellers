@@ -180,9 +180,10 @@ public class DailyTaskService : IDailyTaskService
 
                 user.SetResources(rewardType, user.GetResources()[rewardType] + rewardAmount);
                 user.SetResources(resourceType, user.GetResources()[resourceType] - priceToPay);
-
+                user.Score += 50;
                 bigNotificationMessage += notificationMessage +
-                                          $"Validé ! Echange effectué ! +{rewardAmount} {rewardType} -{priceToPay} {resourceType}\r\n";
+                                          $"Validé ! Echange effectué ! +{rewardAmount} {rewardType} -{priceToPay} {resourceType}\r\n" +
+                                          $"+50 de score !\r\n";
                 
                 #endregion
             }

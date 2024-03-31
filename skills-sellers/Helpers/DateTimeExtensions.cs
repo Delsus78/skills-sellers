@@ -13,4 +13,14 @@ public static class DateTimeExtensions
 
         return date >= debutSemaine && date <= finSemaine;
     }
+    
+    public static bool EstDansLajourneeActuelle(this DateTime date)
+    {
+        var today = DateTime.Today;
+
+        var debutJournee = today.Date;
+        var finJournee = debutJournee.AddHours(23).AddMinutes(59).AddSeconds(59);
+
+        return date >= debutJournee && date <= finJournee;
+    }
 }

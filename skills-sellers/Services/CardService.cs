@@ -14,7 +14,7 @@ public interface ICardService
     CardResponse GetById(int id);
     CardResponse Create(CardCreateRequest model);
     Card GetCardEntity(Expression<Func<Card, bool>> predicate);
-    Card GetRandomCard();
+    Card GetRandomCard(int? seed = null);
 }
 
 public class CardService : ICardService
@@ -50,12 +50,14 @@ public class CardService : ICardService
     }
     
     
-    public Card GetRandomCard()
+    public Card GetRandomCard(int? seed = null)
     {
-        var cardType = Randomizer.RandomCardType();
+        var finalSeed = seed ?? new Random().Next();
+        
+        var cardType = Randomizer.RandomCardType(finalSeed);
         var cardCount = _context.Cards.Count(c => c.Rarity == cardType);
-        var randomIndex = Randomizer.RandomInt(0, cardCount);
-        Console.Out.WriteLine($"Random card index : {randomIndex}");
+        var randomIndex = Randomizer.RandomInt(0, cardCount, finalSeed);
+        if (seed == null) Console.Out.WriteLine($"Random card index : {randomIndex}");
     
         // Récupérez seulement la carte sélectionnée
         return _context.Cards.Where(c => c.Rarity == cardType).Skip(randomIndex).First();

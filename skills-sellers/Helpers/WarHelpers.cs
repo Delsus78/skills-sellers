@@ -68,7 +68,7 @@ public static class WarHelpers
 
     public static List<FightingEntity> SplitArmyFromRegistreHostile(RegistreHostile registreHostile, bool isDefending = false)
     {
-        var powerRemaining = (registreHostile.CardPower + registreHostile.CardWeaponPower) * (isDefending ? 1 : 5);
+        var powerRemaining = (registreHostile.CardPower + registreHostile.CardWeaponPower) * (isDefending ? 5 : 1);
         
         var army = new List<FightingEntity>();
         
@@ -338,6 +338,7 @@ public static class WarHelpers
     /// <returns></returns>
     public static string GetRandomWarLoot(User user, int multiplicator, bool isLooser = false, int basePourcentageForRarity = 0)
     {
+        // ANY CHANGE HERE NEED TO BE REPLICATED IN THE GETESDTIMATEDWARLOOTFORUSER METHOD IN THE WAR SERVICE
         var random = Randomizer.RandomInt(0, 100) - basePourcentageForRarity;
         multiplicator = multiplicator <= 0 ? 1 : multiplicator;
         switch (random)
