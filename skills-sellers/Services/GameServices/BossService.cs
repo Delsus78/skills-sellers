@@ -34,12 +34,19 @@ public class BossService : IGameService
         // get a random card
         var bossCardType = _cardService.GetRandomCard(seed);
         
-        // unfollow card from context
-        _context.Entry(bossCardType).State = EntityState.Detached;
+        // create a copy for not editing it
+        bossCardType = new Card
+        {
+            Id = bossCardType.Id,
+            Name = bossCardType.Name,
+            Description = bossCardType.Description,
+            Collection = bossCardType.Collection,
+            Rarity = bossCardType.Rarity
+        };
 
         #region Random Competences
 
-        var totalPower = _context.UserCards.Count() * 3;
+        var totalPower = _context.UserCards.Count() * 5;
         var ptsLeft = totalPower;
         var stillAvailable = new List<string> { "force", "intel", "cuisine", "charisme", "exploration" };
         var valuesDicto = new Dictionary<string, int>
@@ -184,18 +191,8 @@ public class BossService : IGameService
     
     private ActionBossResponse StartActionIfNotStarted(DateTime endTime)
     {
-        var action = _context.Actions
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.Competences)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.UserWeapon)
-            .Include(a => a.UserCards)
-            .ThenInclude(uc => uc.User)
-            .FirstOrDefault(a => a is ActionBoss);
-        
-        if (action is not ActionBoss)
+        var isAActionBossStarted = _context.Actions.Any(a => a is ActionBoss);
+        if (!isAActionBossStarted)
         {
             // start the action
             _ = _actionTaskService.CreateNewActionAsync(-1, new ActionRequest
@@ -206,6 +203,17 @@ public class BossService : IGameService
             });
         }
         
+        var action = _context.Actions
+            .Where(a => a is ActionBoss)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.User)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.Competences)
+            .Include(a => a.UserCards)
+            .ThenInclude(uc => uc.UserWeapon)
+            .First();
+        
+
         // get all power by playerNames
         var powerByPlayer = action?.UserCards
             .GroupBy(uc => uc.User.Pseudo)
