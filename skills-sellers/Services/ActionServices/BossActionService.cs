@@ -28,7 +28,7 @@ public class BossActionService : IActionService
             return (false, "Une carte ou plus est nécessaire pour partir en guerre !");
 
         // une des carte est déjà en action
-        if (userCards.Any(uc => uc.Action != null))
+        if (userCards.Any(uc => uc.Action != null && uc.Action is not ActionBoss))
             return (false, "Une des cartes est déjà en action");
 
         return (true, "");
@@ -125,7 +125,7 @@ public class BossActionService : IActionService
             if (totalPower >= game.BossCard.Power)
             {
                 var userPower = powerByPlayer[user.Pseudo];
-                var multiplicator = userPower / 5;
+                var multiplicator = userPower / 3;
 
                 var stringReward = WarHelpers.GetRandomWarLoot(user, multiplicator) + "\r\n";
                 stringReward += WarHelpers.GetRandomWarLoot(user, multiplicator) + "\r\n";
