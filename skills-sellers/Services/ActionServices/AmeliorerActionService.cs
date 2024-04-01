@@ -15,17 +15,19 @@ public class AmeliorerActionService : IActionService
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IWeaponService _weaponService;
     private readonly IStatsService _statsService;
+    private readonly DataContext _context;
 
     public AmeliorerActionService(
         IUserBatimentsService userBatimentsService,
         INotificationService notificationService, 
         IStatsService statsService,
-        IWeaponService weaponService)
+        IWeaponService weaponService, DataContext context)
     {
         _userBatimentsService = userBatimentsService;
         _notificationService = notificationService;
         _statsService = statsService;
         _weaponService = weaponService;
+        _context = context;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -71,7 +73,9 @@ public class AmeliorerActionService : IActionService
             if (weapon.UserCard != null)
                 return (false, "Arme déjà utilisée, déséquipez la avant de l'améliorer");
 
-            (creatiumPrice, intelPrice, forcePrice) = _weaponService.GetWeaponPrices(weapon.Power, user.UserWeapons.Count, user.UserCards.Count);
+            
+            var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+            (creatiumPrice, intelPrice, forcePrice) = _weaponService.GetWeaponPrices(weapon.Power, user.UserWeapons.Count, nbMachine);
         }
 
         if (user.Creatium < creatiumPrice)
@@ -120,8 +124,9 @@ public class AmeliorerActionService : IActionService
             if (weaponPower == null)
                 throw new AppException("Arme non trouvée", 404);
             
+            var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
             (creatiumPrice,var intelPrice, _) =
-                _weaponService.GetWeaponPrices((int)weaponPower, user.UserWeapons.Count, user.UserCards.Count);
+                _weaponService.GetWeaponPrices((int)weaponPower, user.UserWeapons.Count, nbMachine);
             var extraLevels = intelTotal - intelPrice;
             endTime = CalculateActionEndTime((int)weaponPower, extraLevels, false);
         }
@@ -183,9 +188,10 @@ public class AmeliorerActionService : IActionService
             if (!weaponPower.HasValue)
                 throw new AppException("Arme non trouvée", 404);
             level = weaponPower.Value * 3;
-
+            
+            var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
             (creatiumPrice, var intelPrice, _) =
-                _weaponService.GetWeaponPrices(weaponPower.Value, user.UserWeapons.Count, user.UserCards.Count);
+                _weaponService.GetWeaponPrices(weaponPower.Value, user.UserWeapons.Count, nbMachine);
             
             var extraLevels = intelTotal - intelPrice;
             finalExtraLevels = extraLevels < 0 ? 0 : extraLevels;
@@ -284,7 +290,9 @@ public class AmeliorerActionService : IActionService
             var weaponPower = user.UserWeapons.FirstOrDefault(uw => uw.Id == actionAmeliorer.WeaponToUpgradeId)?.Power;
             if (weaponPower == null)
                 throw new AppException("Arme non trouvée", 404);
-            (creatiumPrice, _, _) = _weaponService.GetWeaponPrices((int)weaponPower, user.UserWeapons.Count, user.UserCards.Count);
+            
+            var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+            (creatiumPrice, _, _) = _weaponService.GetWeaponPrices((int)weaponPower, user.UserWeapons.Count, nbMachine);
             nourriturePrice = actionAmeliorer.UserCards.Count * 4;
         }
         

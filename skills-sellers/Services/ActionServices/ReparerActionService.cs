@@ -14,17 +14,20 @@ public class ReparerActionService : IActionService
     private readonly IWeaponService _weaponService;
     private readonly IUserBatimentsService _userBatimentsService;
     private readonly IStatsService _statsService;
+    private readonly DataContext _context;
 
     public ReparerActionService(
         INotificationService notificationService, 
         IWeaponService weaponService,
         IStatsService statsService,
-        IUserBatimentsService userBatimentsService)
+        IUserBatimentsService userBatimentsService,
+        DataContext context)
     {
         _notificationService = notificationService;
         _weaponService = weaponService;
         _statsService = statsService;
         _userBatimentsService = userBatimentsService;
+        _context = context;
     }
     
     public (bool valid, string why) CanExecuteAction(User user, List<UserCard> userCards, ActionRequest? model)
@@ -44,7 +47,8 @@ public class ReparerActionService : IActionService
             return (false, "Une de vos cartes est déjà en action !");
         
         // check if user has enough resources
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count, user.UserWeapons.Count);
+        var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count, nbMachine);
         
         if (user.Creatium < creatiumPrice)
             return (false, $"Vous n'avez pas assez de créatium ! Il vous en manque {creatiumPrice - user.Creatium}");
@@ -80,7 +84,8 @@ public class ReparerActionService : IActionService
         await context.Actions.AddAsync(action);
         
         // consume resources
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count, user.UserWeapons.Count);
+        var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(userCards.Count, nbMachine);
         user.Creatium -= creatiumPrice;
         user.Or -= orPrice;
         
@@ -102,7 +107,8 @@ public class ReparerActionService : IActionService
         var endTime = CalculateActionEndTime();
         var totalIntel = userCards.Sum(c => c.Competences.Intelligence);
         var chances = CalculateRepairChances(totalIntel, user.UserCards.Count);
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(totalUserCards, user.UserWeapons.Count);
+        var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(totalUserCards, nbMachine);
         
         return new ActionEstimationResponse
         {
@@ -159,7 +165,8 @@ public class ReparerActionService : IActionService
                 context);
             
             // refund user half
-            var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(action.UserCards.Count, user.UserWeapons.Count);
+            var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+            var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(action.UserCards.Count, nbMachine);
             user.Creatium += creatiumPrice / 2;
             user.Or += orPrice / 2;
         }
@@ -177,7 +184,8 @@ public class ReparerActionService : IActionService
         context.Actions.Remove(action);
         
         // refund
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(action.UserCards.Count, user.UserWeapons.Count);
+        var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == user.Id)?.TotalMachineUsed ?? 0;
+        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(action.UserCards.Count, nbMachine);
         user.Creatium += creatiumPrice;
         user.Or += orPrice;
 
