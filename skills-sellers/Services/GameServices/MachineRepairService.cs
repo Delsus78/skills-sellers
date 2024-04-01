@@ -28,8 +28,9 @@ public class MachineRepairService : IGameService
     public GamesResponse GetGameOfTheDay(int userId)
     {
         var nbCards = _context.UserCards.Count(uc => uc.UserId == userId);
-        var nbWeapons = _context.UserWeapons.Count(uw => uw.UserId == userId);
-        var (creatiumPrice, orPrice) = _weaponService.GetWeaponConstructionPrice(nbCards, nbWeapons);
+        var nbMachine = _context.Stats.FirstOrDefault(s => s.UserId == userId)?.TotalMachineUsed ?? 0;
+        var (creatiumPrice, orPrice) = 
+            _weaponService.GetWeaponConstructionPrice(nbCards, nbMachine);
         return new GamesMachineResponse
         {
             Name = "MACHINE",
