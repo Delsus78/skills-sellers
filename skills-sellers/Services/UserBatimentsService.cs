@@ -92,16 +92,18 @@ public class UserBatimentsService : IUserBatimentsService
     private int GetCreatiumBatimentPrice(int currentLevel, string batimentName)
     {
         var price = (int)(Math.Pow(1.3, currentLevel) * 400);
-        
-        // speciales cases
-        if (batimentName.ToLower() == "satellite")
-            if (currentLevel == 0)
+
+        switch (batimentName.ToLower())
+        {
+            // speciales cases
+            case "satellite":
                 price *= 10;
-            else price *= 50;
-        
-        if (batimentName.ToLower() == "spatioport")
-            price *= 2;
-        
+                break;
+            case "spatioport":
+                price *= 2;
+                break;
+        }
+
         return price;
     }
 

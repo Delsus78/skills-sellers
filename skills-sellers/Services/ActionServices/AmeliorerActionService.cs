@@ -317,12 +317,12 @@ public class AmeliorerActionService : IActionService
         context.Entry(weapon).Reference(w => w.Weapon).Load();
         
         // up weapon power
-        weapon.Power++;
+        weapon.Power += 2;
         
         // notify user
         _notificationService.SendNotificationToUser(user, new NotificationRequest(
                 "Amélioration terminée", 
-                $"Votre arme {weapon.Weapon.Name} a été amélioré !", 
+                $"Votre arme {weapon.Weapon.Name} a été amélioré !\r\nElle est maintenant de niveau {weapon.Power} !", 
                 "oneweapon", weapon.Id), 
             context);
         
