@@ -383,6 +383,9 @@ public class WarService : IWarService
                     uc.ToResponse().Power,
                     uc.UserWeapon != null ? uc.UserWeapon.Affinity : null))
                 .ToList();
+            
+            // x3 power for the target
+            defendingCards.ForEach(dc => dc.TotalPower *= 3);
         }
         else // is a PNJ
         {
@@ -681,7 +684,7 @@ public class WarService : IWarService
             // if started vs registrePlayer, user has done his 2 wars 
             if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
                     .AsEnumerable()
-                    .Count(w => w.CreatedAt.EstDansSemaineActuelle()) >= 2)
+                    .Count(w => w.CreatedAt.EstDansSemaineActuelle() && w.UserTargetId != null) >= 2)
                 return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
         }
         
