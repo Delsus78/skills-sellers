@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using skills_sellers.Entities;
 using skills_sellers.Entities.Actions;
 using skills_sellers.Helpers;
@@ -127,7 +128,32 @@ public class WarActionService : IActionService
                 UpForceOfCards(userCardsToUp);
                 
                 notifMessage +=
-                    $"Les cartes suivantes ont gagné 2 points de force : {string.Join(", ", userCardsToUp.Select(kvp => $"{kvp.Card.Name}"))}";
+                    $"Les cartes suivantes ont gagné 1 points de force : {string.Join(", ", userCardsToUp.Select(kvp => $"{kvp.Card.Name}"))}";
+                
+                // do the same to targetUser
+                if (war.UserTargetId != null)
+                {
+                    var targetUser = await context.Users
+                        .FirstOrDefaultAsync(u => u.Id == war.UserTargetId);
+                    if (targetUser != null)
+                    {
+                        
+                        var cardsInSatellite = context.UserCards
+                            .Include(uc => uc.Competences)
+                            .Include(uc => uc.Action)
+                            .Include(uc => uc.Card)
+                            .Where(uc => uc.UserId == targetUser.Id && uc.Action is ActionSatellite).ToList();
+                            
+                        UpForceOfCards(cardsInSatellite);
+                        
+                        // notify target user
+                        await _notificationService.SendNotificationToUser(targetUser, new NotificationRequest(
+                            "Guerre terminée",
+                            $"Les cartes suivantes ont gagné 1 points de force : {string.Join(", ", cardsInSatellite.Select(kvp => $"{kvp.Card.Name}"))}",
+                            "cards"),
+                        context);
+                    }
+                }
             }
             else
             {
@@ -206,7 +232,7 @@ public class WarActionService : IActionService
     {
         foreach (var card in userCardsToUp)
         {
-            card.Competences.Force = card.Competences.Force + 2 > 10 ? 10 : +2;
+            card.Competences.Force = card.Competences.Force + 1 > 10 ? 10 : +1;
         }
     }
 }
