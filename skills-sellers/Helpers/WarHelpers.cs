@@ -79,7 +79,6 @@ public static class WarHelpers
             army.Add(new FightingEntity("Carte", cardPower, registreHostile.Affinity));
         }
         
-        // explique en une phrase comment l'armée a été divisée
         return army;
 
     }
@@ -87,18 +86,25 @@ public static class WarHelpers
     public static (bool defenseWin, string fightReport) Battle(IEnumerable<FightingEntity> armyDefense,
         IEnumerable<FightingEntity> armyAttack)
     {
-        FightingEntity DamageCardWithPFC(FightingEntity attackingCard2, (int result, int pointDiff) fightResult)
+        FightingEntity DamageCardWithPFC(FightingEntity attackingCard2, (int result, int pointDiff) fightResult, StringBuilder report)
         {
+            report.Append(
+                $"[*!{attackingCard2.Name}!*] prend des dégâts et tombe à *!{attackingCard2.TotalPower}!* de puissance\n");
+            
             attackingCard2 = attackingCard2 with
             {
                 Name = attackingCard2.Name + "!*-*!",
                 TotalPower = Math.Abs(fightResult.pointDiff)
             };
+            
             return attackingCard2;
         }
 
-        FightingEntity PostAttackLooseActionsForFightingEntity(List<FightingEntity> list, FightingEntity fightingEntity1)
+        FightingEntity PostAttackLooseActionsForFightingEntity(List<FightingEntity> list, FightingEntity fightingEntity1, StringBuilder report)
         {
+            report.Append(
+                $"[*!ATTAQUE!*] *!{fightingEntity1.Name}!* tombe au combat !\n");
+            
             // carte attaque retirée
             list.RemoveAt(0);
             // get next attack card
@@ -107,8 +113,11 @@ public static class WarHelpers
             return fightingEntity1;
         }
 
-        FightingEntity PostDefenseLooseActionsForFightingEntity(List<FightingEntity> fightingEntities, FightingEntity fightingEntity, FightingEntity attackingCard1)
+        FightingEntity PostDefenseLooseActionsForFightingEntity(List<FightingEntity> fightingEntities, FightingEntity fightingEntity, FightingEntity attackingCard1, StringBuilder report)
         {
+            report.Append(
+                $"[*!DEFENSE!*] *!{fightingEntity.Name}!* tombe au combat !\n");
+            
             // defense card removed
             fightingEntities.RemoveAt(0);
 
@@ -122,6 +131,7 @@ public static class WarHelpers
                     Name = fightingEntity.Name + "(*)",
                     TotalPower = addedDefensePower
                 });
+                report.Append($"[*!DEFENSE!*] L'armée de défense est renforcée par une nouvelle carte suite à la différence de puissanse sans PFC, ajout de {fightingEntities[0].Name} avec {addedDefensePower} de puissance\n");
                 fightingEntity = fightingEntities[0];
             }
             else if (addedDefensePower > 0)
@@ -131,6 +141,7 @@ public static class WarHelpers
                     Name = fightingEntities[0].Name + $"!*(+{addedDefensePower})*!",
                     TotalPower = fightingEntities[0].TotalPower + addedDefensePower
                 };
+                report.Append($"[*!DEFENSE!*] La carte {fightingEntity.Name} est renforcé par la mort de la carte précédente, ajout de {addedDefensePower} de puissance\n");
             }
 
             return fightingEntity;
@@ -145,9 +156,11 @@ public static class WarHelpers
         
         // write in the report the number of cards in each army and total power
         report.Append(
-            $"[*!DEFENSE!*] *!{orderedArmyDefense.Count}!* cartes avec un total de *!{orderedArmyDefense.Sum(c => c.TotalPower)}!* de puissance\n");
+            $"[*!DEFENSE!*] *!{orderedArmyDefense.Count}!* cartes avec un total de *!{orderedArmyDefense.Sum(c => c.TotalPower)}!* de puissance :\n" +
+            string.Join("\n", orderedArmyDefense.Select(c => $"[*!{c.Name}!*] (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
         report.Append(
-            $"[*!ATTAQUE!*] *!{orderedArmyAttack.Count}!* cartes avec un total de *!{orderedArmyAttack.Sum(c => c.TotalPower)}!* de puissance\n");
+            $"[*!ATTAQUE!*] *!{orderedArmyAttack.Count}!* cartes avec un total de *!{orderedArmyAttack.Sum(c => c.TotalPower)}!* de puissance\n" +
+            string.Join("\n", orderedArmyAttack.Select(c => $"[*!{c.Name}!*] (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
 
         if (orderedArmyDefense.Count == 0)
         {
@@ -175,8 +188,8 @@ public static class WarHelpers
                     report.Append(
                         $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!DEFENSE GAGNE !!*\n");
                     
-                    defendingCard = DamageCardWithPFC(defendingCard, fightResult);
-                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard);
+                    defendingCard = DamageCardWithPFC(defendingCard, fightResult, report);
+                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard, report);
                     
                     break;
                 
@@ -185,8 +198,8 @@ public static class WarHelpers
                     report.Append(
                         $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => *!ATTAQUE GAGNE !!*\n");
                     
-                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard);
-                    attackingCard = DamageCardWithPFC(attackingCard, fightResult);
+                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard, report);
+                    attackingCard = DamageCardWithPFC(attackingCard, fightResult, report);
 
                     break;
                 }
@@ -195,8 +208,8 @@ public static class WarHelpers
                     report.Append(
                         $"[*!DEFENSE!*] *!{defendingCard.Name}!* (*!{defendingCard.TotalPower}/{defendingCard.Affinity}!*) vs [*!ATTAQUE!*] *!{attackingCard.Name}!* (*!{attackingCard.TotalPower}/{attackingCard.Affinity}!*) => Egalité !!*\n");
                     
-                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard);
-                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard);
+                    attackingCard = PostAttackLooseActionsForFightingEntity(orderedArmyAttack, attackingCard, report);
+                    defendingCard = PostDefenseLooseActionsForFightingEntity(orderedArmyDefense, defendingCard, attackingCard, report);
 
                     break;
                 }
