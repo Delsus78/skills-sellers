@@ -224,8 +224,7 @@ public class ExplorerActionService : IActionService
                     // ressources x3 and a card
                     creatiumWin *= 3;
                     orWin *= 3;
-                    user.NbCardOpeningAvailable++;
-                    notificationMessage += "Votre carte a pillé la planète ! Elle gagne une carte supplémentaire !\r\n";
+                    notificationMessage += "Votre carte a pillé la planète !\r\n";
                     var isPlanetHostile = WeaponUpdatePillagePart(context, user, actionExplorer);
 
                     if (isPlanetHostile)
@@ -472,8 +471,8 @@ public class ExplorerActionService : IActionService
     {
         Registre registre;
         
-        // 60% de chance que la planète deviennent hostile
-        if (!Randomizer.RandomPourcentageUp(60))
+        // 50% de chance que la planète deviennent hostile
+        if (!Randomizer.RandomPourcentageUp(50))
         {
             // add registre as Neutral
             registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
@@ -498,24 +497,14 @@ public class ExplorerActionService : IActionService
     private bool WeaponUpdateAllyPart(User user, ActionExplorer action, UserCard userCard)
     {
         Registre registre;
-        
-        // 10 % de créer une route commerciale
-        if (!Randomizer.RandomPourcentageUp(50)) // non
-        {
-            // add registre as Neutral
-            registre = WarHelpers.GenerateNeutralRegistre(user, action.PlanetName);
-            user.Registres.Add(registre);
-            return false;
-        }
 
-        // oui
         // add registre as Friendly
         registre = WarHelpers.GenerateFriendlyRegistre(
             user, 
             action.PlanetName, 
             userCard.ToResponse().Power);
         user.Registres.Add(registre);
-        user.Score += 10;
+        user.Score += 40;
         return true;
     }
     
