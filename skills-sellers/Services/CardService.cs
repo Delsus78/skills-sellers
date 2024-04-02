@@ -53,11 +53,12 @@ public class CardService : ICardService
     public Card GetRandomCard(int? seed = null)
     {
         var finalSeed = seed ?? new Random().Next();
+        var random = new Random(finalSeed);
         
-        var cardType = Randomizer.RandomCardType(finalSeed);
+        var cardType = Randomizer.RandomCardType(random.Next());
         var cardCount = _context.Cards.Count(c => c.Rarity == cardType);
-        var randomIndex = Randomizer.RandomInt(0, cardCount, finalSeed);
-        if (seed == null) Console.Out.WriteLine($"Random card index : {randomIndex}");
+        var randomIndex = Randomizer.RandomInt(0, cardCount, random.Next());
+        if (seed == null) Console.Out.WriteLine($"Random card index : {randomIndex} SEED : " + finalSeed);
     
         // Récupérez seulement la carte sélectionnée
         return _context.Cards.Where(c => c.Rarity == cardType).Skip(randomIndex).First();
