@@ -119,7 +119,7 @@ public class WarActionService : IActionService
             // up force x2 if not 2 wars are already done this week
             if (context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == actionGuerre.User.Id)
                     .AsEnumerable()
-                    .Count(w => w.CreatedAt.EstDansSemaineActuelle()) >= 2)
+                    .Count(w => w.CreatedAt.EstDansSemaineActuelle()) < 2)
             {
                 var userCardsToUp = actionGuerre.UserCards
                     .Where(card => card.Competences.Force < 10)

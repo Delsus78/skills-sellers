@@ -566,4 +566,7 @@ public static class WarHelpers
     }
 }
 
-public record FightingEntity(string Name, int TotalPower, WeaponAffinity? Affinity);
+public record FightingEntity(string Name, int TotalPower, WeaponAffinity? Affinity)
+{
+    public int TotalPower { get; set; } = TotalPower;
+}
