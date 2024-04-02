@@ -694,6 +694,10 @@ public class WarService : IWarService
                 .Count(w => w.CreatedAt.EstDansLajourneeActuelle()) >= 1)
             return (false, "Vous avez déjà fait une guerre aujourd'hui", null, null);
         
+        // si registre hostile, impossible si le registre a ete rencontré il y a moins de 3 jours
+        if (registreTarget is RegistreHostile registreHostile && registreHostile.EncounterDate < DateTime.Now.AddDays(-3)) 
+            return (false, "Vous avez déjà rencontré cette planète hostile il y a moins de 3 jours", null, null);
+
         // ally in war
         if (_context.Wars
             .Where(w => w.Status != WarStatus.Finie && w.Status != WarStatus.Annulee)
