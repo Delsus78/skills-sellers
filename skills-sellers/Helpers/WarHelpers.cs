@@ -506,7 +506,7 @@ public static class WarHelpers
     {
         var random = new Random(planetName.GetHashCode());
         var cardPower = 0;
-        var cardWeaponPower = random.Next(0,userTotalCards / 30);
+        var cardWeaponPower = userTotalCards / 30;
 
         // total cards
         var totalCardsPower = userTotalCards / 5;
@@ -520,7 +520,7 @@ public static class WarHelpers
         else
             cardPower -= randomPower;
 
-        return (Math.Max(cardPower, 1), cardWeaponPower > 0 ? Math.Max(cardWeaponPower + random.Next(-3, 5), 0) : 0);
+        return (Math.Max(cardPower, 1), cardWeaponPower > 0 ? Math.Max(cardWeaponPower + random.Next(-2, 2), 0) : 0);
     }
 
     public static string LoosingAnAttack(User user, int nbToLoose)
