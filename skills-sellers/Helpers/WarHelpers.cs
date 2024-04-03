@@ -88,14 +88,14 @@ public static class WarHelpers
     {
         FightingEntity DamageCardWithPFC(FightingEntity attackingCard2, (int result, int pointDiff) fightResult, StringBuilder report)
         {
-            report.Append(
-                $"[*!{attackingCard2.Name}!*] prend des dégâts et tombe à *!{attackingCard2.TotalPower}!* de puissance\n");
-            
             attackingCard2 = attackingCard2 with
             {
                 Name = attackingCard2.Name + "!*-*!",
                 TotalPower = Math.Abs(fightResult.pointDiff)
             };
+            
+            report.Append(
+                $" - *!{attackingCard2.Name}!* prend des dégâts et tombe à *!{attackingCard2.TotalPower}!* de puissance\n");
             
             return attackingCard2;
         }
@@ -103,7 +103,7 @@ public static class WarHelpers
         FightingEntity PostAttackLooseActionsForFightingEntity(List<FightingEntity> list, FightingEntity fightingEntity1, StringBuilder report)
         {
             report.Append(
-                $"[*!ATTAQUE!*] *!{fightingEntity1.Name}!* tombe au combat !\n");
+                $" - *!{fightingEntity1.Name}!* tombe au combat !\n");
             
             // carte attaque retirée
             list.RemoveAt(0);
@@ -116,7 +116,7 @@ public static class WarHelpers
         FightingEntity PostDefenseLooseActionsForFightingEntity(List<FightingEntity> fightingEntities, FightingEntity fightingEntity, FightingEntity attackingCard1, StringBuilder report)
         {
             report.Append(
-                $"[*!DEFENSE!*] *!{fightingEntity.Name}!* tombe au combat !\n");
+                $" - *!{fightingEntity.Name}!* tombe au combat !\n");
             
             // defense card removed
             fightingEntities.RemoveAt(0);
@@ -131,8 +131,9 @@ public static class WarHelpers
                     Name = fightingEntity.Name + "(*)",
                     TotalPower = addedDefensePower
                 });
-                report.Append($"[*!DEFENSE!*] L'armée de défense est renforcée par une nouvelle carte suite à la différence de puissanse sans PFC, ajout de {fightingEntities[0].Name} avec {addedDefensePower} de puissance\n");
                 fightingEntity = fightingEntities[0];
+                
+                report.Append($" - L'armée de défense est renforcée par une nouvelle carte, ajout de *!{fightingEntity.Name}!* avec *!{addedDefensePower} de puissance!*\n");
             }
             else if (addedDefensePower > 0)
             {
@@ -141,9 +142,10 @@ public static class WarHelpers
                     Name = fightingEntities[0].Name + $"!*(+{addedDefensePower})*!",
                     TotalPower = fightingEntities[0].TotalPower + addedDefensePower
                 };
-                report.Append($"[*!DEFENSE!*] La carte {fightingEntity.Name} est renforcé par la mort de la carte précédente, ajout de {addedDefensePower} de puissance\n");
-            }
-
+                report.Append($" - *!{fightingEntity.TotalPower} - {attackingCard1.TotalPower}!* La carte *!{fightingEntity.Name}!* est renforcé par la mort de la carte précédente, ajout de {addedDefensePower} de puissance\n");
+            } else if (fightingEntities.Count > 0)
+                fightingEntity = fightingEntities[0];
+            
             return fightingEntity;
         }
 
@@ -157,10 +159,10 @@ public static class WarHelpers
         // write in the report the number of cards in each army and total power
         report.Append(
             $"[*!DEFENSE!*] *!{orderedArmyDefense.Count}!* cartes avec un total de *!{orderedArmyDefense.Sum(c => c.TotalPower)}!* de puissance :\n" +
-            string.Join("\n", orderedArmyDefense.Select(c => $"[*!{c.Name}!*] (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
+            string.Join("\n", orderedArmyDefense.Select(c => $" - *!{c.Name}!* (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
         report.Append(
             $"[*!ATTAQUE!*] *!{orderedArmyAttack.Count}!* cartes avec un total de *!{orderedArmyAttack.Sum(c => c.TotalPower)}!* de puissance\n" +
-            string.Join("\n", orderedArmyAttack.Select(c => $"[*!{c.Name}!*] (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
+            string.Join("\n", orderedArmyAttack.Select(c => $" - *!{c.Name}!* (*!{c.TotalPower}/{c.Affinity}!*)")) + "\n");
 
         if (orderedArmyDefense.Count == 0)
         {
