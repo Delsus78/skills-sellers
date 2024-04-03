@@ -408,8 +408,8 @@ public class WarService : IWarService
         var fightDesc = new List<string>
         {
             $"[*!GUERRE!*] - *!{war.User.Pseudo}!* " 
-            + (allies.Count > 0 ? "(*!" + string.Join(", ", allies.Select(a => a.Pseudo)) + "!*)" : "") 
-            + $" vs *!{targetName}!* - {DateTime.Now}"
+            + (allies.Count > 0 ? "(*!" + string.Join(", ", allies.Select(a => a.Pseudo)) + "!*) " : "") 
+            + $"attaque *!{targetName}!* - {DateTime.Now}"
         };
         fightDesc.AddRange(results.fightReport.Split("\n").ToList());
         context.FightReports.Add(new FightReport
