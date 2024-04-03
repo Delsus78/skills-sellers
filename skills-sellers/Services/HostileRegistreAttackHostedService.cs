@@ -135,7 +135,7 @@ public class HostileRegistreAttackService : IHostileRegistreAttackService
             // adding fightReport
             var fightDesc = new List<string>
             {
-                $"[*!ATTAQUE HOSTILE!*] - *!{user.Pseudo}!* "
+                $"[*!ATTAQUE HOSTILE!*] - *!{user.Pseudo}!* se défend contre {allHostileFightingEntities.Count} registres hostiles."
             };
             fightDesc.AddRange(results.fightReport.Split("\n").ToList());
             context.FightReports.Add(new FightReport
