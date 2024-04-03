@@ -44,3 +44,9 @@ jobs:
         chmod 600 deploy_key
         ssh -i deploy_key -o StrictHostKeyChecking=no -p 19452 deploy@146.59.158.8 "sudo systemctl restart skills-sellers.service"
         rm -f deploy_key
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.WEBHOOK_URL }}
+        raw-data: hi.json
