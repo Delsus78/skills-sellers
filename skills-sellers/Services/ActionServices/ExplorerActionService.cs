@@ -230,7 +230,7 @@ public class ExplorerActionService : IActionService
                     if (isPlanetHostile)
                         notificationMessage += 
                             "Pillage - Hostile\r\n" +
-                            "Votre carte a rencontré une planète hostile ! (60% de chance)\n" +
+                            "Votre carte a rencontré une planète hostile ! (50% de chance)\n" +
                             $"La planète {actionExplorer.PlanetName} est désormais dans votre registre ! \n";
                     break;
                 case ExplorationDecision.Ally:
