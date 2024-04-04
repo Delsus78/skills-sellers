@@ -536,7 +536,7 @@ public class WarService : IWarService
                 
                 // deleting registre and all registres with a name containing the same name (ex: "Tue" will delete "Tueur", "Tueur de la mort", etc)
                 
-                var registresToDelete = _context.Registres.Where(r => r.Name.Contains(registreTarget.Name)).ToList();
+                var registresToDelete = _context.Registres.Where(r => r.Name.ToUpperCase().Contains(registreTarget.Name.ToUpperCase())).ToList();
                 
                 foreach (var registre in registresToDelete)
                 {
