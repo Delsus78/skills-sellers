@@ -532,7 +532,7 @@ public class WarService : IWarService
                     throw new AppException("Cible non trouvée", 404);
                 
                 // based on planet hostile total power
-                var multiplicator = registreHostile.CardPower + registreHostile.CardWeaponPower;
+                var multiplicator = (registreHostile.CardPower + registreHostile.CardWeaponPower) * 5;
                 
                 // deleting registre and all registres with a name containing the same name (ex: "Tue" will delete "Tueur", "Tueur de la mort", etc)
                 
