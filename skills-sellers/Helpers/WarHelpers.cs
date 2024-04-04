@@ -369,7 +369,7 @@ public static class WarHelpers
                 user.Or += finalAmountOr;
                 return $"{finalAmountOr} or [RARE]";
             case < 99:
-                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/8, 1), Math.Max(multiplicator/8,3));
+                var amountPack = Randomizer.RandomInt(Math.Max(multiplicator/8, 1), Math.Max(multiplicator/7,3));
                 var finalAmountPack = isLooser ? (amountPack/3 <= 0 ? 1 : amountPack/3) : amountPack;
                 user.NbCardOpeningAvailable += finalAmountPack;
                 return $"{finalAmountPack} packs [EPIC]";
