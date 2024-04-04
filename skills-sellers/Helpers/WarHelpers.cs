@@ -71,12 +71,12 @@ public static class WarHelpers
         var powerRemaining = (registreHostile.CardPower + registreHostile.CardWeaponPower) * (isDefending ? 5 : 1);
         
         var army = new List<FightingEntity>();
-        
+        int i;
         while (powerRemaining > 0)
         {
             var cardPower = Math.Min(powerRemaining, 40);
             powerRemaining -= cardPower;
-            army.Add(new FightingEntity("Carte", cardPower, registreHostile.Affinity));
+            army.Add(new FightingEntity(registreHostile.Name + ' ' + i, cardPower, registreHostile.Affinity));
         }
         
         return army;
