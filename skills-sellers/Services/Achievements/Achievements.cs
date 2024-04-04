@@ -199,7 +199,7 @@ public class AchievementEach25CasinoWin : AchievementStrategy
         
         // user val update
         user.NbCardOpeningAvailable++;
-        if (Achievement.Each50FailCharism > 1) 
+        if (Achievement.Each25CasinoWin > 1) 
             user.Score += 200;
         user.Score += 100;
     }
