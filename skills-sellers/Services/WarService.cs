@@ -719,7 +719,7 @@ public class WarService : IWarService
             return (false, "Vous avez déjà fait une guerre aujourd'hui", null, null);
         
         // si registre hostile, impossible si le registre a ete rencontré il y a moins de 2 jours
-        if (registreTarget is RegistreHostile registreHostile && registreHostile.EncounterDate < DateTime.Now.AddDays(-2)) 
+        if (registreTarget is RegistreHostile registreHostile && registreHostile.EncounterDate > DateTime.Now.AddDays(-2)) 
             return (false, "Vous avez déjà rencontré cette planète hostile il y a moins de 2 jours", null, null);
 
         // ally in war
