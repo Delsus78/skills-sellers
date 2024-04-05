@@ -1,4 +1,6 @@
 using skills_sellers.Entities;
+using skills_sellers.Entities.Registres;
+using skills_sellers.Helpers;
 using skills_sellers.Models.Users;
 
 namespace skills_sellers.Models;
@@ -24,3 +26,7 @@ public record WarResponse(
     DateTime CreatedAt, 
     UserResponse UserCreator,
     bool isInvitationPending);
+    
+public record WarSimulationRequest(List<FightingEntity> Attackers, RegistreHostile Hostile);
+
+public record WarSimulationResponse(string Report, WarLootEstimationResponse Loot);
