@@ -27,6 +27,8 @@ public record WarResponse(
     UserResponse UserCreator,
     bool isInvitationPending);
     
-public record WarSimulationRequest(List<FightingEntity> Attackers, RegistreHostile Hostile);
+public record WarSimulationRequest(List<FightingEntity> Attackers, EnnemyRequest Hostile);
+
+public record EnnemyRequest(string Name, int CardPower, int WeaponPower, WeaponAffinity Affinity);
 
 public record WarSimulationResponse(string Report, WarLootEstimationResponse Loot);

@@ -638,15 +638,21 @@ public class WarService : IWarService
     public WarSimulationResponse SimulateWar(WarSimulationRequest model)
     {
         var attackingCards = model.Attackers;
+        var fakeHostileRegistre = new RegistreHostile
+        {
+            CardPower = model.Hostile.CardPower,
+            CardWeaponPower = model.Hostile.WeaponPower,
+            Name = model.Hostile.Name
+        };
 
-        var defendingCards = WarHelpers.SplitArmyFromRegistreHostile(model.Hostile, true);
+        var defendingCards = WarHelpers.SplitArmyFromRegistreHostile(fakeHostileRegistre, true);
 
         var results = WarHelpers.Battle(defendingCards, attackingCards);
         results.fightReport += results.defenseWin
             ? "[*!GUERRE!*] - *!Victoire de la défense !!*\n"
             : "[*!GUERRE!*] - *!Victoire de l'attaque !!*\n";
 
-        var multiplicator = model.Hostile.CardPower + model.Hostile.CardWeaponPower;
+        var multiplicator = fakeHostileRegistre.CardPower + fakeHostileRegistre.CardWeaponPower;
         var estimatedLoot = GetEstimatedWarLootForUser(multiplicator, 0);
 
         return new WarSimulationResponse(results.fightReport, estimatedLoot);
