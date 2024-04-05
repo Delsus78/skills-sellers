@@ -57,6 +57,10 @@ public class WarController : ControllerBase
     [HttpGet("warLoot/estimate")]
     public WarLootEstimationResponse GetEstimatedWarLootForUser(int multiplicator = 1, int reducedPourcentage = 0)
         => _warService.GetEstimatedWarLootForUser(multiplicator, reducedPourcentage);
+    
+    [HttpPost("simulate")]
+    public WarSimulationResponse SimulateWar(WarSimulationRequest model)
+        => _warService.SimulateWar(model);
 
     [Authorize(Roles = "admin")]
     [HttpPost("warLoot/{userId}")]

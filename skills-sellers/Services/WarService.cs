@@ -22,6 +22,7 @@ public interface IWarService
     Task StartBattle(int warId, DataContext context);
     Task GiveRandomWarLoot(int userId, int multiplicator);
     WarLootEstimationResponse GetEstimatedWarLootForUser(int multiplicator, int reducedPourcentage);
+    WarSimulationResponse SimulateWar(WarSimulationRequest model);
 }
 public class WarService : IWarService
 {
@@ -632,6 +633,23 @@ public class WarService : IWarService
         }
 
         return new WarLootEstimationResponse(estimations);
+    }
+
+    public WarSimulationResponse SimulateWar(WarSimulationRequest model)
+    {
+        var attackingCards = model.Attackers;
+
+        var defendingCards = WarHelpers.SplitArmyFromRegistreHostile(model.Hostile, true);
+
+        var results = WarHelpers.Battle(defendingCards, attackingCards);
+        results.fightReport += results.defenseWin
+            ? "[*!GUERRE!*] - *!Victoire de la défense !!*\n"
+            : "[*!GUERRE!*] - *!Victoire de l'attaque !!*\n";
+
+        var multiplicator = model.Hostile.CardPower + model.Hostile.CardWeaponPower;
+        var estimatedLoot = GetEstimatedWarLootForUser(multiplicator, 0);
+
+        return new WarSimulationResponse(results.fightReport, estimatedLoot);
     }
 
     // get if cards aren't in actions using the classic Estimation Methods for ActionGuerre
