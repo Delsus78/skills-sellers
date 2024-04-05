@@ -29,6 +29,6 @@ public record WarResponse(
     
 public record WarSimulationRequest(List<FightingEntity> Attackers, EnnemyRequest Hostile);
 
-public record EnnemyRequest(string Name, int CardPower, int WeaponPower, WeaponAffinity Affinity);
+public record EnnemyRequest(string Name, int CardPower, int WeaponPower, WeaponAffinity? Affinity);
 
 public record WarSimulationResponse(string Report, WarLootEstimationResponse Loot);
