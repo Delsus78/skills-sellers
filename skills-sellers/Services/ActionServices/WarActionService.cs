@@ -232,7 +232,7 @@ public class WarActionService : IActionService
     {
         foreach (var card in userCardsToUp)
         {
-            card.Competences.Force = card.Competences.Force + 1 > 10 ? 10 : +1;
+            card.Competences.Force = card.Competences.Force + 1 > 10 ? 10 : card.Competences.Force + 1;
         }
     }
 }
