@@ -370,7 +370,7 @@ public class WarService : IWarService
                 throw new AppException("Cible non trouvée", 404);
 
             targetName = target.Pseudo;
-            target.WarTimeout = DateTime.Now.AddDays(48);
+            target.WarTimeout = DateTime.Now.AddDays(3);
             
             defendingCards = context.Actions
                 .Where(a => a.UserId == target.Id && a is ActionSatellite)
