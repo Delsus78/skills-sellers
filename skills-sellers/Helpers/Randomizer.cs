@@ -98,16 +98,19 @@ public static class Randomizer
         // remove all duplicates
         AllCardWords = AllCardWords.Distinct().ToList();
             
-        // remove all words with a '
-        AllCardWords = AllCardWords.Where(w => !w.Contains('\'')).ToList();
+        // get only wordle characters
+        var wordleCharacters = new List<char>
+        {
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            '.', '-', '+', ',',
+            'é', 'è', 'ê', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç', 'œ', 'æ'
+        };
+        
+        AllCardWords = AllCardWords
+            .Select(w => w.ToLower())
+            .Where(w => w.All(c => wordleCharacters.Contains(c)))
+            .ToList();
 
-        // remove ( ) from words
-        AllCardWords = AllCardWords.Select(w => w.Replace("(", "").Replace(")", "")).ToList();
-        
-        // remove ? + ! from words
-        AllCardWords = AllCardWords.Select(w => w.Replace("?", "").Replace("!", "")).ToList();
-        
-        
         // remove all accents and replace them by the letter without accent
         for (var i = 0; i < AllCardWords.Count; i++)
         {
