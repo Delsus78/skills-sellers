@@ -642,7 +642,8 @@ public class WarService : IWarService
         {
             CardPower = model.Hostile.CardPower,
             CardWeaponPower = model.Hostile.WeaponPower,
-            Name = model.Hostile.Name
+            Name = model.Hostile.Name,
+            Affinity = model.Hostile.Affinity
         };
 
         var defendingCards = WarHelpers.SplitArmyFromRegistreHostile(fakeHostileRegistre, true);
