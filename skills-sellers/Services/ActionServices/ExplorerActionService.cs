@@ -437,6 +437,7 @@ public class ExplorerActionService : IActionService
             ), context);
             
             var registre = WarHelpers.GenerateHostileRegistre(user, action.PlanetName);
+            registre.EncounterDate = DateTime.Now.AddDays(-2);
             user.Registres.Add(registre);
             return true;
         }
