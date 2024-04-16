@@ -202,7 +202,8 @@ public class AmeliorerActionService : IActionService
         var gain = new Dictionary<string, string>
         {
             { "Up intel", level + " fois random" },
-            { isABatUpgrade ? "Up batiment" : "Up arme", "1 fois" },
+            { isABatUpgrade ? "Up batiment" : "Up arme", 
+                isABatUpgrade ? "1 fois" : "2 fois" },
             { "réduites", isABatUpgrade ? finalExtraLevels + "Heures" : finalExtraLevels * 30 + "Minutes" }
         };
 

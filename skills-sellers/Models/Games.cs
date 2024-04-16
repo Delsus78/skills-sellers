@@ -8,6 +8,7 @@ namespace skills_sellers.Models;
 [JsonDerivedType(typeof(GamesMachineResponse))]
 [JsonDerivedType(typeof(GamesWordleResponse))]
 [JsonDerivedType(typeof(GamesBossResponse))]
+[JsonDerivedType(typeof(GamesBJResponse))]
 public class GamesResponse
 {
     public string Name { get; set; }
@@ -28,6 +29,12 @@ public class GamesBossResponse : GamesResponse
     public DateTime StartDate { get; set; }
     public UserCardResponse BossCard { get; set; }
     public Dictionary<string,int> PlayersPower { get; set; } = new();
+}
+
+public class GamesBJResponse : GamesResponse
+{
+    public DateTime StartDate { get; set; }
+    public BJGameResponse? Game { get; set; }
 }
 
 public class GamesWordleResponse : GamesResponse

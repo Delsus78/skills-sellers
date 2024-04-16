@@ -64,6 +64,10 @@ public class  GamesController : ControllerBase
     [HttpPost("wordle")]
     public async Task<GamesPlayResponse> PlayWordle(int id, GamesRequest model)
         => await _gamesService.PlayWordle(GetUserAuthenticated(id), model);
+    
+    [HttpPost("blackjack")]
+    public GamesPlayResponse PlayBlackJack(int id, BlackJackAction action)
+        => _gamesService.PlayBlackJack(GetUserAuthenticated(id), action);
 
     [HttpGet("christmas")]
     public async Task<ChristmasResponse> GetChristmas(int id)

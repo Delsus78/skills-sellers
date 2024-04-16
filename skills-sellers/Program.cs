@@ -78,6 +78,7 @@ services.AddScoped<CasinoService>();
 services.AddScoped<MachineRepairService>();
 services.AddScoped<WordleGameService>();
 services.AddScoped<BossService>();
+services.AddSingleton<BlackJackService>();
 
 // special services
 services.AddScoped<IChristmasService, ChristmasService>();
@@ -125,7 +126,7 @@ services.AddAuthentication(options =>
             // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/globalChatHub") || path.StartsWithSegments("/notificationHub")))
+                (path.StartsWithSegments("/globalChatHub") || path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/blackJackHub")))
             {
                 // Read the token out of the query string
                 context.Token = accessToken;
@@ -191,6 +192,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GlobalChatHub>("/globalChatHub");
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<BlackJackHub>("/blackJackHub");
 
 app.Run();
 

@@ -316,15 +316,20 @@ public class ExplorerActionService : IActionService
         var averageCardNb =
             context.UserCards.Count(uc => uc.UserId == user.Id || uc.UserId == opponentCard.UserId) / 2;
         
+        
+        var opponent = opponentCard!.User;
+        var stringReward = "";
+        var looserStringReward = "";
+        
         switch (result)
         {
             case 1: // user win
-                var stringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb);
-                var looserstringReward = WarHelpers.GetRandomWarLoot(opponentCard.User, averageCardNb, true, 1);
+                stringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb);
+                looserStringReward = WarHelpers.GetRandomWarLoot(opponent, averageCardNb, true, 1);
                 
                 // score 
                 user.Score += 50;
-                opponentCard.User.Score += 25;
+                opponent.Score += 25;
 
                 notificationMessage =
                     $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a gagné !\n" +
@@ -334,12 +339,11 @@ public class ExplorerActionService : IActionService
                 opponentNotificationMessage =
                     $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a perdu !\n" +
                     $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n" +
-                    $"Elle a gagné {looserstringReward} ! \n";
+                    $"Elle a gagné {looserStringReward} ! \n";
                 break;
             case -1: // opponent win
-                var opponent = opponentCard!.User;
-                var stringRewardOpponent = WarHelpers.GetRandomWarLoot(opponent, averageCardNb);
-                var looserStringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb, true, 1);
+                stringReward = WarHelpers.GetRandomWarLoot(opponent, averageCardNb);
+                looserStringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb, true, 1);
                 
                 // score
                 opponent.Score += 50;
@@ -353,17 +357,27 @@ public class ExplorerActionService : IActionService
                 opponentNotificationMessage =
                     $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a gagné !\n" +
                     $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n" +
-                    $"Elle a gagné {stringRewardOpponent} ! \n";
+                    $"Elle a gagné {stringReward} ! \n";
                 
                 break;
             default:
+                looserStringReward = WarHelpers.GetRandomWarLoot(opponent, averageCardNb, true, 1);
+                stringReward = WarHelpers.GetRandomWarLoot(user, averageCardNb, true, 1);
+                
+                // score
+                user.Score += 25;
+                opponent.Score += 25;
+                
                 notificationMessage =
                     $"Votre carte {userCard.Card.Name} a rencontré une autre carte et a fait match nul !\n" +
-                    $"Elle s'est battue contre {opponentCard?.Card.Name} de {opponentCard?.User.Pseudo} ! \n";
+                    $"Elle s'est battue contre {opponentCard?.Card.Name} de {opponentCard?.User.Pseudo} ! \n" +
+                    $"Elle a gagné {stringReward} ! \n";
 
                 opponentNotificationMessage =
                     $"Votre carte {opponentCard?.Card.Name} a rencontré une autre carte et a fait match nul !\n" +
-                    $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n";
+                    $"Elle s'est battue contre {userCard.Card.Name} de {user.Pseudo} ! \n" +
+                    $"Elle a gagné {looserStringReward} ! \n";
+                
 
                 break;
         }
