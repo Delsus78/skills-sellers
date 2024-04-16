@@ -10,25 +10,27 @@ public class GamesService : IGameService
     private readonly MachineRepairService _machineRepairService;
     private readonly WordleGameService _wordleGameService;
     private readonly BossService _bossService;
+    private readonly BlackJackService _blackJackService;
 
     public GamesService(
         CasinoService casinoService,
         MachineRepairService machineRepairService,
         WordleGameService wordleGameService, 
-        BossService bossService)
+        BossService bossService, BlackJackService blackJackService)
     {
         _casinoService = casinoService;
         _machineRepairService = machineRepairService;
         _wordleGameService = wordleGameService;
         _bossService = bossService;
+        _blackJackService = blackJackService;
     }
     public GamesResponse GetGameOfTheDay(int userId)
     {
         return DateTime.Now.DayOfWeek switch
         {
             DayOfWeek.Monday => _casinoService.GetGameOfTheDay(userId),
-            DayOfWeek.Tuesday => _machineRepairService.GetGameOfTheDay(userId),
-            DayOfWeek.Wednesday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
+            DayOfWeek.Tuesday => _blackJackService.GetGameOfTheDay(userId),
+            DayOfWeek.Wednesday => _blackJackService.GetGameOfTheDay(userId),
             DayOfWeek.Thursday => _casinoService.GetGameOfTheDay(userId),
             DayOfWeek.Friday => _machineRepairService.GetGameOfTheDay(userId),
             DayOfWeek.Saturday => throw new AppException("Aucun jeu n'est disponible aujourd'hui.", 400),
@@ -50,6 +52,7 @@ public class GamesService : IGameService
             "casino" => _casinoService.PlayGameOfTheDay(user, model),
             "machine" => _machineRepairService.PlayGameOfTheDay(user, model),
             "boss" => _bossService.PlayGameOfTheDay(user, model),
+            "blackjack" => _blackJackService.PlayGameOfTheDay(user, model),
             _ => throw new AppException("Le jeu demandé n'existe pas.", 400)
         };
     }
@@ -67,6 +70,7 @@ public class GamesService : IGameService
             "casino" => _casinoService.EstimateGameOfTheDay(user, model),
             "machine" => _machineRepairService.EstimateGameOfTheDay(user, model),
             "boss" => _bossService.EstimateGameOfTheDay(user, model),
+            "blackjack" => _blackJackService.EstimateGameOfTheDay(user, model),
             _ => throw new AppException("Le jeu demandé n'existe pas.", 400)
         };
     }
@@ -93,4 +97,7 @@ public class GamesService : IGameService
             _ => throw new AppException("Le jeu demandé n'existe pas.", 400)
         };
     }
+
+    public GamesPlayResponse PlayBlackJack(User user, BlackJackAction action)
+        => _blackJackService.TryPlay(user, action);
 }

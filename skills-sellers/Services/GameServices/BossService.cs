@@ -46,7 +46,7 @@ public class BossService : IGameService
 
         #region Random Competences
 
-        var totalPower = _context.UserCards.Count() * 5;
+        var totalPower = _context.UserCards.Count() * 8;
         var ptsLeft = totalPower;
         var stillAvailable = new List<string> { "force", "intel", "cuisine", "charisme", "exploration" };
         var valuesDicto = new Dictionary<string, int>

@@ -712,16 +712,10 @@ public class WarService : IWarService
                     .Count(w => w.CreatedAt.EstDansSemaineActuelle() && w.UserTargetId != null) >= 2)
                 return (false, "Vous avez déjà fait vos 2 guerres de la semaine", null, null);
         }
-        
-        // deja effectué une guerre aujourd'hui
-        if (_context.Wars.Where(w => w.Status != WarStatus.Annulee && w.UserId == user.Id)
-                .AsEnumerable()
-                .Count(w => w.CreatedAt.EstDansLajourneeActuelle()) >= 1)
-            return (false, "Vous avez déjà fait une guerre aujourd'hui", null, null);
-        
-        // si registre hostile, impossible si le registre a ete rencontré il y a moins de 2 jours
-        if (registreTarget is RegistreHostile registreHostile && registreHostile.EncounterDate > DateTime.Now.AddDays(-2)) 
-            return (false, "Vous avez déjà rencontré cette planète hostile il y a moins de 2 jours", null, null);
+
+        // si registre hostile, impossible si le registre a ete rencontré il y a moins de 1 jours
+        if (registreTarget is RegistreHostile registreHostile && registreHostile.EncounterDate > DateTime.Now.AddDays(-1)) 
+            return (false, "Vous avez déjà rencontré cette planète hostile il y a moins de 1 jours", null, null);
 
         // ally in war
         if (_context.Wars
