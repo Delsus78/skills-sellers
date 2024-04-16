@@ -29,7 +29,7 @@ public class GamesService : IGameService
         return DateTime.Now.DayOfWeek switch
         {
             DayOfWeek.Monday => _casinoService.GetGameOfTheDay(userId),
-            DayOfWeek.Tuesday => _blackJackService.GetGameOfTheDay(userId),
+            DayOfWeek.Tuesday => _machineRepairService.GetGameOfTheDay(userId),
             DayOfWeek.Wednesday => _blackJackService.GetGameOfTheDay(userId),
             DayOfWeek.Thursday => _casinoService.GetGameOfTheDay(userId),
             DayOfWeek.Friday => _machineRepairService.GetGameOfTheDay(userId),
