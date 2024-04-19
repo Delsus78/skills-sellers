@@ -202,9 +202,13 @@ public class WarActionService : IActionService
         if (war.Status != WarStatus.EnAttente)
             throw new AppException("Vous ne pouvez pas annuler cette action !", 400);
         
-        var user = action.User;
-        user.Nourriture += actionGuerre.UserCards.Count(uc => uc.UserId == user.Id) * 4;
-
+        // all allies and main user
+        var users = action.UserCards.Select(uc => uc.User).Distinct().ToList();
+        
+        // regive food
+        foreach (var user in users)
+            user.Nourriture += action.UserCards.Count(uc => uc.UserId == user.Id) * 4;
+        
         context.Actions.Remove(action);
         
         return context.SaveChangesAsync();

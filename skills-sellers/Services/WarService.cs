@@ -689,7 +689,7 @@ public class WarService : IWarService
             return (false, "Vous devez utiliser au moins une carte", null, null);
         
         // is user in war
-        if (_context.Wars.Where(w => w.Status == WarStatus.Finie && w.Status == WarStatus.Annulee)
+        if (_context.Wars.Where(w => w.Status != WarStatus.Finie && w.Status != WarStatus.Annulee)
             .AsEnumerable()
             .Any(w => w.UserId == user.Id 
                      || w.UserAllyIds.Contains(user.Id) 
