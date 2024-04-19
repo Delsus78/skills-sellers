@@ -102,7 +102,7 @@ public static class Randomizer
         var wordleCharacters = new List<char>
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            '.', '-', '+', ',',
+            '.', '-', '+', ',', '(', ')', '[', ']', '|', '!', '?', ':', ';', ' ',
             'é', 'è', 'ê', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç', 'œ', 'æ'
         };
         
@@ -128,6 +128,19 @@ public static class Randomizer
             word = word.Replace("ç", "c");
             word = word.Replace("œ", "oe");
             word = word.Replace("æ", "ae");
+            
+            // remove all '(', ')', '[', ']', '|', '!', '?', ':', ';', ' '
+            word = word.Replace("(", "");
+            word = word.Replace(")", "");
+            word = word.Replace("[", "");
+            word = word.Replace("]", "");
+            word = word.Replace("|", "");
+            word = word.Replace("!", "");
+            word = word.Replace("?", "");
+            word = word.Replace(":", "");
+            word = word.Replace(";", "");
+            word = word.Replace(" ", "");
+            
             AllCardWords[i] = word;
         }
             
