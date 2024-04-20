@@ -34,6 +34,7 @@ public class ResourcesService : IResourcesService
         {
             "or", new Dictionary<int, (int max, int min)>
             {
+                {0, (0, 0)},
                 {1, (10, 20)},
                 {2, (15, 25)},
                 {3, (20, 30)},
@@ -50,8 +51,6 @@ public class ResourcesService : IResourcesService
     
     public (int min, int max) GetLimitsForForceStat(int forceLevel, string resourceType)
     {
-        if (forceLevel is < 1 or > 10)
-            throw new AppException("La force doit être comprise entre 1 et 10.", 400);
         
         resourceType = resourceType.ToLower();
         
@@ -63,8 +62,6 @@ public class ResourcesService : IResourcesService
     
     public int GetRandomValueForForceStat(int forceLevel, string resourceType)
     {
-        if (forceLevel is < 1 or > 10)
-            throw new ArgumentOutOfRangeException(nameof(forceLevel));
         
         resourceType = resourceType.ToLower();
         
