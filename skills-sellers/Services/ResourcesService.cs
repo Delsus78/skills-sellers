@@ -19,6 +19,7 @@ public class ResourcesService : IResourcesService
         {
             "creatium", new Dictionary<int, (int max, int min)>
             {
+                {0, (0, 0)},
                 {1, (20, 50)},
                 {2, (40, 100)},
                 {3, (50, 110)},
