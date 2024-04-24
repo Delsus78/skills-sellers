@@ -692,7 +692,7 @@ public class WarService : IWarService
         if (_context.Wars.Where(w => w.Status != WarStatus.Finie && w.Status != WarStatus.Annulee)
             .AsEnumerable()
             .Any(w => w.UserId == user.Id 
-                     || w.UserAllyIds.Contains(user.Id))
+                     || w.UserAllyIds.Contains(user.Id)))
               return (false, "Vous êtes déjà en guerre", null, null);
 
         if (registreTarget is RegistrePlayer registrePlayer)
@@ -721,9 +721,7 @@ public class WarService : IWarService
             .Where(w => w.Status != WarStatus.Finie && w.Status != WarStatus.Annulee)
             .Any(w =>
                 w.UserAllyIds.Any(id => userAllyIds.Contains(id))
-                || userAllyIds.Contains(w.UserId))
-            )
-           )
+                || userAllyIds.Contains(w.UserId)))
               return (false, "Un de vos alliés est déjà en guerre", null, null);
 
         return (true, "", actionEstimation.EndDates.First(), actionEstimation.Couts);
