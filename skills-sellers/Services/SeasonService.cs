@@ -112,6 +112,6 @@ public class SeasonService : ISeasonService
             PreserveReferencesHandling = PreserveReferencesHandling.Objects
         });
         
-        File.WriteAllText($"./season_{season.Id}.json", json);
+        Console.Out.WriteLine(json);
     }
 }
